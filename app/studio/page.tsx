@@ -8,7 +8,7 @@ export default async function StudioPage() {
   const user = await requireProductUser("/studio");
   const profile = await ensureUserRecord(user) as any;
   return (
-    <main className="studio-body">
+    <main className="studio-body" id="main-content">
       <header className="studio-header">
         <Link href="/" className="brand"><span>li</span>Link</Link>
         <div className="studio-user">

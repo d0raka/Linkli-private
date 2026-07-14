@@ -22,17 +22,6 @@ export default function StudioClient({ initialName }: { initialName: string }) {
 
   const selected = projects.find((project) => project.id === selectedId) ?? null;
 
-  async function load() {
-    const response = await fetch("/api/projects", { cache: "no-store" });
-    const data = await response.json();
-    if (response.ok) {
-      setProfile(data.profile);
-      setProjects(data.projects);
-      if (data.projects.length) setSelectedId((current) => current || data.projects[0].id);
-    } else setNotice({ text: data.error || "לא הצלחנו לטעון את הסטודיו", error: true });
-    setLoading(false);
-  }
-
   useEffect(() => {
     let cancelled = false;
     fetch("/api/projects", { cache: "no-store" }).then((response) => response.json().then((data) => ({ response, data }))).then(({ response, data }) => {
@@ -101,11 +90,7 @@ export default function StudioClient({ initialName }: { initialName: string }) {
   }
 
   async function upgrade() {
-    const response = await fetch("/api/billing/upgrade", { method: "POST" });
-    const data = await response.json();
-    if (!response.ok) return flash(data.error || "לא הצלחנו לפתוח את התשלום", true);
-    if (data.url) window.location.href = data.url;
-    else { await load(); flash("מצב Plus הופעל להדגמה 🎉"); }
+    window.location.href = "/checkout";
   }
 
   const publishedCount = projects.filter((project) => project.published).length;

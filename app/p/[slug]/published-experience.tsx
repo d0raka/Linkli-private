@@ -25,7 +25,7 @@ export default function PublishedExperience({ slug, config, showWatermark }: { s
   const isCorrect = selected === config.correctOption;
   const whatsappUrl = `https://wa.me/${config.whatsapp}?text=${encodeURIComponent(config.whatsappText)}`;
 
-  return <main className="published-shell" style={{"--page-soft":config.accentSoft,"--page-accent":config.accent} as React.CSSProperties}>
+  return <main className="published-shell" id="main-content" style={{"--page-soft":config.accentSoft,"--page-accent":config.accent} as React.CSSProperties}>
     <section className="published-card">
       {!submitted ? <>
         <div className="published-emoji">{config.emoji}</div>
@@ -33,7 +33,7 @@ export default function PublishedExperience({ slug, config, showWatermark }: { s
         <h1>{config.headline}</h1>
         <p className="published-sub">{config.subtitle}</p>
         <div className="published-options">{config.options.map((option,index)=><label className={`published-option ${selected === option ? "selected" : ""}`} key={`${option}-${index}`}><input type="radio" name="answer" value={option} checked={selected === option} onChange={() => setSelected(option)} /><span>{option}</span></label>)}</div>
-        {error && <p className="published-error">צריך לבחור תשובה אחת קודם 😊</p>}
+        {error && <p className="published-error" role="alert">צריך לבחור תשובה אחת קודם 😊</p>}
         <button className="published-button" onClick={submit}>שליחה</button>
       </> : <div className="success-box">
         <div className="published-emoji">{isCorrect ? "🎉" : "😅"}</div>

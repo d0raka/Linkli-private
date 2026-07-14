@@ -3,7 +3,7 @@ import { templates } from "@/lib/templates";
 
 export default function LandingPage() {
   return (
-    <main className="landing-shell">
+    <main className="landing-shell" id="main-content">
       <nav className="topbar wrap">
         <Link href="/" className="brand"><span>li</span>Link</Link>
         <div className="nav-links">
@@ -79,13 +79,13 @@ export default function LandingPage() {
         <div className="center-heading"><span className="kicker">מחיר קטן. אפקט גדול.</span><h2>בוחרים את הקצב שלכם</h2><p>מתחילים חינם ומשדרגים רק כשרוצים יותר.</p></div>
         <div className="pricing-grid">
           <article className="price-card"><div><span className="plan-label">חינם</span><h3>₪0 <small>/ לתמיד</small></h3><p>כדי לנסות, לשתף ולהתחיל ליצור.</p></div><ul><li>✓ עמוד אחד מפורסם</li><li>✓ 3 תבניות בסיס</li><li>✓ התאמת טקסטים וצבעים</li><li>✓ סטטיסטיקת פתיחות</li><li className="muted">— כולל סימן Linkli</li></ul><Link href="/studio" className="button button-outline">מתחילים בחינם</Link></article>
-          <article className="price-card featured"><div className="popular">הכי משתלם</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>ליוצרים שרוצים שהלינק יהיה באמת שלהם.</p></div><ul><li>✓ עד 10 עמודים מפורסמים</li><li>✓ כל התבניות, כולל חדשות</li><li>✓ בלי סימן מים</li><li>✓ נתוני פתיחות ולחיצות</li><li>✓ צבעים ומיתוג מלאים</li></ul><Link href="/studio?upgrade=1" className="button button-primary">מתחילים עם Plus <span>←</span></Link></article>
+          <article className="price-card featured"><div className="popular">הכי משתלם</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>ליוצרים שרוצים שהלינק יהיה באמת שלהם.</p></div><ul><li>✓ עד 10 עמודים מפורסמים</li><li>✓ כל התבניות, כולל חדשות</li><li>✓ בלי סימן מים</li><li>✓ נתוני פתיחות ולחיצות</li><li>✓ צבעים ומיתוג מלאים</li></ul><Link href="/checkout" className="button button-primary">מתחילים עם Plus <span>←</span></Link><div className="payment-mini">💳 אשראי · <b>PayPal</b> · <b>bit</b></div></article>
         </div>
       </section>
 
       <section className="final-cta wrap"><span>✦</span><h2>הרעיון כבר אצלכם.<br />בואו נהפוך אותו ללינק.</h2><p>העמוד הראשון שלכם יכול להיות באוויר בעוד כמה דקות.</p><Link href="/studio" className="button button-light">יצירת עמוד בחינם ←</Link></section>
 
-      <footer className="footer wrap"><Link href="/" className="brand"><span>li</span>Link</Link><p>עמודים קטנים לרגעים גדולים.</p><div><a href="#pricing">מחירים</a><Link href="/studio">כניסה לסטודיו</Link></div></footer>
+      <footer className="footer wrap"><Link href="/" className="brand"><span>li</span>Link</Link><p>עמודים קטנים לרגעים גדולים.</p><div><a href="#pricing">מחירים</a><Link href="/studio">כניסה לסטודיו</Link><Link href="/accessibility">נגישות</Link><Link href="/privacy">פרטיות</Link><Link href="/terms">תנאי שימוש</Link><Link href="/refunds">ביטולים והחזרים</Link><Link href="/contact">יצירת קשר</Link></div></footer>
     </main>
   );
 }
