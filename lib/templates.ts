@@ -51,16 +51,16 @@ export const templates: LinkliTemplate[] = [
     id: "date", name: "הזמנה לדייט", category: "רומנטי", emoji: "💘", free: true,
     description: "הזמנה אישית בשלושה שלבים, עם מסך סיום מרגש והמשך ישיר ל־WhatsApp.",
     config: config({
-      recipient: "שירה", headline: "יש לי הצעה שקשה לסרב לה", subtitle: "הכנתי לך הזמנה קטנה, אישית וקצת מרגשת. שלוש שאלות — ואז מגלים מה תכננתי.",
+      recipient: "שירה", headline: "יש לי הצעה שקשה לסרב לה", subtitle: "הכנתי לך הזמנה קטנה, אישית וקצת מרגשת. שלוש שאלות - ואז מגלים מה תכננתי.",
       introLabel: "הזמנה אישית במיוחד", startText: "מעניין אותי, מתחילים", highlights: ["3 שאלות קצרות", "פחות מדקה"],
       questions: [
-        { prompt: "איזו אווירה מתאימה לערב שלנו?", helper: "אין תשובה לא נכונה — רק כיוון טוב להתחלה.", options: ["יין ושיחה טובה 🍷", "ארוחה במקום חדש 🍝", "משהו ספונטני לגמרי ✨", "סרט ונשנושים בבית 🍿"], correctOption: "משהו ספונטני לגמרי ✨" },
+        { prompt: "איזו אווירה מתאימה לערב שלנו?", helper: "אין תשובה לא נכונה - רק כיוון טוב להתחלה.", options: ["יין ושיחה טובה 🍷", "ארוחה במקום חדש 🍝", "משהו ספונטני לגמרי ✨", "סרט ונשנושים בבית 🍿"], correctOption: "משהו ספונטני לגמרי ✨" },
         { prompt: "מתי הכי נוח לצאת?", helper: "כדי שאוכל להתחיל לתכנן.", options: ["חמישי בערב", "שישי בצהריים", "מוצאי שבת", "עדיף להשאיר כהפתעה"], correctOption: "עדיף להשאיר כהפתעה" },
         { prompt: "אז קובעים דייט?", helper: "זה הרגע לבחור את התשובה הנכונה.", options: ["כן, בשמחה 💕", "ברור שכן", "רק אם יש קינוח", "כבר מחכה לזה"], correctOption: "כן, בשמחה 💕" },
       ],
       finalButtonText: "לחשיפת ההזמנה", resultLabel: "ההזמנה התקבלה ✨",
       successTitle: "זה דייט! עכשיו זה רשמי 🥰", successText: "ידעתי שיש לי סיכוי. נשאר רק לבחור זמן ומקום ולהתחיל להתרגש.",
-      whatsapp: "", whatsappText: "ראיתי את ההזמנה — בשמחה, קובעים דייט 💕", buttonText: "קובעים ב־WhatsApp",
+      whatsapp: "", whatsappText: "ראיתי את ההזמנה - בשמחה, קובעים דייט 💕", buttonText: "קובעים ב־WhatsApp",
       accent: "#ef476f", accentSoft: "#fff0f3", emoji: "💘", decorations: ["💗", "✨", "💕", "🌸"], theme: "romance",
     }),
   },
@@ -77,7 +77,7 @@ export const templates: LinkliTemplate[] = [
       ],
       finalButtonText: "לפתיחת הברכה", resultLabel: "יום הולדת שמח 🎉",
       successTitle: "יום הולדת שמח! הגיע הזמן לחגוג 🎉", successText: "שתהיה שנה של רגעים גדולים, אנשים טובים והמון סיבות אמיתיות לחייך.",
-      whatsapp: "", whatsappText: "פתחתי את ההפתעה — ריגשתם אותי! 🎂", buttonText: "שליחת תודה ב־WhatsApp",
+      whatsapp: "", whatsappText: "פתחתי את ההפתעה - ריגשתם אותי! 🎂", buttonText: "שליחת תודה ב־WhatsApp",
       accent: "#7c3aed", accentSoft: "#f5efff", emoji: "🎂", decorations: ["🎉", "🎈", "✨", "🥳", "🎊"], theme: "party",
     }),
   },
@@ -134,7 +134,7 @@ export const templates: LinkliTemplate[] = [
   },
   {
     id: "prank", name: "עמוד מתיחה", category: "מצחיק", emoji: "😈", free: false,
-    description: "מתיחה דיגיטלית בשלושה שלבים שנראים רשמיים — עד לטוויסט בסיום.",
+    description: "מתיחה דיגיטלית בשלושה שלבים שנראים רשמיים - עד לטוויסט בסיום.",
     config: config({
       recipient: "הזוכה המאושר", headline: "נבחרת לקבל פרס מסתורי", subtitle: "המערכת בחרה דווקא בך. כדי לחשוף את הפרס צריך להשלים שלושה שלבים רשמיים לחלוטין. כנראה.",
       introLabel: "הודעת זכייה מיוחדת", startText: "בדיקת הזכאות", highlights: ["3 שלבי אימות", "פרס מסתורי בסיום"],

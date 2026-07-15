@@ -6,15 +6,16 @@ import type { TemplateConfig } from "@/lib/templates";
 
 type Screen = "intro" | "question" | "result";
 
-export default function PublishedExperience({ slug, config, showWatermark }: { slug: string; config: TemplateConfig; showWatermark: boolean }) {
+export default function PublishedExperience({ slug, config, showWatermark, trackAnalytics = true, previewMode = false }: { slug: string; config: TemplateConfig; showWatermark: boolean; trackAnalytics?: boolean; previewMode?: boolean }) {
   const [screen, setScreen] = useState<Screen>("intro");
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>(() => config.questions.map(() => ""));
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (!trackAnalytics) return;
     void fetch("/api/analytics", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug, event: "view" }) });
-  }, [slug]);
+  }, [slug, trackAnalytics]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -66,10 +67,12 @@ export default function PublishedExperience({ slug, config, showWatermark }: { s
   }
 
   function trackClick() {
+    if (!trackAnalytics) return;
     void fetch("/api/analytics", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug, event: "click" }), keepalive: true });
   }
 
   return <main className={`experience-shell experience-${config.theme}`} id="main-content" style={{ "--page-soft": config.accentSoft, "--page-accent": config.accent } as React.CSSProperties}>
+    {previewMode ? <Link href="/#templates" className="template-preview-back">חזרה לכל התבניות</Link> : null}
     <div className="experience-aurora experience-aurora-one" aria-hidden="true" />
     <div className="experience-aurora experience-aurora-two" aria-hidden="true" />
     <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size }}>{item.value}</span>)}</div>

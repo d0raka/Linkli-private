@@ -24,7 +24,7 @@ export default function ContactForm() {
     <label>שם מלא<input name="name" required maxLength={80} autoComplete="name" /></label>
     <label>דוא״ל לחזרה<input name="email" type="email" required maxLength={160} autoComplete="email" /></label>
     <label className="full">נושא<select name="topic" value={topic} onChange={(event) => setTopic(event.target.value)}><option value="general">שאלה כללית</option><option value="billing">חיוב, ביטול או החזר</option><option value="accessibility">נגישות</option><option value="privacy">פרטיות ומידע אישי</option><option value="technical">תקלה טכנית</option></select></label>
-    <label className="full">כתובת העמוד הרלוונטי — לא חובה<input name="pageUrl" type="url" maxLength={500} placeholder="https://..." /></label>
+    <label className="full">כתובת העמוד הרלוונטי - לא חובה<input name="pageUrl" type="url" maxLength={500} placeholder="https://..." /></label>
     <label className="contact-honeypot" aria-hidden="true">אין למלא שדה זה<input name="company" tabIndex={-1} autoComplete="off" /></label>
     <label className="full">איך אפשר לעזור?<textarea name="message" required minLength={10} maxLength={3000} /></label>
     <div className="full">{status && <div role="status" className={`status-message ${status.error ? "error" : ""}`}>{status.text}</div>}<button className="button button-primary" disabled={sending}>{sending ? "שולחים…" : "שליחת הפנייה"}</button></div>

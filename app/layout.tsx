@@ -8,13 +8,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host") || "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
   const base = new URL(`${protocol}://${host}`);
-  const title = "Linkli — הופכים רעיון לעמוד שאנשים זוכרים";
-  const description = "יוצרים עמודים אינטראקטיביים לאירועים, הפתעות, חידונים ורגעים אישיים — ומשתפים באמצעות קישור אחד.";
+  const title = "Linkli - הופכים רעיון לעמוד שאנשים זוכרים";
+  const description = "יוצרים עמודים אינטראקטיביים לאירועים, הפתעות, חידונים ורגעים אישיים - ומשתפים באמצעות קישור אחד.";
   return {
     metadataBase: base,
     title,
     description,
-    openGraph: { title, description, type: "website", images: [{ url: "/og-v2.png", width: 1536, height: 1024, alt: "Linkli — חוויות אינטראקטיביות בכמה צעדים" }] },
+    openGraph: { title, description, type: "website", images: [{ url: "/og-v2.png", width: 1536, height: 1024, alt: "Linkli - חוויות אינטראקטיביות בכמה צעדים" }] },
     twitter: { card: "summary_large_image", title, description, images: ["/og-v2.png"] },
   };
 }
