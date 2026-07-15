@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { templates, type TemplateConfig } from "@/lib/templates";
+import { templates, type TemplateConfig, type TemplateQuestion } from "@/lib/templates";
 import type { ProjectRecord } from "@/lib/projects";
 
 type Profile = { email: string; displayName: string; plan: "free" | "plus" };
@@ -55,7 +55,7 @@ export default function StudioClient({ initialName }: { initialName: string }) {
     setProjects((items) => items.map((item) => item.id === selectedId ? { ...item, ...patch } : item));
   }
 
-  function updateConfig(key: keyof TemplateConfig, value: string | string[]) {
+  function updateConfig<K extends keyof TemplateConfig>(key: K, value: TemplateConfig[K]) {
     if (!selected) return;
     updateSelected({ config: { ...selected.config, [key]: value } });
   }
@@ -114,8 +114,8 @@ export default function StudioClient({ initialName }: { initialName: string }) {
           <div className="template-picker">
             {templates.map((template) => {
               const locked = !template.free && profile.plan !== "plus";
-              return <button className={`template-choice ${locked ? "locked" : ""}`} key={template.id} onClick={() => locked ? upgrade() : createProject(template.id)}>
-                {locked && <span className="lock-label">PLUS</span>}<span className="emoji">{template.emoji}</span><h3>{template.name}</h3><p>{template.description}</p>
+              return <button className={`template-choice template-choice-${template.config.theme} ${locked ? "locked" : ""}`} key={template.id} onClick={() => locked ? upgrade() : createProject(template.id)}>
+                {locked && <span className="lock-label">PLUS</span>}<span className="template-step-label">3 שלבים</span><span className="emoji">{template.emoji}</span><h3>{template.name}</h3><p>{template.description}</p><span className="template-choice-action">יצירת העמוד ←</span>
               </button>;
             })}
           </div>
@@ -136,10 +136,13 @@ export default function StudioClient({ initialName }: { initialName: string }) {
   );
 }
 
-function Editor({ project, profile, saving, onProject, onConfig, onSave, onPublish, onDelete }: { project: ProjectRecord; profile: Profile; saving: boolean; onProject: (patch: Partial<ProjectRecord>) => void; onConfig: (key: keyof TemplateConfig, value: string | string[]) => void; onSave: () => void; onPublish: () => void; onDelete: () => void }) {
+function Editor({ project, profile, saving, onProject, onConfig, onSave, onPublish, onDelete }: { project: ProjectRecord; profile: Profile; saving: boolean; onProject: (patch: Partial<ProjectRecord>) => void; onConfig: <K extends keyof TemplateConfig>(key: K, value: TemplateConfig[K]) => void; onSave: () => void; onPublish: () => void; onDelete: () => void }) {
   const c = project.config;
   const shareUrl = typeof window === "undefined" ? `/p/${project.slug}` : `${window.location.origin}/p/${project.slug}`;
-  const optionText = useMemo(() => c.options.join("\n"), [c.options]);
+  const questionOptionText = useMemo(() => c.questions.map((question) => question.options.join("\n")), [c.questions]);
+  function updateQuestion(index: number, patch: Partial<TemplateQuestion>) {
+    onConfig("questions", c.questions.map((question, questionIndex) => questionIndex === index ? { ...question, ...patch } : question));
+  }
   return <div className="editor-grid">
     <section className="studio-panel">
       <div className="metrics"><div className="metric"><strong>{project.views}</strong><span>פתיחות</span></div><div className="metric"><strong>{project.clicks}</strong><span>לחיצות</span></div><div className="metric"><strong>{profile.plan === "plus" ? "ללא" : "מוצג"}</strong><span>סימן מים</span></div></div>
@@ -148,8 +151,20 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
         <label>שם הנמען/ת<input value={c.recipient} onChange={(e) => onConfig("recipient", e.target.value)} /></label>
         <label className="full">כותרת ראשית<input value={c.headline} onChange={(e) => onConfig("headline", e.target.value)} /></label>
         <label className="full">טקסט מסביר<input value={c.subtitle} onChange={(e) => onConfig("subtitle", e.target.value)} /></label>
-        <label className="full">אפשרויות — שורה לכל אפשרות<textarea value={optionText} onChange={(e) => onConfig("options", e.target.value.split("\n").filter(Boolean).slice(0, 6))} /></label>
-        <label className="full">התשובה שמציגה הצלחה<select value={c.correctOption} onChange={(e) => onConfig("correctOption", e.target.value)}>{c.options.map((option) => <option value={option} key={option}>{option}</option>)}</select></label>
+        <label>טקסט פתיחה<input value={c.introLabel} onChange={(e) => onConfig("introLabel", e.target.value)} /></label>
+        <label>טקסט כפתור ההתחלה<input value={c.startText} onChange={(e) => onConfig("startText", e.target.value)} /></label>
+        <div className="question-editor-list full">
+          {c.questions.map((question, index) => <fieldset className="question-editor" key={index}>
+            <legend><span>{index + 1}</span> שאלה {index + 1}</legend>
+            <label>השאלה<input value={question.prompt} onChange={(e) => updateQuestion(index, { prompt: e.target.value })} /></label>
+            <label>טקסט עזר<input value={question.helper} onChange={(e) => updateQuestion(index, { helper: e.target.value })} /></label>
+            <label>אפשרויות — שורה לכל אפשרות<textarea value={questionOptionText[index]} onChange={(e) => {
+              const options = e.target.value.split("\n").map((value) => value.trim()).filter(Boolean).slice(0, 6);
+              updateQuestion(index, { options, correctOption: options.includes(question.correctOption) ? question.correctOption : "" });
+            }} /></label>
+            <label>תשובה נכונה (אופציונלי)<select value={question.correctOption} onChange={(e) => updateQuestion(index, { correctOption: e.target.value })}><option value="">אין תשובה שגויה</option>{question.options.map((option) => <option value={option} key={option}>{option}</option>)}</select></label>
+          </fieldset>)}
+        </div>
         <label className="full">כותרת הצלחה<input value={c.successTitle} onChange={(e) => onConfig("successTitle", e.target.value)} /></label>
         <label className="full">טקסט הצלחה<textarea value={c.successText} onChange={(e) => onConfig("successText", e.target.value)} /></label>
         <label>מספר וואטסאפ<input value={c.whatsapp} inputMode="numeric" onChange={(e) => onConfig("whatsapp", e.target.value.replace(/\D/g,""))} /></label>
@@ -161,6 +176,9 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
       {project.published && <div className="share-url">{shareUrl}</div>}
       <div className="editor-actions"><button className="button button-outline" onClick={onSave}>{saving ? "שומר…" : "שמירת שינויים"}</button><button className="button button-primary" onClick={onPublish}>{project.published ? "הסרה מהאוויר" : "פרסום העמוד"}</button>{project.published && <a className="button button-outline" href={`/p/${project.slug}`} target="_blank" rel="noreferrer">צפייה ↗</a>}<button className="button button-danger" onClick={onDelete}>מחיקה</button></div>
     </section>
-    <aside className="preview-frame" style={{"--preview-soft":c.accentSoft,"--preview-accent":c.accent} as React.CSSProperties}><div className="preview-card"><div className="big-emoji">{c.emoji}</div><p style={{color:c.accent,fontWeight:800}}>היי {c.recipient}!</p><h2>{c.headline}</h2><p>{c.subtitle}</p>{c.options.slice(0,4).map((option,index)=><div className="preview-option" key={`${option}-${index}`}>{option}</div>)}<button className="preview-action">שליחה</button></div></aside>
+    <aside className={`preview-frame preview-${c.theme}`} style={{"--preview-soft":c.accentSoft,"--preview-accent":c.accent} as React.CSSProperties}>
+      <div className="preview-falling" aria-hidden="true">{c.decorations.slice(0,4).map((item,index)=><span key={index} style={{left:`${12 + index * 24}%`,animationDelay:`-${index * 1.1}s`}}>{item}</span>)}</div>
+      <div className="preview-card preview-card-designed"><span className="preview-mini-label">{c.introLabel}</span><div className="big-emoji">{c.emoji}</div><p style={{color:c.accent,fontWeight:800}}>היי {c.recipient}!</p><h2>{c.headline}</h2><p>{c.subtitle}</p><div className="preview-progress"><i /><i /><i /></div><button className="preview-action">{c.startText}</button></div>
+    </aside>
   </div>;
 }

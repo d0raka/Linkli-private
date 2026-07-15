@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ensureDatabase } from "@/db";
 import { projectFromRow } from "@/lib/projects";
+import { isAdminEmail } from "@/lib/auth";
 import PublishedExperience from "./published-experience";
 import { validSlug } from "@/lib/security";
 
@@ -31,5 +32,5 @@ export default async function PublishedPage({ params }: Props) {
   const row = await getPublishedProject(slug);
   if (!row) notFound();
   const project = projectFromRow(row);
-  return <PublishedExperience slug={slug} config={project.config} showWatermark={row.owner_plan !== "plus"} />;
+  return <PublishedExperience slug={slug} config={project.config} showWatermark={row.owner_plan !== "plus" && !isAdminEmail(String(row.owner_email))} />;
 }

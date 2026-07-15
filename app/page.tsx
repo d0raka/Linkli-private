@@ -5,7 +5,7 @@ export default function LandingPage() {
   return (
     <main className="landing-shell" id="main-content">
       <nav className="topbar wrap">
-        <Link href="/" className="brand"><span>li</span>Link</Link>
+        <Link href="/" className="brand">Link<span>li</span></Link>
         <div className="nav-links">
           <a href="#templates">תבניות</a>
           <a href="#pricing">מחירים</a>
@@ -18,7 +18,7 @@ export default function LandingPage() {
         <div className="hero-copy">
           <div className="eyebrow"><span className="live-dot" /> חדש: תבניות אינטראקטיביות בעברית</div>
           <h1>הופכים רעיון קטן<br />ללינק ש<span className="marker">מרגיש גדול.</span></h1>
-          <p>יוצרים הזמנה, הפתעה, חידון או ברכה אישית — ושולחים עמוד יפה שעובד מיד. בלי לדעת לבנות אתרים.</p>
+          <p>יוצרים הזמנה, הפתעה, חידון או ברכה אישית עם כמה שאלות, אנימציות ורגע חשיפה — ושולחים חוויה שעובדת מיד.</p>
           <div className="hero-actions">
             <Link className="button button-primary" href="/register">יצירת עמוד בחינם <span>←</span></Link>
             <a className="text-link" href="#templates">לצפייה בתבניות</a>
@@ -30,18 +30,20 @@ export default function LandingPage() {
         </div>
 
         <div className="hero-stage" aria-label="תצוגה מקדימה של עמוד Linkli">
+          <div className="hero-emoji-rain" aria-hidden="true"><i>💕</i><i>✨</i><i>🌸</i><i>💗</i></div>
           <div className="spark spark-one">✦</div><div className="spark spark-two">✦</div>
           <div className="phone-card">
             <div className="phone-top"><span /><span /><span /></div>
             <div className="phone-content">
               <div className="floating-emoji">💘</div>
-              <p className="mini-greeting">היי שירה!</p>
-              <h2>מה בא לך לעשות?</h2>
-              <p>בחרי תשובה אחת 👇</p>
-              <div className="mini-option active">לצאת איתי לדייט 💕 <b>●</b></div>
-              <div className="mini-option">להעמיד פנים שלא ראיתי <b>○</b></div>
-              <div className="mini-option">להפתיע אותי <b>○</b></div>
-              <div className="mini-button">שליחה</div>
+              <p className="mini-greeting">שאלה 2 מתוך 3</p>
+              <div className="mini-progress"><i /><i /><i /></div>
+              <h2>מתי הכי כיף לך לצאת?</h2>
+              <p>כדי שאדע מתי להתחיל לתכנן</p>
+              <div className="mini-option active">חמישי בערב <b>✓</b></div>
+              <div className="mini-option">שישי בצהריים <b>○</b></div>
+              <div className="mini-option">תפתיע אותי <b>○</b></div>
+              <div className="mini-button">לשאלה הבאה ←</div>
             </div>
           </div>
           <div className="stat-bubble stat-views"><strong>1,248</strong><span>פתיחות 👀</span></div>
@@ -59,7 +61,7 @@ export default function LandingPage() {
           {templates.map((template, index) => (
             <Link href={`/register?returnTo=${encodeURIComponent(`/studio?template=${template.id}`)}`} className={`template-showcase template-tone-${index + 1}`} key={template.id}>
               <div className="template-art"><span>{template.emoji}</span><i>{template.category}</i></div>
-              <div className="template-info"><h3>{template.name}</h3><p>{template.description}</p><b>{template.free ? "בחינם" : "Plus"} <span>←</span></b></div>
+              <div className="template-info"><h3>{template.name}</h3><p>{template.description}</p><small>3 שאלות · אנימציות · תוצאה אישית</small><b>{template.free ? "בחינם" : "Plus"} <span>←</span></b></div>
             </Link>
           ))}
         </div>
@@ -70,7 +72,7 @@ export default function LandingPage() {
           <div className="center-heading"><span className="kicker">פשוט. ממש פשוט.</span><h2>שלושה צעדים ויש לכם לינק</h2></div>
           <div className="steps-grid">
             <article><span>01</span><div>🧩</div><h3>בוחרים תבנית</h3><p>מתחילים מהסגנון שמתאים לרגע שלכם.</p></article>
-            <article><span>02</span><div>✍️</div><h3>הופכים אותה לשלכם</h3><p>מעדכנים טקסטים, צבעים והפעולה הרצויה.</p></article>
+            <article><span>02</span><div>✍️</div><h3>הופכים אותה לשלכם</h3><p>מעדכנים שלוש שאלות, תשובות, צבעים והפעולה הרצויה.</p></article>
             <article><span>03</span><div>🚀</div><h3>מפרסמים ומשתפים</h3><p>מקבלים לינק נקי שמוכן לוואטסאפ ולרשתות.</p></article>
           </div>
         </div>
@@ -86,7 +88,7 @@ export default function LandingPage() {
 
       <section className="final-cta wrap"><span>✦</span><h2>הרעיון כבר אצלכם.<br />בואו נהפוך אותו ללינק.</h2><p>העמוד הראשון שלכם יכול להיות באוויר בעוד כמה דקות.</p><Link href="/register" className="button button-light">יצירת עמוד בחינם ←</Link></section>
 
-      <footer className="footer wrap"><Link href="/" className="brand"><span>li</span>Link</Link><p>עמודים קטנים לרגעים גדולים.</p><div><a href="#pricing">מחירים</a><Link href="/login">כניסה</Link><Link href="/register">הרשמה</Link><Link href="/accessibility">נגישות</Link><Link href="/security">אבטחה</Link><Link href="/privacy">פרטיות</Link><Link href="/terms">תנאי שימוש</Link><Link href="/refunds">ביטולים והחזרים</Link><Link href="/contact">יצירת קשר</Link></div></footer>
+      <footer className="footer wrap"><Link href="/" className="brand">Link<span>li</span></Link><p>עמודים קטנים לרגעים גדולים.</p><div><a href="#pricing">מחירים</a><Link href="/login">כניסה</Link><Link href="/register">הרשמה</Link><Link href="/accessibility">נגישות</Link><Link href="/security">אבטחה</Link><Link href="/privacy">פרטיות</Link><Link href="/terms">תנאי שימוש</Link><Link href="/refunds">ביטולים והחזרים</Link><Link href="/contact">יצירת קשר</Link></div></footer>
     </main>
   );
 }
