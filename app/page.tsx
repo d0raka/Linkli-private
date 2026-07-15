@@ -9,7 +9,8 @@ export default function LandingPage() {
         <div className="nav-links">
           <a href="#templates">תבניות</a>
           <a href="#pricing">מחירים</a>
-          <Link className="button button-small button-dark" href="/studio">מתחילים ליצור</Link>
+          <Link href="/login">כניסה</Link>
+          <Link className="button button-small button-dark" href="/register">הרשמה חינם</Link>
         </div>
       </nav>
 
@@ -19,7 +20,7 @@ export default function LandingPage() {
           <h1>הופכים רעיון קטן<br />ללינק ש<span className="marker">מרגיש גדול.</span></h1>
           <p>יוצרים הזמנה, הפתעה, חידון או ברכה אישית — ושולחים עמוד יפה שעובד מיד. בלי לדעת לבנות אתרים.</p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/studio">יצירת עמוד בחינם <span>←</span></Link>
+            <Link className="button button-primary" href="/register">יצירת עמוד בחינם <span>←</span></Link>
             <a className="text-link" href="#templates">לצפייה בתבניות</a>
           </div>
           <div className="trust-row">
@@ -56,7 +57,7 @@ export default function LandingPage() {
         <div className="section-heading"><div><span className="kicker">מתחילים מתבנית</span><h2>משהו לכל רגע</h2></div><p>כל תבנית מגיעה מוכנה. נשאר רק להפוך אותה לשלכם.</p></div>
         <div className="template-grid landing-templates">
           {templates.map((template, index) => (
-            <Link href={`/studio?template=${template.id}`} className={`template-showcase template-tone-${index + 1}`} key={template.id}>
+            <Link href={`/register?returnTo=${encodeURIComponent(`/studio?template=${template.id}`)}`} className={`template-showcase template-tone-${index + 1}`} key={template.id}>
               <div className="template-art"><span>{template.emoji}</span><i>{template.category}</i></div>
               <div className="template-info"><h3>{template.name}</h3><p>{template.description}</p><b>{template.free ? "בחינם" : "Plus"} <span>←</span></b></div>
             </Link>
@@ -78,14 +79,14 @@ export default function LandingPage() {
       <section className="section wrap" id="pricing">
         <div className="center-heading"><span className="kicker">מחיר קטן. אפקט גדול.</span><h2>בוחרים את הקצב שלכם</h2><p>מתחילים חינם ומשדרגים רק כשרוצים יותר.</p></div>
         <div className="pricing-grid">
-          <article className="price-card"><div><span className="plan-label">חינם</span><h3>₪0 <small>/ לתמיד</small></h3><p>כדי לנסות, לשתף ולהתחיל ליצור.</p></div><ul><li>✓ עמוד אחד מפורסם</li><li>✓ 3 תבניות בסיס</li><li>✓ התאמת טקסטים וצבעים</li><li>✓ סטטיסטיקת פתיחות</li><li className="muted">— כולל סימן Linkli</li></ul><Link href="/studio" className="button button-outline">מתחילים בחינם</Link></article>
+          <article className="price-card"><div><span className="plan-label">חינם</span><h3>₪0 <small>/ לתמיד</small></h3><p>כדי לנסות, לשתף ולהתחיל ליצור.</p></div><ul><li>✓ עמוד אחד מפורסם</li><li>✓ 3 תבניות בסיס</li><li>✓ התאמת טקסטים וצבעים</li><li>✓ סטטיסטיקת פתיחות</li><li className="muted">— כולל סימן Linkli</li></ul><Link href="/register" className="button button-outline">מתחילים בחינם</Link></article>
           <article className="price-card featured"><div className="popular">הכי משתלם</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>ליוצרים שרוצים שהלינק יהיה באמת שלהם.</p></div><ul><li>✓ עד 10 עמודים מפורסמים</li><li>✓ כל התבניות, כולל חדשות</li><li>✓ בלי סימן מים</li><li>✓ נתוני פתיחות ולחיצות</li><li>✓ צבעים ומיתוג מלאים</li></ul><Link href="/checkout" className="button button-primary">מתחילים עם Plus <span>←</span></Link><div className="payment-mini">💳 אשראי · <b>PayPal</b> · <b>bit</b></div></article>
         </div>
       </section>
 
-      <section className="final-cta wrap"><span>✦</span><h2>הרעיון כבר אצלכם.<br />בואו נהפוך אותו ללינק.</h2><p>העמוד הראשון שלכם יכול להיות באוויר בעוד כמה דקות.</p><Link href="/studio" className="button button-light">יצירת עמוד בחינם ←</Link></section>
+      <section className="final-cta wrap"><span>✦</span><h2>הרעיון כבר אצלכם.<br />בואו נהפוך אותו ללינק.</h2><p>העמוד הראשון שלכם יכול להיות באוויר בעוד כמה דקות.</p><Link href="/register" className="button button-light">יצירת עמוד בחינם ←</Link></section>
 
-      <footer className="footer wrap"><Link href="/" className="brand"><span>li</span>Link</Link><p>עמודים קטנים לרגעים גדולים.</p><div><a href="#pricing">מחירים</a><Link href="/studio">כניסה לסטודיו</Link><Link href="/accessibility">נגישות</Link><Link href="/security">אבטחה</Link><Link href="/privacy">פרטיות</Link><Link href="/terms">תנאי שימוש</Link><Link href="/refunds">ביטולים והחזרים</Link><Link href="/contact">יצירת קשר</Link></div></footer>
+      <footer className="footer wrap"><Link href="/" className="brand"><span>li</span>Link</Link><p>עמודים קטנים לרגעים גדולים.</p><div><a href="#pricing">מחירים</a><Link href="/login">כניסה</Link><Link href="/register">הרשמה</Link><Link href="/accessibility">נגישות</Link><Link href="/security">אבטחה</Link><Link href="/privacy">פרטיות</Link><Link href="/terms">תנאי שימוש</Link><Link href="/refunds">ביטולים והחזרים</Link><Link href="/contact">יצירת קשר</Link></div></footer>
     </main>
   );
 }

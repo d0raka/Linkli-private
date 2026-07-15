@@ -8,9 +8,9 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "object-src 'none'",
   "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
-  "font-src 'self' data:",
+  "font-src 'self' data: https://fonts.gstatic.com",
   "connect-src 'self'",
   "manifest-src 'self'",
 ].join("; ");
@@ -28,7 +28,7 @@ function secureResponse(response: Response, request: Request) {
     headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
   const pathname = new URL(request.url).pathname;
-  if (pathname.startsWith("/api/") || pathname.startsWith("/studio") || pathname.startsWith("/checkout") || pathname.startsWith("/payment/")) {
+  if (pathname.startsWith("/api/") || pathname.startsWith("/studio") || pathname.startsWith("/checkout") || pathname.startsWith("/payment/") || pathname === "/login" || pathname === "/register") {
     headers.set("Cache-Control", "private, no-store, max-age=0");
   }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });

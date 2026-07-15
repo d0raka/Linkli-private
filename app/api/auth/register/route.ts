@@ -1,0 +1,36 @@
+import { NextResponse } from "next/server";
+import { createSession, hashPassword, safeReturnTo, serializeSessionCookie, validatePassword } from "@/lib/auth";
+import { ensureDatabase } from "@/db";
+import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, requireSameOrigin } from "@/lib/security";
+
+export async function POST(request: Request) {
+  try {
+    requireSameOrigin(request);
+    const body = await readJsonObject(request, 8_192);
+    if (typeof body.company === "string" && body.company) return NextResponse.json({ ok: true, redirectTo: "/studio" });
+    const email = normalizeEmail(body.email);
+    const displayName = typeof body.displayName === "string" ? body.displayName.trim().replace(/\s+/g, " ").slice(0, 80) : "";
+    const password = typeof body.password === "string" ? body.password : "";
+    if (!email || displayName.length < 2) return NextResponse.json({ error: "יש להזין שם וכתובת דוא״ל תקינה" }, { status: 400 });
+    if (body.acceptTerms !== true) return NextResponse.json({ error: "יש לאשר את תנאי השימוש ומדיניות הפרטיות" }, { status: 400 });
+    const passwordError = validatePassword(password, email);
+    if (passwordError) return NextResponse.json({ error: passwordError }, { status: 400 });
+
+    const db = await ensureDatabase();
+    await enforceRateLimit(db, request, "auth-register", 5, 3_600, email);
+    const passwordRecord = await hashPassword(password);
+    await db.prepare("INSERT OR IGNORE INTO users (email, display_name) VALUES (?, ?)").bind(email, displayName).run();
+    const inserted = await db.prepare(
+      "INSERT OR IGNORE INTO auth_credentials (email, password_hash, password_salt, password_iterations) VALUES (?, ?, ?, ?)",
+    ).bind(email, passwordRecord.hash, passwordRecord.salt, passwordRecord.iterations).run();
+    if (!inserted.meta?.changes) return NextResponse.json({ error: "כבר קיים חשבון עם כתובת הדוא״ל הזו. אפשר להתחבר במקום." }, { status: 409 });
+    await db.prepare("UPDATE users SET display_name = ?, updated_at = CURRENT_TIMESTAMP WHERE email = ?").bind(displayName, email).run();
+
+    const token = await createSession(email);
+    const response = NextResponse.json({ ok: true, redirectTo: safeReturnTo(body.returnTo) }, { status: 201 });
+    response.headers.set("Set-Cookie", serializeSessionCookie(token));
+    return response;
+  } catch (error) {
+    return errorResponse(error);
+  }
+}

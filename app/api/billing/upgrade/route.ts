@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProductUser } from "@/app/chatgpt-auth";
+import { getProductUser } from "@/lib/auth";
 import { ensureDatabase, runtimeValue } from "@/db";
 import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, safeHostedCheckoutUrl } from "@/lib/security";
 

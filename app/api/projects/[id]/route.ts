@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProductUser } from "@/app/chatgpt-auth";
+import { getProductUser } from "@/lib/auth";
 import { ensureDatabase } from "@/db";
 import { projectFromRow } from "@/lib/projects";
 import { safeConfig } from "@/lib/templates";
