@@ -14,8 +14,8 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: base,
     title,
     description,
-    openGraph: { title, description, type: "website", images: [{ url: "/og.png", width: 1731, height: 909, alt: "Linkli" }] },
-    twitter: { card: "summary_large_image", title, description, images: ["/og.png"] },
+    openGraph: { title, description, type: "website", images: [{ url: "/og-v2.png", width: 1536, height: 1024, alt: "Linkli — חוויות אינטראקטיביות בכמה צעדים" }] },
+    twitter: { card: "summary_large_image", title, description, images: ["/og-v2.png"] },
   };
 }
 
