@@ -62,14 +62,12 @@ export default async function LandingPage() {
       <section className="section wrap" id="templates">
         <div className="section-heading"><div><span className="kicker">מתחילים מתבנית</span><h2>משהו לכל רגע</h2></div><p>כל תבנית מגיעה מוכנה. נשאר רק להפוך אותה לשלכם.</p></div>
         <div className="template-grid landing-templates">
-          {templates.map((template, index) => {
-            const previewPath = `/preview/${template.id}`;
-            const whatsappShare = `https://wa.me/?text=${encodeURIComponent(`כדאי לראות את תבנית ${template.name} של Linkli: https://linkli.online${previewPath}`)}`;
-            return <article className={`template-showcase template-tone-${index + 1}`} key={template.id}>
-              <Link href={previewPath} className="template-art" aria-label={`תצוגה מקדימה של ${template.name}`}><span>{template.emoji}</span><i>{template.category}</i><b>תצוגה חיה</b></Link>
-              <div className="template-info"><h3>{template.name}</h3><p>{template.description}</p><small>3 שאלות · אנימציות · תוצאה אישית</small><div className="template-actions"><Link href={previewPath} className="template-preview-link">תצוגה מקדימה</Link><Link href={user ? `/studio/create?template=${template.id}` : `/register?returnTo=${encodeURIComponent(`/studio/create?template=${template.id}`)}`} className="template-use-link">{template.free ? "בחירה בחינם" : "בחירת Plus"} <span>←</span></Link><a href={whatsappShare} target="_blank" rel="noopener noreferrer" className="template-whatsapp-link" aria-label={`שיתוף התצוגה של ${template.name} ב־WhatsApp`}>שיתוף התצוגה ב־WhatsApp</a></div></div>
-            </article>;
-          })}
+          {templates.map((template, index) => (
+            <article className={`template-showcase template-tone-${index + 1}`} key={template.id}>
+              <Link href={`/preview/${template.id}`} className="template-art" aria-label={`תצוגה מקדימה של ${template.name}`}><span>{template.emoji}</span><i>{template.category}</i><b>תצוגה חיה</b></Link>
+              <div className="template-info"><h3>{template.name}</h3><p>{template.description}</p><small>3 שאלות · אנימציות · תוצאה אישית</small><div className="template-actions"><Link href={`/preview/${template.id}`} className="template-preview-link">תצוגה מקדימה</Link><Link href={user ? `/studio/create?template=${template.id}` : `/register?returnTo=${encodeURIComponent(`/studio/create?template=${template.id}`)}`} className="template-use-link">{template.free ? "בחירה בחינם" : "בחירת Plus"} <span>←</span></Link></div></div>
+            </article>
+          ))}
         </div>
       </section>
 

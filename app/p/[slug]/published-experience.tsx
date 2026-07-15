@@ -6,6 +6,16 @@ import type { TemplateConfig } from "@/lib/templates";
 
 type Screen = "intro" | "question" | "result";
 
+function whatsappSafeText(value: string) {
+  return value.normalize("NFC")
+    .replace(/[\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}]/gu, "")
+    .replace(/[\u200d\ufe0f\u20e3]/g, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ +\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export default function PublishedExperience({ slug, config, showWatermark, trackAnalytics = true, previewMode = false }: { slug: string; config: TemplateConfig; showWatermark: boolean; trackAnalytics?: boolean; previewMode?: boolean }) {
   const [screen, setScreen] = useState<Screen>("intro");
   const [step, setStep] = useState(0);
@@ -32,8 +42,8 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   const scoredQuestions = config.questions.filter((question) => question.correctOption);
   const score = config.questions.reduce((total, question, index) => total + (question.correctOption && answers[index] === question.correctOption ? 1 : 0), 0);
   const answerSummary = config.questions.map((question, index) => `• ${question.prompt}: ${answers[index]}`).join("\n");
-  const whatsappMessage = `${config.whatsappText}\n\n${answerSummary}`.slice(0, 1800);
-  const whatsappUrl = `https://wa.me/${config.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappMessage = whatsappSafeText(`${config.whatsappText}\n\n${answerSummary}`).slice(0, 1800);
+  const whatsappUrl = `https://wa.me/${config.whatsapp || ""}?text=${encodeURIComponent(whatsappMessage)}`;
   const question = config.questions[step];
 
   function start() {
@@ -104,7 +114,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         <h2>{config.successTitle}</h2>
         <p className="experience-copy">{config.successText}</p>
         <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{answers[index]}</b></p></div>)}</div>
-        {config.whatsapp ? <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="experience-primary experience-whatsapp" onClick={trackClick}><span aria-hidden="true">◉</span>{config.buttonText}</a> : null}
+        {config.whatsapp || previewMode ? <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="experience-primary experience-whatsapp" onClick={trackClick}><span aria-hidden="true">◉</span>{previewMode ? "שיתוף התוצאה ב־WhatsApp" : config.buttonText}</a> : null}
         <button onClick={restart} className="experience-restart">התחלה מחדש</button>
       </div> : null}
     </section>
