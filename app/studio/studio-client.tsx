@@ -94,12 +94,18 @@ export default function StudioClient({ initialName }: { initialName: string }) {
     return true;
   }
 
-  async function removeProject() {
-    if (!selected || !window.confirm("למחוק את העמוד? לא ניתן לבטל את הפעולה.")) return;
-    const response = await fetch(`/api/projects/${selected.id}`, { method: "DELETE" });
-    if (!response.ok) return flash("לא הצלחנו למחוק את העמוד.", true);
-    const remaining = projects.filter((item) => item.id !== selected.id);
-    setProjects(remaining); setSelectedId(remaining[0]?.id ?? null); setMode("dashboard"); flash("העמוד נמחק בהצלחה.");
+  async function removeProject(project: ProjectRecord | null = selected) {
+    if (!project || !window.confirm(`למחוק את ״${project.title}״?\n\nהעמוד וכל הנתונים שלו יימחקו לצמיתות ולא ניתן יהיה לבטל את הפעולה.`)) return;
+    const response = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return flash(data.error || "לא הצלחנו למחוק את העמוד.", true);
+    const remaining = projects.filter((item) => item.id !== project.id);
+    setProjects(remaining);
+    if (selectedId === project.id) {
+      setSelectedId(remaining[0]?.id ?? null);
+      setMode("dashboard");
+    }
+    flash("העמוד נמחק בהצלחה.");
   }
 
   async function upgrade() {
@@ -140,7 +146,7 @@ export default function StudioClient({ initialName }: { initialName: string }) {
         <Editor key={selected.id} project={selected} profile={profile} saving={saving} onProject={updateSelected} onConfig={updateConfig} onSave={saveProject} onPublish={togglePublish} onPassword={updatePagePassword} onDelete={removeProject} />
       ) : (
         <div className="studio-layout">
-          <aside className="studio-panel project-sidebar"><h2>העמודים שלי</h2><div className="project-list">{projects.length ? projects.map((project) => <button key={project.id} className={`project-item ${selectedId === project.id ? "active" : ""}`} onClick={() => setSelectedId(project.id)}><b>{project.title}</b><span>{project.published ? "🟢 פורסם" : "טיוטה"} · /p/{project.slug}</span></button>) : <div className="empty-projects">עדיין לא יצרת עמודים.<br />אפשר להתחיל מבחירת תבנית ✨</div>}</div></aside>
+          <aside className="studio-panel project-sidebar"><h2>העמודים שלי</h2><div className="project-list">{projects.length ? projects.map((project) => <div className="project-list-row" key={project.id}><button className={`project-item ${selectedId === project.id ? "active" : ""}`} onClick={() => setSelectedId(project.id)}><b>{project.title}</b><span>{project.published ? "🟢 פורסם" : "טיוטה"} · /p/{project.slug}</span></button><button className="project-quick-delete" onClick={() => removeProject(project)} aria-label={`מחיקת העמוד ${project.title}`} title="מחיקת העמוד">🗑️</button></div>) : <div className="empty-projects">עדיין לא יצרת עמודים.<br />אפשר להתחיל מבחירת תבנית ✨</div>}</div></aside>
           <section>
             <div className="metrics"><div className="metric"><strong>{publishedCount}</strong><span>עמודים שפורסמו</span></div><div className="metric"><strong>{totalViews}</strong><span>צפיות</span></div><div className="metric"><strong>{totalClicks}</strong><span>לחיצות על הפעולה</span></div></div>
             <div className="studio-panel">{selected ? <><h2>{selected.title}</h2><p style={{color:"var(--muted)",fontSize:13}}>תבנית: {templates.find((item) => item.id === selected.templateId)?.name} · עודכן לאחרונה {new Date(selected.updatedAt).toLocaleDateString("he-IL")}</p><div className="editor-actions"><button className="button button-primary" onClick={() => setMode("editor")}>עריכת העמוד</button>{selected.published && <a className="button button-outline" href={`/p/${selected.slug}`} target="_blank" rel="noreferrer">פתיחת העמוד ↗</a>}</div></> : <><h2>העמוד הראשון מחכה לך</h2><p style={{color:"var(--muted)"}}>בוחרים תבנית ומקבלים עמוד מוכן לעריכה ולשיתוף.</p><button className="button button-primary" onClick={() => setMode("templates")}>בחירת תבנית</button></>}</div>

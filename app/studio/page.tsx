@@ -10,7 +10,7 @@ export default async function StudioPage() {
   return (
     <main className="studio-body" id="main-content">
       <header className="studio-header">
-        <Link href="/" className="brand">Link<span>li</span></Link>
+        <Link href="/studio" className="brand">Link<span>li</span></Link>
         <div className="studio-user">
           {user.isAdmin ? <Link href="/admin" className="admin-link">ניהול</Link> : null}
           <Link href="/account" className="account-link">הגדרות</Link>

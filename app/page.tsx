@@ -1,16 +1,21 @@
 import Link from "next/link";
+import { getProductUser } from "@/lib/auth";
 import { templates } from "@/lib/templates";
 
-export default function LandingPage() {
+export const dynamic = "force-dynamic";
+
+export default async function LandingPage() {
+  const user = await getProductUser();
+  const homeHref = user ? "/studio" : "/";
+  const startHref = user ? "/studio" : "/register";
   return (
     <main className="landing-shell" id="main-content">
       <nav className="topbar wrap">
-        <Link href="/" className="brand">Link<span>li</span></Link>
+        <Link href={homeHref} className="brand">Link<span>li</span></Link>
         <div className="nav-links">
           <a href="#templates">תבניות</a>
           <a href="#pricing">מחירים</a>
-          <Link href="/login">כניסה</Link>
-          <Link className="button button-small button-dark" href="/register">הרשמה חינם</Link>
+          {user ? <><Link href="/account" className="landing-user-link"><span className="landing-user-dot" />{user.displayName}</Link><Link className="button button-small button-dark" href="/studio">לסטודיו שלי</Link></> : <><Link href="/login">כניסה</Link><Link className="button button-small button-dark" href="/register">הרשמה חינם</Link></>}
         </div>
       </nav>
 
@@ -20,7 +25,7 @@ export default function LandingPage() {
           <h1>הופכים רעיון קטן<br />לקישור ש<span className="marker">מרגיש כמו חוויה.</span></h1>
           <p>יוצרים הזמנה, הפתעה, חידון או ברכה אישית עם שאלות, אנימציות ומסך סיום מעוצב — ומשתפים עמוד שעובד מצוין בכל מכשיר.</p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/register">יצירת עמוד בחינם <span>←</span></Link>
+            <Link className="button button-primary" href={startHref}>{user ? "מעבר לסטודיו" : "יצירת עמוד בחינם"} <span>←</span></Link>
             <a className="text-link" href="#templates">לצפייה בתבניות</a>
           </div>
           <div className="trust-row">
@@ -59,7 +64,7 @@ export default function LandingPage() {
         <div className="section-heading"><div><span className="kicker">מתחילים מתבנית</span><h2>משהו לכל רגע</h2></div><p>כל תבנית מגיעה מוכנה. נשאר רק להפוך אותה לשלכם.</p></div>
         <div className="template-grid landing-templates">
           {templates.map((template, index) => (
-            <Link href={`/register?returnTo=${encodeURIComponent(`/studio?template=${template.id}`)}`} className={`template-showcase template-tone-${index + 1}`} key={template.id}>
+            <Link href={user ? `/studio?template=${template.id}` : `/register?returnTo=${encodeURIComponent(`/studio?template=${template.id}`)}`} className={`template-showcase template-tone-${index + 1}`} key={template.id}>
               <div className="template-art"><span>{template.emoji}</span><i>{template.category}</i></div>
               <div className="template-info"><h3>{template.name}</h3><p>{template.description}</p><small>3 שאלות · אנימציות · תוצאה אישית</small><b>{template.free ? "בחינם" : "Plus"} <span>←</span></b></div>
             </Link>
@@ -81,14 +86,14 @@ export default function LandingPage() {
       <section className="section wrap" id="pricing">
         <div className="center-heading"><span className="kicker">מחיר קטן. אפקט גדול.</span><h2>בוחרים את המסלול שמתאים לכם</h2><p>מתחילים בחינם ומשדרגים כשצריכים יותר.</p></div>
         <div className="pricing-grid">
-          <article className="price-card"><div><span className="plan-label">חינם</span><h3>₪0 <small>/ ללא הגבלת זמן</small></h3><p>כדי להתנסות, ליצור ולשתף עמוד ראשון.</p></div><ul><li>✓ עמוד אחד שפורסם</li><li>✓ 3 תבניות בסיסיות</li><li>✓ התאמת טקסטים וצבעים</li><li>✓ נתוני צפייה</li><li className="muted">— כולל מיתוג Linkli</li></ul><Link href="/register" className="button button-outline">מתחילים בחינם</Link></article>
+          <article className="price-card"><div><span className="plan-label">חינם</span><h3>₪0 <small>/ ללא הגבלת זמן</small></h3><p>כדי להתנסות, ליצור ולשתף עמוד ראשון.</p></div><ul><li>✓ עמוד אחד שפורסם</li><li>✓ 3 תבניות בסיסיות</li><li>✓ התאמת טקסטים וצבעים</li><li>✓ נתוני צפייה</li><li className="muted">— כולל מיתוג Linkli</li></ul><Link href={startHref} className="button button-outline">{user ? "לסטודיו שלי" : "מתחילים בחינם"}</Link></article>
           <article className="price-card featured"><div className="popular">הכי משתלם</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>ליוצרים שרוצים עמודים ללא מיתוג Linkli.</p></div><ul><li>✓ עד 10 עמודים שפורסמו</li><li>✓ כל התבניות, כולל תבניות חדשות</li><li>✓ ללא סימן מים</li><li>✓ נתוני צפייה ולחיצות</li><li>✓ התאמת צבעים מלאה</li></ul><Link href="/checkout" className="button button-primary">מתחילים עם Plus <span>←</span></Link><div className="payment-mini">💳 אשראי · <b>PayPal</b> · <b>bit</b></div></article>
         </div>
       </section>
 
-      <section className="final-cta wrap"><span>✦</span><h2>הרעיון כבר אצלכם.<br />בואו נהפוך אותו לעמוד שאפשר לשתף.</h2><p>העמוד הראשון שלכם יכול להיות מוכן בתוך כמה דקות.</p><Link href="/register" className="button button-light">יצירת עמוד בחינם ←</Link></section>
+      <section className="final-cta wrap"><span>✦</span><h2>הרעיון כבר אצלכם.<br />בואו נהפוך אותו לעמוד שאפשר לשתף.</h2><p>העמוד הראשון שלכם יכול להיות מוכן בתוך כמה דקות.</p><Link href={startHref} className="button button-light">{user ? "חזרה לסטודיו" : "יצירת עמוד בחינם"} ←</Link></section>
 
-      <footer className="footer wrap"><Link href="/" className="brand">Link<span>li</span></Link><p>עמודים קטנים לרגעים גדולים.</p><div><a href="#pricing">מחירים</a><Link href="/login">כניסה</Link><Link href="/register">הרשמה</Link><Link href="/accessibility">נגישות</Link><Link href="/security">אבטחה</Link><Link href="/privacy">פרטיות</Link><Link href="/terms">תנאי שימוש</Link><Link href="/refunds">ביטולים והחזרים</Link><Link href="/contact">יצירת קשר</Link></div></footer>
+      <footer className="footer wrap"><Link href={homeHref} className="brand">Link<span>li</span></Link><p>עמודים קטנים לרגעים גדולים.</p><div><a href="#pricing">מחירים</a>{user ? <><Link href="/studio">הסטודיו שלי</Link><Link href="/account">החשבון שלי</Link></> : <><Link href="/login">כניסה</Link><Link href="/register">הרשמה</Link></>}<Link href="/accessibility">נגישות</Link><Link href="/security">אבטחה</Link><Link href="/privacy">פרטיות</Link><Link href="/terms">תנאי שימוש</Link><Link href="/refunds">ביטולים והחזרים</Link><Link href="/contact">יצירת קשר</Link></div></footer>
     </main>
   );
 }

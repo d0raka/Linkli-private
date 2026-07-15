@@ -42,7 +42,7 @@ export default async function AdminPage() {
   return (
     <main className="admin-shell" id="main-content">
       <header className="admin-header">
-        <Link href="/" className="brand">Link<span>li</span></Link>
+        <Link href="/studio" className="brand">Link<span>li</span></Link>
         <nav aria-label="ניווט מנהל">
           <Link href="/studio">הסטודיו שלי</Link>
           <span className="admin-owner-badge">OWNER</span>
