@@ -12,6 +12,7 @@ export default async function StudioPage() {
       <header className="studio-header">
         <Link href="/" className="brand"><span>li</span>Link</Link>
         <div className="studio-user">
+          {user.isAdmin ? <Link href="/admin" className="admin-link">ניהול</Link> : null}
           <span className="plan-pill">{user.plan === "plus" ? "PLUS" : "FREE"}</span>
           <div><b>{user.displayName}</b><span>{user.email}</span></div>
           <div className="user-avatar">{user.displayName.slice(0, 1)}</div>

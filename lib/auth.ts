@@ -12,7 +12,15 @@ export type ProductUser = {
   email: string;
   displayName: string;
   plan: "free" | "plus";
+  isAdmin: boolean;
 };
+
+const DEVELOPMENT_ADMIN_EMAIL = "dor.aka.inbox@gmail.com";
+
+export function isAdminEmail(email: string) {
+  const configured = runtimeValue("ADMIN_EMAILS") || (process.env.NODE_ENV === "development" ? DEVELOPMENT_ADMIN_EMAIL : "");
+  return configured.split(",").map((value) => value.trim().toLowerCase()).filter(Boolean).includes(email.trim().toLowerCase());
+}
 
 const commonPasswords = new Set([
   "passwordpassword", "password123456", "123456789012345", "qwertyuiop12345",
@@ -76,7 +84,7 @@ export function safeReturnTo(value: unknown, fallback = "/studio") {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return fallback;
   try {
     const url = new URL(value, "https://linkli.local");
-    if (!["/studio", "/checkout"].includes(url.pathname)) return fallback;
+    if (!["/studio", "/checkout", "/admin"].includes(url.pathname)) return fallback;
     return `${url.pathname}${url.search}`;
   } catch {
     return fallback;
@@ -121,15 +129,18 @@ export async function getProductUser(): Promise<ProductUser | null> {
   const now = Math.floor(Date.now() / 1000);
   const db = await ensureDatabase();
   const row = await db.prepare(
-    `SELECT users.email, users.display_name, users.plan
+    `SELECT users.email, users.display_name, users.plan, COALESCE(user_controls.status, 'active') AS account_status
      FROM sessions JOIN users ON users.email = sessions.user_email
+     LEFT JOIN user_controls ON user_controls.email = users.email
      WHERE sessions.id = ? AND sessions.expires_at > ?`,
   ).bind(id, now).first();
-  if (!row) return null;
+  if (!row || row.account_status === "suspended") return null;
+  const admin = isAdminEmail(String(row.email));
   return {
     email: String(row.email),
     displayName: String(row.display_name),
-    plan: row.plan === "plus" ? "plus" : "free",
+    plan: row.plan === "plus" || admin ? "plus" : "free",
+    isAdmin: admin,
   };
 }
 
@@ -144,4 +155,16 @@ export async function requireProductUser(returnTo = "/studio") {
   const user = await getProductUser();
   if (user) return user;
   redirect(`/login?returnTo=${encodeURIComponent(safeReturnTo(returnTo))}`);
+}
+
+export async function getAdminUser() {
+  const user = await getProductUser();
+  return user?.isAdmin ? user : null;
+}
+
+export async function requireAdminUser() {
+  const user = await getProductUser();
+  if (!user) redirect(`/login?returnTo=${encodeURIComponent("/admin")}`);
+  if (!user.isAdmin) redirect("/studio");
+  return user;
 }

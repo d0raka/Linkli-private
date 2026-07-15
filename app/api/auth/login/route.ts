@@ -24,6 +24,10 @@ export async function POST(request: Request) {
     if (!(await verifyPassword(password, credential))) {
       return NextResponse.json({ error: "כתובת הדוא״ל או הסיסמה שגויות" }, { status: 401 });
     }
+    const control = await db.prepare("SELECT status FROM user_controls WHERE email = ?").bind(email).first();
+    if (control?.status === "suspended") {
+      return NextResponse.json({ error: "החשבון אינו פעיל. אפשר לפנות לתמיכה." }, { status: 403 });
+    }
     stage = "session";
     const token = await createSession(email);
     const response = NextResponse.json({ ok: true, redirectTo: safeReturnTo(body.returnTo) });

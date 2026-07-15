@@ -28,7 +28,7 @@ function secureResponse(response: Response, request: Request) {
     headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
   const pathname = new URL(request.url).pathname;
-  if (pathname.startsWith("/api/") || pathname.startsWith("/studio") || pathname.startsWith("/checkout") || pathname.startsWith("/payment/") || pathname === "/login" || pathname === "/register") {
+  if (pathname.startsWith("/api/") || pathname.startsWith("/studio") || pathname.startsWith("/admin") || pathname.startsWith("/checkout") || pathname.startsWith("/payment/") || pathname === "/login" || pathname === "/register") {
     headers.set("Cache-Control", "private, no-store, max-age=0");
   }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
