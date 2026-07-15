@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureDatabase } from "@/db";
 import { isApiResponse, requireAdminApiUser, writeAdminAudit } from "@/lib/admin";
+import { isAdminEmail } from "@/lib/auth";
 import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, RequestError, requireSameOrigin } from "@/lib/security";
 
 type Context = { params: Promise<{ email: string }> };
@@ -42,6 +43,58 @@ export async function PATCH(request: Request, context: Context) {
     }
 
     throw new RequestError(400, "פעולה לא תקינה");
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function DELETE(request: Request, context: Context) {
+  try {
+    requireSameOrigin(request);
+    const admin = await requireAdminApiUser();
+    if (isApiResponse(admin)) return admin;
+    const email = normalizeEmail((await context.params).email);
+    if (!email) throw new RequestError(404, "המשתמש לא נמצא");
+    if (isAdminEmail(email)) throw new RequestError(400, "אי אפשר למחוק חשבון מנהל.");
+    const body = await readJsonObject(request, 1_024);
+    if (normalizeEmail(body.confirmation) !== email) {
+      throw new RequestError(400, "כתובת הדוא״ל לאימות המחיקה אינה תואמת.");
+    }
+
+    const db = await ensureDatabase();
+    await enforceRateLimit(db, request, "admin-user-delete", 10, 900, admin.email);
+    const target = await db.prepare(
+      `SELECT users.email, users.plan,
+        COUNT(projects.id) AS project_count,
+        COALESCE(SUM(CASE WHEN projects.published = 1 THEN 1 ELSE 0 END), 0) AS published_count
+       FROM users LEFT JOIN projects ON projects.owner_email = users.email
+       WHERE users.email = ? GROUP BY users.email, users.plan`,
+    ).bind(email).first();
+    if (!target) throw new RequestError(404, "המשתמש לא נמצא");
+
+    await db.batch([
+      db.prepare("DELETE FROM auth_tokens WHERE user_email = ?").bind(email),
+      db.prepare("DELETE FROM email_verifications WHERE user_email = ?").bind(email),
+      db.prepare("DELETE FROM sessions WHERE user_email = ?").bind(email),
+      db.prepare("DELETE FROM auth_credentials WHERE email = ?").bind(email),
+      db.prepare("DELETE FROM user_controls WHERE email = ?").bind(email),
+      db.prepare("DELETE FROM projects WHERE owner_email = ?").bind(email),
+      db.prepare("DELETE FROM users WHERE email = ?").bind(email),
+    ]);
+    await writeAdminAudit(admin.email, "user.deleted", "user", email, {
+      plan: target.plan,
+      projectCount: Number(target.project_count || 0),
+      publishedCount: Number(target.published_count || 0),
+    });
+    return NextResponse.json({
+      ok: true,
+      deleted: {
+        email,
+        plan: target.plan,
+        projectCount: Number(target.project_count || 0),
+        publishedCount: Number(target.published_count || 0),
+      },
+    });
   } catch (error) {
     return errorResponse(error);
   }
