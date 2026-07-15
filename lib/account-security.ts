@@ -18,7 +18,8 @@ export async function issueAuthToken(email: string, purpose: AuthTokenPurpose, l
 }
 
 export function actionUrl(request: Request, path: string, token: string) {
-  const url = new URL(path, new URL(request.url).origin);
+  const trustedOrigin = process.env.NODE_ENV === "development" ? new URL(request.url).origin : "https://linkli.online";
+  const url = new URL(path, trustedOrigin);
   url.searchParams.set("token", token);
   return url.toString();
 }

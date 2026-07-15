@@ -62,12 +62,14 @@ export default async function LandingPage() {
       <section className="section wrap" id="templates">
         <div className="section-heading"><div><span className="kicker">מתחילים מתבנית</span><h2>משהו לכל רגע</h2></div><p>כל תבנית מגיעה מוכנה. נשאר רק להפוך אותה לשלכם.</p></div>
         <div className="template-grid landing-templates">
-          {templates.map((template, index) => (
-            <article className={`template-showcase template-tone-${index + 1}`} key={template.id}>
-              <Link href={`/preview/${template.id}`} className="template-art" aria-label={`תצוגה מקדימה של ${template.name}`}><span>{template.emoji}</span><i>{template.category}</i><b>תצוגה חיה</b></Link>
-              <div className="template-info"><h3>{template.name}</h3><p>{template.description}</p><small>3 שאלות · אנימציות · תוצאה אישית</small><div className="template-actions"><Link href={`/preview/${template.id}`} className="template-preview-link">תצוגה מקדימה</Link><Link href={user ? `/studio/create?template=${template.id}` : `/register?returnTo=${encodeURIComponent(`/studio/create?template=${template.id}`)}`} className="template-use-link">{template.free ? "בחירה בחינם" : "בחירת Plus"} <span>←</span></Link></div></div>
-            </article>
-          ))}
+          {templates.map((template, index) => {
+            const previewPath = `/preview/${template.id}`;
+            const whatsappShare = `https://wa.me/?text=${encodeURIComponent(`כדאי לראות את תבנית ${template.name} של Linkli: https://linkli.online${previewPath}`)}`;
+            return <article className={`template-showcase template-tone-${index + 1}`} key={template.id}>
+              <Link href={previewPath} className="template-art" aria-label={`תצוגה מקדימה של ${template.name}`}><span>{template.emoji}</span><i>{template.category}</i><b>תצוגה חיה</b></Link>
+              <div className="template-info"><h3>{template.name}</h3><p>{template.description}</p><small>3 שאלות · אנימציות · תוצאה אישית</small><div className="template-actions"><Link href={previewPath} className="template-preview-link">תצוגה מקדימה</Link><Link href={user ? `/studio/create?template=${template.id}` : `/register?returnTo=${encodeURIComponent(`/studio/create?template=${template.id}`)}`} className="template-use-link">{template.free ? "בחירה בחינם" : "בחירת Plus"} <span>←</span></Link><a href={whatsappShare} target="_blank" rel="noopener noreferrer" className="template-whatsapp-link" aria-label={`שיתוף התצוגה של ${template.name} ב־WhatsApp`}>שיתוף התצוגה ב־WhatsApp</a></div></div>
+            </article>;
+          })}
         </div>
       </section>
 
@@ -92,7 +94,7 @@ export default async function LandingPage() {
 
       <section className="final-cta wrap"><span>✦</span><h2>הרעיון כבר אצלכם.<br />בואו נהפוך אותו לעמוד שאפשר לשתף.</h2><p>העמוד הראשון שלכם יכול להיות מוכן בתוך כמה דקות.</p><Link href={startHref} className="button button-light">{user ? "חזרה לסטודיו" : "יצירת עמוד בחינם"} ←</Link></section>
 
-      <footer className="footer wrap"><Link href={homeHref} className="brand">Link<span>li</span></Link><p>עמודים קטנים לרגעים גדולים.</p><div><a href="#pricing">מחירים</a>{user ? <><Link href="/studio">הסטודיו שלי</Link><Link href="/account">החשבון שלי</Link></> : <><Link href="/login">כניסה</Link><Link href="/register">הרשמה</Link></>}<Link href="/accessibility">נגישות</Link><Link href="/security">אבטחה</Link><Link href="/privacy">פרטיות</Link><Link href="/terms">תנאי שימוש</Link><Link href="/refunds">ביטולים והחזרים</Link><Link href="/contact">יצירת קשר</Link></div></footer>
+      <footer className="footer wrap"><Link href={homeHref} className="brand">Link<span>li</span></Link><p>עמודים קטנים לרגעים גדולים.</p><div><Link href="/legal">תנאים ופרטיות</Link><Link href="/accessibility">נגישות</Link><Link href="/contact">יצירת קשר</Link></div></footer>
     </main>
   );
 }

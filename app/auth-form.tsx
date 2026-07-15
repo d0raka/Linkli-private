@@ -33,7 +33,7 @@ export default function AuthForm({ mode, returnTo }: { mode: "login" | "register
     {mode === "register" && <>
       <p className="password-help">לפחות 15 תווים. מומלץ לבחור משפט שקל לך לזכור וקשה לאחרים לנחש.</p>
       <label className="auth-honeypot" aria-hidden="true">חברה<input name="company" tabIndex={-1} autoComplete="off" /></label>
-      <label className="auth-consent"><input name="acceptTerms" type="checkbox" required /><span>קראתי ואני מאשר/ת את <Link href="/terms">תנאי השימוש</Link> ואת <Link href="/privacy">מדיניות הפרטיות</Link>.</span></label>
+      <label className="auth-consent"><input name="acceptTerms" type="checkbox" required /><span>קראתי ואני מאשר/ת את <Link href="/legal#terms">תנאי השימוש</Link> ואת <Link href="/legal#privacy">מדיניות הפרטיות</Link>.</span></label>
     </>}
     {mode === "login" && <div className="auth-recovery-link"><Link href="/forgot-password">שכחת את הסיסמה?</Link></div>}
     {error && <div className="auth-error" role="alert">{error}</div>}

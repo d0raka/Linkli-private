@@ -21,7 +21,7 @@ export async function POST(request: Request, context: Context) {
     const valid = await verifyPassword(password, { password_hash: project.access_password_hash });
     if (!valid) throw new RequestError(401, "הסיסמה אינה נכונה. נסו שוב.");
     const response = NextResponse.json({ ok: true });
-    response.headers.set("Set-Cookie", await serializePageAccessCookie(slug));
+    response.headers.set("Set-Cookie", await serializePageAccessCookie(slug, String(project.access_password_hash)));
     return response;
   } catch (error) {
     return errorResponse(error);

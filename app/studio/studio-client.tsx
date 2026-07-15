@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { templates, type TemplateConfig, type TemplateQuestion } from "@/lib/templates";
 import type { ProjectRecord } from "@/lib/projects";
 
@@ -15,7 +15,9 @@ export default function StudioClient({ initialName, initialMode = "dashboard" }:
   const [mode, setMode] = useState<"dashboard" | "templates" | "editor">(initialMode);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creatingTemplateId, setCreatingTemplateId] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
+  const creationInFlight = useRef(false);
 
   const selected = projects.find((project) => project.id === selectedId) ?? null;
 
@@ -39,13 +41,24 @@ export default function StudioClient({ initialName, initialMode = "dashboard" }:
   }
 
   async function createProject(templateId: string) {
-    const response = await fetch("/api/projects", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ templateId }) });
-    const data = await response.json();
-    if (!response.ok) { flash(data.error || "לא הצלחנו ליצור את העמוד", true); return; }
-    setProjects((items) => [data.project, ...items]);
-    setSelectedId(data.project.id);
-    setMode("editor");
-    flash("העמוד נוצר. עכשיו אפשר להתאים אותו בדיוק למה שצריך ✨");
+    if (creationInFlight.current) return;
+    creationInFlight.current = true;
+    setCreatingTemplateId(templateId);
+    const requestId = crypto.randomUUID();
+    try {
+      const response = await fetch("/api/projects", { method: "POST", headers: { "content-type": "application/json", "idempotency-key": requestId }, body: JSON.stringify({ templateId }) });
+      const data = await response.json();
+      if (!response.ok) { flash(data.error || "לא הצלחנו ליצור את העמוד", true); return; }
+      setProjects((items) => [data.project, ...items.filter((item) => item.id !== data.project.id)]);
+      setSelectedId(data.project.id);
+      setMode("editor");
+      flash("העמוד נוצר. עכשיו אפשר להתאים אותו בדיוק למה שצריך ✨");
+    } catch {
+      flash("החיבור התעכב ולא הצלחנו ליצור את העמוד. נסו שוב.", true);
+    } finally {
+      creationInFlight.current = false;
+      setCreatingTemplateId(null);
+    }
   }
 
   function updateSelected(patch: Partial<ProjectRecord>) {
@@ -132,8 +145,9 @@ export default function StudioClient({ initialName, initialMode = "dashboard" }:
           <div className="template-picker">
             {templates.map((template) => {
               const locked = !template.free && profile.plan !== "plus";
-              return <button className={`template-choice template-choice-${template.config.theme} ${locked ? "locked" : ""}`} key={template.id} onClick={() => locked ? upgrade() : createProject(template.id)}>
-                {locked && <span className="lock-label">PLUS</span>}<span className="template-step-label">3 שלבים</span><span className="emoji">{template.emoji}</span><h3>{template.name}</h3><p>{template.description}</p><span className="template-choice-action">שימוש בתבנית ←</span>
+              const creating = creatingTemplateId === template.id;
+              return <button className={`template-choice template-choice-${template.config.theme} ${locked ? "locked" : ""}`} key={template.id} disabled={creatingTemplateId !== null} aria-busy={creating} onClick={() => locked ? upgrade() : createProject(template.id)}>
+                {locked && <span className="lock-label">PLUS</span>}<span className="template-step-label">3 שלבים</span><span className="emoji">{template.emoji}</span><h3>{template.name}</h3><p>{template.description}</p><span className="template-choice-action">{creating ? "יוצרים את העמוד…" : "שימוש בתבנית ←"}</span>
               </button>;
             })}
           </div>
@@ -305,13 +319,13 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
         </div>
 
         {section === "opening" && <div className="form-section editor-stage-fields">
-          <label>שם העמוד <small>לשימוש שלך בלבד</small><input value={project.title} placeholder="לדוגמה: אישור הגעה לחתונה" onChange={(event) => onProject({ title: event.target.value })} /></label>
-          <label>שם הנמען או הקבוצה<input value={c.recipient} placeholder="לדוגמה: משפחת לוי" onChange={(event) => onConfig("recipient", event.target.value)} /></label>
-          <label>תווית עליונה<input value={c.introLabel} placeholder="לדוגמה: הזמנה אישית" onChange={(event) => onConfig("introLabel", event.target.value)} /></label>
-          <label>כיתוב כפתור ההתחלה<input value={c.startText} placeholder="לדוגמה: מתחילים" onChange={(event) => onConfig("startText", event.target.value)} /></label>
-          <label className="full">כותרת ראשית<input value={c.headline} placeholder="הכותרת שתופיע בראש העמוד" onChange={(event) => onConfig("headline", event.target.value)} /></label>
-          <label className="full">תיאור קצר<textarea value={c.subtitle} placeholder="הסבר קצר שמכין את המבקרים לתהליך" onChange={(event) => onConfig("subtitle", event.target.value)} /></label>
-          <fieldset className="highlight-editor full"><legend>פרטים מרכזיים <small>עד שתי שורות</small></legend><div className="highlight-list">{c.highlights.map((highlight, index) => <div className="highlight-row" key={index}><input value={highlight} aria-label={`פרט מרכזי ${index + 1}`} placeholder={index === 0 ? "לדוגמה: 18.09.2026 · 19:30" : "לדוגמה: חוות רונית, השרון"} onChange={(event) => updateHighlight(index, event.target.value)} /><button type="button" onClick={() => removeHighlight(index)} aria-label={`מחיקת פרט מרכזי ${index + 1}`}>×</button></div>)}</div><button type="button" className="highlight-add" disabled={c.highlights.length >= 2} onClick={addHighlight}>+ הוספת שורה</button></fieldset>
+          <label>שם העמוד <small>לשימוש שלך בלבד</small><input value={project.title} maxLength={80} placeholder="לדוגמה: אישור הגעה לחתונה" onChange={(event) => onProject({ title: event.target.value })} /></label>
+          <label>שם הנמען או הקבוצה<input value={c.recipient} maxLength={80} placeholder="לדוגמה: משפחת לוי" onChange={(event) => onConfig("recipient", event.target.value)} /></label>
+          <label>תווית עליונה<input value={c.introLabel} maxLength={80} placeholder="לדוגמה: הזמנה אישית" onChange={(event) => onConfig("introLabel", event.target.value)} /></label>
+          <label>כיתוב כפתור ההתחלה<input value={c.startText} maxLength={80} placeholder="לדוגמה: מתחילים" onChange={(event) => onConfig("startText", event.target.value)} /></label>
+          <label className="full">כותרת ראשית<input value={c.headline} maxLength={120} placeholder="הכותרת שתופיע בראש העמוד" onChange={(event) => onConfig("headline", event.target.value)} /></label>
+          <label className="full">תיאור קצר<textarea value={c.subtitle} maxLength={320} placeholder="הסבר קצר שמכין את המבקרים לתהליך" onChange={(event) => onConfig("subtitle", event.target.value)} /></label>
+          <fieldset className="highlight-editor full"><legend>פרטים מרכזיים <small>עד שתי שורות</small></legend><div className="highlight-list">{c.highlights.map((highlight, index) => <div className="highlight-row" key={index}><input value={highlight} maxLength={80} aria-label={`פרט מרכזי ${index + 1}`} placeholder={index === 0 ? "לדוגמה: 18.09.2026 · 19:30" : "לדוגמה: חוות רונית, השרון"} onChange={(event) => updateHighlight(index, event.target.value)} /><button type="button" onClick={() => removeHighlight(index)} aria-label={`מחיקת פרט מרכזי ${index + 1}`}>×</button></div>)}</div><button type="button" className="highlight-add" disabled={c.highlights.length >= 2} onClick={addHighlight}>+ הוספת שורה</button></fieldset>
         </div>}
 
         {section === "questions" && activeQuestion && <div className="questions-stage">
@@ -322,8 +336,8 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
           <fieldset className="question-editor question-editor-focused">
             <legend><span>{questionIndex + 1}</span> עריכת שאלה {questionIndex + 1}</legend>
             <button type="button" className="remove-question-button" disabled={c.questions.length === 1} onClick={() => removeQuestion(questionIndex)}>מחיקת השאלה</button>
-            <label>נוסח השאלה<input value={activeQuestion.prompt} placeholder="כתבו שאלה קצרה וברורה" onChange={(event) => updateQuestion(questionIndex, { prompt: event.target.value })} /></label>
-            <label>הסבר קצר<input value={activeQuestion.helper} placeholder="מידע שיעזור לבחור תשובה" onChange={(event) => updateQuestion(questionIndex, { helper: event.target.value })} /></label>
+            <label>נוסח השאלה<input value={activeQuestion.prompt} maxLength={140} placeholder="כתבו שאלה קצרה וברורה" onChange={(event) => updateQuestion(questionIndex, { prompt: event.target.value })} /></label>
+            <label>הסבר קצר<input value={activeQuestion.helper} maxLength={240} placeholder="מידע שיעזור לבחור תשובה" onChange={(event) => updateQuestion(questionIndex, { helper: event.target.value })} /></label>
             <div className="option-editor"><div><b>אפשרויות תשובה</b><small>כל אפשרות נשמרת בשורה נפרדת.</small></div>{activeQuestion.options.map((option, index) => <div className="option-editor-row" key={index}><span>{index + 1}</span><input value={option} aria-label={`אפשרות ${index + 1}`} maxLength={120} onChange={(event) => updateQuestionOption(questionIndex, index, event.target.value)} /><button type="button" aria-label={`מחיקת אפשרות ${index + 1}`} disabled={activeQuestion.options.length <= 2} onClick={() => removeQuestionOption(questionIndex, index)}>×</button></div>)}<button type="button" className="add-option-button" disabled={activeQuestion.options.length >= 6} onClick={() => addQuestionOption(questionIndex)}>+ הוספת אפשרות</button></div>
             <label>תשובה נכונה <small>רשות - לחידונים עם ניקוד</small><select value={activeQuestion.correctOption} onChange={(event) => updateQuestion(questionIndex, { correctOption: event.target.value })}><option value="">ללא ניקוד</option>{activeQuestion.options.map((option) => <option value={option} key={option}>{option}</option>)}</select></label>
           </fieldset>
@@ -331,14 +345,14 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
         </div>}
 
         {section === "completion" && <div className="form-section editor-stage-fields">
-          <label>תווית מסך הסיום<input value={c.resultLabel} placeholder="לדוגמה: הפרטים נקלטו" onChange={(event) => onConfig("resultLabel", event.target.value)} /></label>
-          <label>כיתוב כפתור סיום השאלות<input value={c.finalButtonText} placeholder="לדוגמה: להצגת הסיכום" onChange={(event) => onConfig("finalButtonText", event.target.value)} /></label>
-          <label className="full">כותרת מסך הסיום<input value={c.successTitle} placeholder="כותרת שמאשרת שהתהליך הושלם" onChange={(event) => onConfig("successTitle", event.target.value)} /></label>
-          <label className="full">הודעת הסיום<textarea value={c.successText} placeholder="הודעת תודה, ברכה או הסבר על השלב הבא" onChange={(event) => onConfig("successText", event.target.value)} /></label>
+          <label>תווית מסך הסיום<input value={c.resultLabel} maxLength={80} placeholder="לדוגמה: הפרטים נקלטו" onChange={(event) => onConfig("resultLabel", event.target.value)} /></label>
+          <label>כיתוב כפתור סיום השאלות<input value={c.finalButtonText} maxLength={80} placeholder="לדוגמה: להצגת הסיכום" onChange={(event) => onConfig("finalButtonText", event.target.value)} /></label>
+          <label className="full">כותרת מסך הסיום<input value={c.successTitle} maxLength={140} placeholder="כותרת שמאשרת שהתהליך הושלם" onChange={(event) => onConfig("successTitle", event.target.value)} /></label>
+          <label className="full">הודעת הסיום<textarea value={c.successText} maxLength={700} placeholder="הודעת תודה, ברכה או הסבר על השלב הבא" onChange={(event) => onConfig("successText", event.target.value)} /></label>
           <div className="field-divider full"><b>כפתור WhatsApp</b><span>אפשר להשאיר את המספר ריק ולחבר אותו בהמשך.</span></div>
-          <label>מספר כולל קידומת המדינה<input value={c.whatsapp} placeholder="972501234567" inputMode="numeric" dir="ltr" onChange={(event) => onConfig("whatsapp", event.target.value.replace(/\D/g, ""))} /></label>
-          <label>כיתוב הכפתור<input value={c.buttonText} placeholder="לדוגמה: שליחת האישור" onChange={(event) => onConfig("buttonText", event.target.value)} /></label>
-          <label className="full">הודעה מוכנה לשליחה<textarea value={c.whatsappText} placeholder="הטקסט שיופיע לפני סיכום התשובות" onChange={(event) => onConfig("whatsappText", event.target.value)} /></label>
+          <label>מספר כולל קידומת המדינה<input value={c.whatsapp} maxLength={15} placeholder="972501234567" inputMode="numeric" dir="ltr" onChange={(event) => onConfig("whatsapp", event.target.value.replace(/\D/g, ""))} /></label>
+          <label>כיתוב הכפתור<input value={c.buttonText} maxLength={80} placeholder="לדוגמה: שליחת האישור" onChange={(event) => onConfig("buttonText", event.target.value)} /></label>
+          <label className="full">הודעה מוכנה לשליחה<textarea value={c.whatsappText} maxLength={500} placeholder="הטקסט שיופיע לפני סיכום התשובות" onChange={(event) => onConfig("whatsappText", event.target.value)} /></label>
         </div>}
 
         {section === "design" && <div className="design-stage">

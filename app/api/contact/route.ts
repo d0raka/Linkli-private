@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureDatabase } from "@/db";
 import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, requireSameOrigin } from "@/lib/security";
+import { plainText } from "@/lib/text";
 
 const allowedTopics = new Set(["general", "billing", "accessibility", "privacy", "technical"]);
 
@@ -9,10 +10,10 @@ export async function POST(request: Request) {
     requireSameOrigin(request);
     const body = await readJsonObject(request, 8_192);
     if (typeof body.company === "string" && body.company) return NextResponse.json({ ok: true });
-    const name = typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
+    const name = plainText(body.name, 80, true);
     const email = normalizeEmail(body.email);
     const topic = typeof body.topic === "string" && allowedTopics.has(body.topic) ? body.topic : "general";
-    const message = typeof body.message === "string" ? body.message.trim().slice(0, 3000) : "";
+    const message = plainText(body.message, 3000);
     let pageUrl = "";
     if (typeof body.pageUrl === "string" && body.pageUrl.trim()) {
       try {

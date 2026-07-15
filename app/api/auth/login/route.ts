@@ -15,7 +15,8 @@ export async function POST(request: Request) {
     }
     stage = "database";
     const db = await ensureDatabase();
-    await enforceRateLimit(db, request, "auth-login", 5, 900, email);
+    await enforceRateLimit(db, request, "auth-login-account", 8, 900, email, "subject");
+    await enforceRateLimit(db, request, "auth-login-ip", 30, 900, undefined, "ip");
     stage = "credential";
     const credential = await db.prepare(
       "SELECT password_hash, password_salt, password_iterations FROM auth_credentials WHERE email = ?",

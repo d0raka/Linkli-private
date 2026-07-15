@@ -4,6 +4,7 @@ import { ensureDatabase } from "@/db";
 import { projectFromRow } from "@/lib/projects";
 import { safeConfig } from "@/lib/templates";
 import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, validUuid } from "@/lib/security";
+import { plainText } from "@/lib/text";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -20,7 +21,8 @@ export async function PATCH(request: Request, context: Context) {
     const current = await db.prepare("SELECT * FROM projects WHERE id = ? AND owner_email = ?").bind(id, user.email).first();
     if (!current) return NextResponse.json({ error: "העמוד לא נמצא" }, { status: 404 });
     const body = await readJsonObject(request, 16_384);
-    const title = typeof body.title === "string" && body.title.trim() ? body.title.trim().slice(0, 80) : current.title;
+    const requestedTitle = plainText(body.title, 80, true);
+    const title = requestedTitle || current.title;
     const config = safeConfig(body.config, String(current.template_id));
     await db.prepare("UPDATE projects SET title = ?, config_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND owner_email = ?")
       .bind(title, JSON.stringify(config), id, user.email).run();

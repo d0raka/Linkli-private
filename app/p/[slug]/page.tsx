@@ -34,7 +34,7 @@ export default async function PublishedPage({ params }: Props) {
   const row = await getPublishedProject(slug);
   if (!row) notFound();
   const project = projectFromRow(row);
-  if (row.access_password_hash && !(await hasPageAccess(slug))) {
+  if (row.access_password_hash && !(await hasPageAccess(slug, String(row.access_password_hash)))) {
     return <PasswordGate slug={slug} title={project.config.headline} emoji={project.config.emoji} accent={project.config.accent} accentSoft={project.config.accentSoft} />;
   }
   return <PublishedExperience slug={slug} config={project.config} showWatermark={row.owner_plan !== "plus" && !isAdminEmail(String(row.owner_email))} />;

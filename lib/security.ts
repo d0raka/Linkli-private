@@ -18,10 +18,13 @@ export function errorResponse(error: unknown) {
 
 export function requireSameOrigin(request: Request) {
   const fetchSite = request.headers.get("sec-fetch-site");
-  if (fetchSite === "cross-site") throw new RequestError(403, "הבקשה נחסמה מטעמי אבטחה");
+  if (fetchSite === "cross-site" || fetchSite === "same-site") throw new RequestError(403, "הבקשה נחסמה מטעמי אבטחה");
 
   const origin = request.headers.get("origin");
-  if (!origin) return;
+  if (!origin) {
+    if (fetchSite !== "same-origin") throw new RequestError(403, "לא ניתן לאמת את מקור הבקשה");
+    return;
+  }
   let requestOrigin: string;
   try {
     requestOrigin = new URL(request.url).origin;
@@ -79,8 +82,14 @@ export async function enforceRateLimit(
   limit: number,
   windowSeconds: number,
   subject?: string,
+  scope: "both" | "ip" | "subject" = "both",
 ) {
-  const identifier = await sha256(`${bucket}:${subject ? `${subject}:` : ""}${clientIdentifier(request)}`);
+  const source = scope === "ip"
+    ? clientIdentifier(request)
+    : scope === "subject"
+      ? subject || "unknown"
+      : `${subject ? `${subject}:` : ""}${clientIdentifier(request)}`;
+  const identifier = await sha256(`${bucket}:${source}`);
   const key = `${bucket}:${identifier}`;
   const now = Math.floor(Date.now() / 1000);
   const resetAt = now + windowSeconds;

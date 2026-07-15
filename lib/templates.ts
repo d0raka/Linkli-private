@@ -1,3 +1,5 @@
+import { plainText } from "./text";
+
 export type TemplateQuestion = {
   prompt: string;
   helper: string;
@@ -160,14 +162,12 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
   if (!value || typeof value !== "object") return structuredClone(base);
   const input = value as Partial<TemplateConfig>;
   const limitedString = (candidate: unknown, fallback: string, max: number) => {
-    if (typeof candidate !== "string") return fallback;
-    const normalized = candidate.trim().slice(0, max);
+    const normalized = plainText(candidate, max);
     return normalized || fallback;
   };
   const safeOptions = (candidate: unknown, fallback: string[]) => {
     if (!Array.isArray(candidate)) return fallback;
-    const options = candidate.filter((item): item is string => typeof item === "string")
-      .map((item) => item.trim().slice(0, 120)).filter(Boolean).slice(0, 6);
+    const options = candidate.map((item) => plainText(item, 120, true)).filter(Boolean).slice(0, 6);
     return options.length >= 2 ? options : fallback;
   };
   const legacyOptions = safeOptions(input.options, base.questions[0].options);
@@ -199,7 +199,7 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     introLabel: limitedString(input.introLabel, base.introLabel, 80),
     startText: limitedString(input.startText, base.startText, 80),
     highlights: Array.isArray(input.highlights)
-      ? input.highlights.filter((item): item is string => typeof item === "string").map((item) => item.trim().slice(0, 80)).filter(Boolean).slice(0, 2)
+      ? input.highlights.map((item) => plainText(item, 80, true)).filter(Boolean).slice(0, 2)
       : base.highlights,
     questions,
     finalButtonText: limitedString(input.finalButtonText, base.finalButtonText, 80),

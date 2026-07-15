@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ensureDatabase } from "@/db";
 import { deleteCurrentSession, getProductUser, hashPassword, validatePassword, verifyPassword } from "@/lib/auth";
 import { enforceRateLimit, errorResponse, readJsonObject, RequestError, requireSameOrigin } from "@/lib/security";
+import { plainText } from "@/lib/text";
 
 export async function PATCH(request: Request) {
   try {
@@ -15,7 +16,7 @@ export async function PATCH(request: Request) {
     await enforceRateLimit(db, request, "account-update", 12, 900, user.email);
 
     if (action === "profile") {
-      const displayName = typeof body.displayName === "string" ? body.displayName.trim().replace(/\s+/g, " ").slice(0, 80) : "";
+      const displayName = plainText(body.displayName, 80, true);
       if (displayName.length < 2) throw new RequestError(400, "יש להזין שם באורך שני תווים לפחות.");
       await db.prepare("UPDATE users SET display_name = ?, updated_at = CURRENT_TIMESTAMP WHERE email = ?").bind(displayName, user.email).run();
       return NextResponse.json({ ok: true, displayName });

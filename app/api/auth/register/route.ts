@@ -4,6 +4,7 @@ import { ensureDatabase } from "@/db";
 import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, RequestError, requireSameOrigin } from "@/lib/security";
 import { actionUrl, issueAuthToken } from "@/lib/account-security";
 import { emailDeliveryConfigured, sendAuthEmail } from "@/lib/email";
+import { plainText } from "@/lib/text";
 
 export async function POST(request: Request) {
   let stage = "request";
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
     const body = await readJsonObject(request, 8_192);
     if (typeof body.company === "string" && body.company) return NextResponse.json({ ok: true, redirectTo: "/studio" });
     const email = normalizeEmail(body.email);
-    const displayName = typeof body.displayName === "string" ? body.displayName.trim().replace(/\s+/g, " ").slice(0, 80) : "";
+    const displayName = plainText(body.displayName, 80, true);
     const password = typeof body.password === "string" ? body.password : "";
     if (!email || displayName.length < 2) return NextResponse.json({ error: "יש להזין שם וכתובת דוא״ל תקינה" }, { status: 400 });
     if (body.acceptTerms !== true) return NextResponse.json({ error: "יש לאשר את תנאי השימוש ומדיניות הפרטיות" }, { status: 400 });
@@ -21,7 +22,8 @@ export async function POST(request: Request) {
 
     stage = "database";
     const db = await ensureDatabase();
-    await enforceRateLimit(db, request, "auth-register", 5, 3_600, email);
+    await enforceRateLimit(db, request, "auth-register-account", 3, 3_600, email, "subject");
+    await enforceRateLimit(db, request, "auth-register-ip", 10, 3_600, undefined, "ip");
     if (!emailDeliveryConfigured()) {
       return NextResponse.json({ error: "ההרשמה אינה זמינה כרגע כי שירות אימות הדוא״ל אינו מחובר. נסו שוב מאוחר יותר." }, { status: 503 });
     }

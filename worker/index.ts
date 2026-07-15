@@ -23,12 +23,14 @@ function secureResponse(response: Response, request: Request) {
   headers.set("X-Frame-Options", "DENY");
   headers.set("Cross-Origin-Opener-Policy", "same-origin");
   headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  headers.set("Origin-Agent-Cluster", "?1");
+  headers.set("X-Permitted-Cross-Domain-Policies", "none");
   headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()");
   if (new URL(request.url).protocol === "https:") {
     headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
   const pathname = new URL(request.url).pathname;
-  if (pathname.startsWith("/api/") || pathname.startsWith("/studio") || pathname.startsWith("/admin") || pathname.startsWith("/checkout") || pathname.startsWith("/payment/") || pathname === "/login" || pathname === "/register") {
+  if (pathname.startsWith("/api/") || pathname.startsWith("/studio") || pathname.startsWith("/admin") || pathname.startsWith("/account") || pathname.startsWith("/checkout") || pathname.startsWith("/payment/") || pathname === "/login" || pathname === "/register" || pathname === "/verify-email" || pathname === "/forgot-password" || pathname === "/reset-password") {
     headers.set("Cache-Control", "private, no-store, max-age=0");
   }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });

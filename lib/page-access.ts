@@ -12,11 +12,11 @@ function cookieName(slug: string) {
   return `${process.env.NODE_ENV === "development" ? "linkli_page_" : "__Host-linkli_page_"}${slug}`;
 }
 
-async function signature(slug: string, expiresAt: number) {
+async function signature(slug: string, passwordHash: string, expiresAt: number) {
   const secret = accessSecret();
   if (!secret) throw new Error("Page access signing secret is unavailable");
   const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const digest = await crypto.subtle.sign("HMAC", key, encoder.encode(`${slug}.${expiresAt}`));
+  const digest = await crypto.subtle.sign("HMAC", key, encoder.encode(`${slug}.${passwordHash}.${expiresAt}`));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
@@ -29,17 +29,17 @@ function constantTimeEqual(left: string, right: string) {
   return mismatch === 0;
 }
 
-export async function hasPageAccess(slug: string) {
+export async function hasPageAccess(slug: string, passwordHash: string) {
   const value = (await cookies()).get(cookieName(slug))?.value || "";
   const [expiresText, supplied] = value.split(".", 2);
   const expiresAt = Number(expiresText);
   if (!Number.isInteger(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000) || !/^[0-9a-f]{64}$/i.test(supplied || "")) return false;
-  return constantTimeEqual(await signature(slug, expiresAt), supplied.toLowerCase());
+  return constantTimeEqual(await signature(slug, passwordHash, expiresAt), supplied.toLowerCase());
 }
 
-export async function serializePageAccessCookie(slug: string) {
+export async function serializePageAccessCookie(slug: string, passwordHash: string) {
   const expiresAt = Math.floor(Date.now() / 1000) + ACCESS_SECONDS;
-  const value = `${expiresAt}.${await signature(slug, expiresAt)}`;
+  const value = `${expiresAt}.${await signature(slug, passwordHash, expiresAt)}`;
   const secure = process.env.NODE_ENV === "development" ? "" : "; Secure";
   return `${cookieName(slug)}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ACCESS_SECONDS}${secure}`;
 }

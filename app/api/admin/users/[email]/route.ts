@@ -3,6 +3,7 @@ import { ensureDatabase } from "@/db";
 import { isApiResponse, requireAdminApiUser, writeAdminAudit } from "@/lib/admin";
 import { isAdminEmail } from "@/lib/auth";
 import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, RequestError, requireSameOrigin } from "@/lib/security";
+import { plainText } from "@/lib/text";
 
 type Context = { params: Promise<{ email: string }> };
 
@@ -31,7 +32,7 @@ export async function PATCH(request: Request, context: Context) {
     if (action === "suspend" || action === "restore") {
       if (email === admin.email && action === "suspend") throw new RequestError(400, "אי אפשר להשעות את חשבון המנהל שלך");
       const status = action === "suspend" ? "suspended" : "active";
-      const note = typeof body.note === "string" ? body.note.trim().slice(0, 300) : "";
+      const note = plainText(body.note, 300);
       await db.prepare(
         `INSERT INTO user_controls (email, status, note, updated_by) VALUES (?, ?, ?, ?)
          ON CONFLICT(email) DO UPDATE SET status = excluded.status, note = excluded.note,
