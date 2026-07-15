@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { templates, type TemplateConfig, type TemplateQuestion } from "@/lib/templates";
 import type { ProjectRecord } from "@/lib/projects";
@@ -7,15 +8,11 @@ import type { ProjectRecord } from "@/lib/projects";
 type Profile = { email: string; displayName: string; plan: "free" | "plus"; emailVerified: boolean };
 type Notice = { text: string; error?: boolean } | null;
 
-export default function StudioClient({ initialName }: { initialName: string }) {
+export default function StudioClient({ initialName, initialMode = "dashboard" }: { initialName: string; initialMode?: "dashboard" | "templates" }) {
   const [profile, setProfile] = useState<Profile>({ email: "", displayName: initialName, plan: "free", emailVerified: true });
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"dashboard" | "templates" | "editor">(() => {
-    if (typeof window === "undefined") return "dashboard";
-    const query = new URLSearchParams(window.location.search);
-    return query.get("template") || query.get("upgrade") ? "templates" : "dashboard";
-  });
+  const [mode, setMode] = useState<"dashboard" | "templates" | "editor">(initialMode);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
@@ -122,7 +119,7 @@ export default function StudioClient({ initialName }: { initialName: string }) {
     <div className="studio-main">
       <div className="studio-title-row">
         <div><h1>{mode === "editor" ? "עריכת העמוד" : mode === "templates" ? "איזה עמוד ניצור היום?" : `שלום ${profile.displayName} 👋`}</h1><p>{mode === "editor" ? "השינויים מופיעים מיד בתצוגה המקדימה." : "כאן יוצרים, עורכים ומפרסמים את כל העמודים שלך."}</p></div>
-        {mode !== "templates" && <button className="button button-primary" onClick={() => setMode("templates")}>+ עמוד חדש</button>}
+        {mode !== "templates" && <Link className="button button-primary" href="/studio/create">+ עמוד חדש</Link>}
       </div>
       {notice && <div className={`status-message ${notice.error ? "error" : ""}`}>{notice.text}</div>}
 
@@ -140,7 +137,7 @@ export default function StudioClient({ initialName }: { initialName: string }) {
               </button>;
             })}
           </div>
-          <div className="editor-actions"><button className="button button-outline" onClick={() => setMode("dashboard")}>חזרה לעמודים שלי</button></div>
+          <div className="editor-actions"><Link className="button button-outline" href="/studio">חזרה לעמודים שלי</Link></div>
         </section>
       ) : mode === "editor" && selected ? (
         <Editor key={selected.id} project={selected} profile={profile} saving={saving} onProject={updateSelected} onConfig={updateConfig} onSave={saveProject} onPublish={togglePublish} onPassword={updatePagePassword} onDelete={removeProject} />
@@ -149,7 +146,7 @@ export default function StudioClient({ initialName }: { initialName: string }) {
           <aside className="studio-panel project-sidebar"><h2>העמודים שלי</h2><div className="project-list">{projects.length ? projects.map((project) => <div className="project-list-row" key={project.id}><button className={`project-item ${selectedId === project.id ? "active" : ""}`} onClick={() => setSelectedId(project.id)}><b>{project.title}</b><span>{project.published ? "🟢 פורסם" : "טיוטה"} · /p/{project.slug}</span></button><button className="project-quick-delete" onClick={() => removeProject(project)} aria-label={`מחיקת העמוד ${project.title}`} title="מחיקת העמוד">🗑️</button></div>) : <div className="empty-projects">עדיין לא יצרת עמודים.<br />אפשר להתחיל מבחירת תבנית ✨</div>}</div></aside>
           <section>
             <div className="metrics"><div className="metric"><strong>{publishedCount}</strong><span>עמודים שפורסמו</span></div><div className="metric"><strong>{totalViews}</strong><span>צפיות</span></div><div className="metric"><strong>{totalClicks}</strong><span>לחיצות על הפעולה</span></div></div>
-            <div className="studio-panel">{selected ? <><h2>{selected.title}</h2><p style={{color:"var(--muted)",fontSize:13}}>תבנית: {templates.find((item) => item.id === selected.templateId)?.name} · עודכן לאחרונה {new Date(selected.updatedAt).toLocaleDateString("he-IL")}</p><div className="editor-actions"><button className="button button-primary" onClick={() => setMode("editor")}>עריכת העמוד</button>{selected.published && <a className="button button-outline" href={`/p/${selected.slug}`} target="_blank" rel="noreferrer">פתיחת העמוד ↗</a>}</div></> : <><h2>העמוד הראשון מחכה לך</h2><p style={{color:"var(--muted)"}}>בוחרים תבנית ומקבלים עמוד מוכן לעריכה ולשיתוף.</p><button className="button button-primary" onClick={() => setMode("templates")}>בחירת תבנית</button></>}</div>
+            <div className="studio-panel">{selected ? <><h2>{selected.title}</h2><p style={{color:"var(--muted)",fontSize:13}}>תבנית: {templates.find((item) => item.id === selected.templateId)?.name} · עודכן לאחרונה {new Date(selected.updatedAt).toLocaleDateString("he-IL")}</p><div className="editor-actions"><button className="button button-primary" onClick={() => setMode("editor")}>עריכת העמוד</button>{selected.published && <a className="button button-outline" href={`/p/${selected.slug}`} target="_blank" rel="noreferrer">פתיחת העמוד ↗</a>}</div></> : <><h2>העמוד הראשון מחכה לך</h2><p style={{color:"var(--muted)"}}>בוחרים תבנית ומקבלים עמוד מוכן לעריכה ולשיתוף.</p><Link className="button button-primary" href="/studio/create">בחירת תבנית</Link></>}</div>
           </section>
         </div>
       )}
@@ -229,6 +226,19 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
     setPreviewQuestion(nextIndex);
   }
 
+  function updateHighlight(position: number, value: string) {
+    onConfig("highlights", c.highlights.map((highlight, index) => index === position ? value.slice(0, 80) : highlight));
+  }
+
+  function addHighlight() {
+    if (c.highlights.length >= 2) return;
+    onConfig("highlights", [...c.highlights, ""]);
+  }
+
+  function removeHighlight(position: number) {
+    onConfig("highlights", c.highlights.filter((_, index) => index !== position));
+  }
+
   async function savePagePassword() {
     if (await onPassword(passwordDraft)) setPasswordDraft("");
   }
@@ -301,7 +311,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
           <label>כיתוב כפתור ההתחלה<input value={c.startText} placeholder="לדוגמה: מתחילים" onChange={(event) => onConfig("startText", event.target.value)} /></label>
           <label className="full">כותרת ראשית<input value={c.headline} placeholder="הכותרת שתופיע בראש העמוד" onChange={(event) => onConfig("headline", event.target.value)} /></label>
           <label className="full">תיאור קצר<textarea value={c.subtitle} placeholder="הסבר קצר שמכין את המבקרים לתהליך" onChange={(event) => onConfig("subtitle", event.target.value)} /></label>
-          <label className="full">פרטים מרכזיים <small>עד שתי שורות</small><textarea value={c.highlights.join("\n")} placeholder={"לדוגמה:\n18.09.2026 · 19:30\nחוות רונית, השרון"} onChange={(event) => onConfig("highlights", event.target.value.split("\n").map((value) => value.trim()).filter(Boolean).slice(0, 2))} /></label>
+          <fieldset className="highlight-editor full"><legend>פרטים מרכזיים <small>עד שתי שורות</small></legend><div className="highlight-list">{c.highlights.map((highlight, index) => <div className="highlight-row" key={index}><input value={highlight} aria-label={`פרט מרכזי ${index + 1}`} placeholder={index === 0 ? "לדוגמה: 18.09.2026 · 19:30" : "לדוגמה: חוות רונית, השרון"} onChange={(event) => updateHighlight(index, event.target.value)} /><button type="button" onClick={() => removeHighlight(index)} aria-label={`מחיקת פרט מרכזי ${index + 1}`}>×</button></div>)}</div><button type="button" className="highlight-add" disabled={c.highlights.length >= 2} onClick={addHighlight}>+ הוספת שורה</button></fieldset>
         </div>}
 
         {section === "questions" && activeQuestion && <div className="questions-stage">
@@ -367,7 +377,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
 
             {previewScreen === "intro" && <div className="preview-site-screen preview-site-intro">
               <span className="preview-mini-label">{c.introLabel}</span><div className="big-emoji">{c.emoji}</div><p className="preview-greeting">שלום {c.recipient},</p><h2>{c.headline}</h2><p>{c.subtitle}</p>
-              <div className="preview-highlights">{c.highlights.map((highlight, index) => <span key={index}>✓ {highlight}</span>)}</div>
+              <div className="preview-highlights">{c.highlights.filter(Boolean).map((highlight, index) => <span key={index}>✓ {highlight}</span>)}</div>
               <button type="button" className="preview-action" onClick={() => { setPreviewQuestion(0); setPreviewScreen("question"); }}>{c.startText}<span>←</span></button>
             </div>}
 

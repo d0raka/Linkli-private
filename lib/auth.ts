@@ -89,7 +89,7 @@ export function safeReturnTo(value: unknown, fallback = "/studio") {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return fallback;
   try {
     const url = new URL(value, "https://linkli.local");
-    if (!["/studio", "/checkout", "/admin"].includes(url.pathname)) return fallback;
+    if (!["/studio", "/studio/create", "/checkout", "/admin"].includes(url.pathname)) return fallback;
     return `${url.pathname}${url.search}`;
   } catch {
     return fallback;

@@ -199,7 +199,7 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     introLabel: limitedString(input.introLabel, base.introLabel, 80),
     startText: limitedString(input.startText, base.startText, 80),
     highlights: Array.isArray(input.highlights)
-      ? input.highlights.filter((item): item is string => typeof item === "string").map((item) => item.trim().slice(0, 80)).filter(Boolean).slice(0, 2).concat(base.highlights).slice(0, 2)
+      ? input.highlights.filter((item): item is string => typeof item === "string").map((item) => item.trim().slice(0, 80)).filter(Boolean).slice(0, 2)
       : base.highlights,
     questions,
     finalButtonText: limitedString(input.finalButtonText, base.finalButtonText, 80),
