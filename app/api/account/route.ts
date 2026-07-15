@@ -8,6 +8,7 @@ export async function PATCH(request: Request) {
     requireSameOrigin(request);
     const user = await getProductUser();
     if (!user) throw new RequestError(401, "יש להתחבר לחשבון כדי לעדכן את הפרטים.");
+    if (!user.emailVerified) throw new RequestError(403, "יש לאמת את כתובת הדוא״ל לפני עדכון החשבון.");
     const body = await readJsonObject(request, 4_096);
     const action = body.action;
     const db = await ensureDatabase();

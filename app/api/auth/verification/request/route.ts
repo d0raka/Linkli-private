@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProductUser } from "@/lib/auth";
+import { getProductUser, safeReturnTo } from "@/lib/auth";
 import { ensureDatabase } from "@/db";
 import { actionUrl, issueAuthToken } from "@/lib/account-security";
 import { sendAuthEmail } from "@/lib/email";
@@ -8,7 +8,7 @@ import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin } fr
 export async function POST(request: Request) {
   try {
     requireSameOrigin(request);
-    await readJsonObject(request, 1_024);
+    const body = await readJsonObject(request, 1_024);
     const user = await getProductUser();
     if (!user) return NextResponse.json({ error: "יש להתחבר לחשבון כדי לשלוח הודעת אימות." }, { status: 401 });
     if (user.emailVerified) return NextResponse.json({ ok: true, alreadyVerified: true });
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       to: user.email,
       displayName: user.displayName,
       type: "verify_email",
-      actionUrl: actionUrl(request, "/verify-email", token),
+      actionUrl: actionUrl(request, `/verify-email?returnTo=${encodeURIComponent(safeReturnTo(body.returnTo))}`, token),
     });
     if (!delivery.sent) {
       return NextResponse.json({ error: "שירות הודעות הדוא״ל עדיין אינו זמין. אפשר להמשיך לעבוד ולנסות שוב מאוחר יותר." }, { status: 503 });

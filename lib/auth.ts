@@ -162,18 +162,21 @@ export async function deleteCurrentSession() {
 
 export async function requireProductUser(returnTo = "/studio") {
   const user = await getProductUser();
-  if (user) return user;
-  redirect(`/login?returnTo=${encodeURIComponent(safeReturnTo(returnTo))}`);
+  const safeDestination = safeReturnTo(returnTo);
+  if (!user) redirect(`/login?returnTo=${encodeURIComponent(safeDestination)}`);
+  if (!user.emailVerified) redirect(`/verify-email?returnTo=${encodeURIComponent(safeDestination)}`);
+  return user;
 }
 
 export async function getAdminUser() {
   const user = await getProductUser();
-  return user?.isAdmin ? user : null;
+  return user?.isAdmin && user.emailVerified ? user : null;
 }
 
 export async function requireAdminUser() {
   const user = await getProductUser();
   if (!user) redirect(`/login?returnTo=${encodeURIComponent("/admin")}`);
+  if (!user.emailVerified) redirect(`/verify-email?returnTo=${encodeURIComponent("/admin")}`);
   if (!user.isAdmin) redirect("/studio");
   return user;
 }

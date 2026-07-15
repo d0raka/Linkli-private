@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const user = await getProductUser();
   if (!user) return NextResponse.json({ error: "נדרשת התחברות" }, { status: 401 });
+  if (!user.emailVerified) return NextResponse.json({ error: "יש לאמת את כתובת הדוא״ל לפני הכניסה לסטודיו." }, { status: 403 });
   const db = await ensureDatabase();
   const results = await db.prepare("SELECT * FROM projects WHERE owner_email = ? ORDER BY updated_at DESC").bind(user.email).all();
   return NextResponse.json({ profile: { email: user.email, displayName: user.displayName, plan: user.plan, emailVerified: user.emailVerified }, projects: results.results.map(projectFromRow) });
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
     requireSameOrigin(request);
     const user = await getProductUser();
     if (!user) return NextResponse.json({ error: "נדרשת התחברות" }, { status: 401 });
+    if (!user.emailVerified) return NextResponse.json({ error: "יש לאמת את כתובת הדוא״ל לפני יצירת עמוד." }, { status: 403 });
     const body = await readJsonObject(request, 2_048);
     const requestedTemplate = typeof body.templateId === "string" ? body.templateId : "date";
     const template = getTemplate(requestedTemplate);

@@ -3,7 +3,7 @@ import { createSession, hashPassword, safeReturnTo, serializeSessionCookie, vali
 import { ensureDatabase } from "@/db";
 import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, RequestError, requireSameOrigin } from "@/lib/security";
 import { actionUrl, issueAuthToken } from "@/lib/account-security";
-import { sendAuthEmail } from "@/lib/email";
+import { emailDeliveryConfigured, sendAuthEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   let stage = "request";
@@ -22,6 +22,9 @@ export async function POST(request: Request) {
     stage = "database";
     const db = await ensureDatabase();
     await enforceRateLimit(db, request, "auth-register", 5, 3_600, email);
+    if (!emailDeliveryConfigured()) {
+      return NextResponse.json({ error: "ההרשמה אינה זמינה כרגע כי שירות אימות הדוא״ל אינו מחובר. נסו שוב מאוחר יותר." }, { status: 503 });
+    }
     stage = "password";
     const passwordRecord = await hashPassword(password);
     stage = "account";
@@ -34,18 +37,18 @@ export async function POST(request: Request) {
     await db.prepare("INSERT OR REPLACE INTO email_verifications (user_email, verified_at, updated_at) VALUES (?, NULL, CURRENT_TIMESTAMP)").bind(email).run();
 
     stage = "verification";
+    const returnTo = safeReturnTo(body.returnTo);
     const verificationToken = await issueAuthToken(email, "verify_email", 86_400);
     const delivery = await sendAuthEmail({
       to: email,
       displayName,
       type: "verify_email",
-      actionUrl: actionUrl(request, "/verify-email", verificationToken),
+      actionUrl: actionUrl(request, `/verify-email?returnTo=${encodeURIComponent(returnTo)}`, verificationToken),
     });
 
     stage = "session";
     const token = await createSession(email);
-    const returnTo = safeReturnTo(body.returnTo);
-    const redirectTo = `/verify-email?${delivery.sent ? "sent=1" : "delivery=unavailable"}&returnTo=${encodeURIComponent(returnTo)}`;
+    const redirectTo = `/verify-email?${delivery.sent ? "sent=1" : "delivery=failed"}&returnTo=${encodeURIComponent(returnTo)}`;
     const response = NextResponse.json({ ok: true, redirectTo, verificationEmailSent: delivery.sent, verificationEmailStatus: delivery.sent ? "sent" : delivery.reason }, { status: 201 });
     response.headers.set("Set-Cookie", serializeSessionCookie(token));
     return response;

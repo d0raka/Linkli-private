@@ -8,6 +8,7 @@ export async function POST(request: Request) {
     requireSameOrigin(request);
     const user = await getProductUser();
     if (!user) return NextResponse.json({ error: "נדרשת התחברות" }, { status: 401 });
+    if (!user.emailVerified) return NextResponse.json({ error: "יש לאמת את כתובת הדוא״ל לפני שדרוג החשבון." }, { status: 403 });
     const body = await readJsonObject(request, 2_048);
     const method = ["card", "paypal", "bit"].includes(String(body.method || "")) ? String(body.method) : "card";
     const db = await ensureDatabase();

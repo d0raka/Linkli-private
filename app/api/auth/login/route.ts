@@ -30,7 +30,15 @@ export async function POST(request: Request) {
     }
     stage = "session";
     const token = await createSession(email);
-    const response = NextResponse.json({ ok: true, redirectTo: safeReturnTo(body.returnTo) });
+    const returnTo = safeReturnTo(body.returnTo);
+    const verification = await db.prepare(
+      "SELECT verified_at FROM email_verifications WHERE user_email = ?",
+    ).bind(email).first();
+    const requiresVerification = Boolean(verification && !verification.verified_at);
+    const redirectTo = requiresVerification
+      ? `/verify-email?returnTo=${encodeURIComponent(returnTo)}`
+      : returnTo;
+    const response = NextResponse.json({ ok: true, redirectTo, requiresVerification });
     response.headers.set("Set-Cookie", serializeSessionCookie(token));
     return response;
   } catch (error) {

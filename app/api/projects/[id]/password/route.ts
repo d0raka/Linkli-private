@@ -11,6 +11,7 @@ export async function POST(request: Request, context: Context) {
     requireSameOrigin(request);
     const user = await getProductUser();
     if (!user) return NextResponse.json({ error: "נדרשת התחברות" }, { status: 401 });
+    if (!user.emailVerified) return NextResponse.json({ error: "יש לאמת את כתובת הדוא״ל לפני הגדרת סיסמה לעמוד." }, { status: 403 });
     const { id } = await context.params;
     if (!validUuid(id)) return NextResponse.json({ error: "העמוד לא נמצא" }, { status: 404 });
     const body = await readJsonObject(request, 2_048);

@@ -12,6 +12,7 @@ export async function PATCH(request: Request, context: Context) {
     requireSameOrigin(request);
     const user = await getProductUser();
     if (!user) return NextResponse.json({ error: "נדרשת התחברות" }, { status: 401 });
+    if (!user.emailVerified) return NextResponse.json({ error: "יש לאמת את כתובת הדוא״ל לפני עריכת עמוד." }, { status: 403 });
     const { id } = await context.params;
     if (!validUuid(id)) return NextResponse.json({ error: "העמוד לא נמצא" }, { status: 404 });
     const db = await ensureDatabase();
@@ -35,6 +36,7 @@ export async function DELETE(request: Request, context: Context) {
     requireSameOrigin(request);
     const user = await getProductUser();
     if (!user) return NextResponse.json({ error: "נדרשת התחברות" }, { status: 401 });
+    if (!user.emailVerified) return NextResponse.json({ error: "יש לאמת את כתובת הדוא״ל לפני מחיקת עמוד." }, { status: 403 });
     const { id } = await context.params;
     if (!validUuid(id)) return NextResponse.json({ error: "העמוד לא נמצא" }, { status: 404 });
     const db = await ensureDatabase();
