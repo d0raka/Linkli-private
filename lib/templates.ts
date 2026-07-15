@@ -102,15 +102,30 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
   const base = getTemplate(templateId).config;
   if (!value || typeof value !== "object") return structuredClone(base);
   const input = value as Partial<TemplateConfig>;
-  const string = (key: keyof TemplateConfig) => typeof input[key] === "string" ? input[key] as string : base[key] as string;
+  const limits: Partial<Record<keyof TemplateConfig, number>> = {
+    recipient: 80, headline: 120, subtitle: 240, correctOption: 120, successTitle: 120,
+    successText: 500, whatsapp: 18, whatsappText: 500, buttonText: 80, emoji: 16,
+  };
+  const string = (key: keyof TemplateConfig) => {
+    const fallback = base[key] as string;
+    if (typeof input[key] !== "string") return fallback;
+    const value = (input[key] as string).trim().slice(0, limits[key] || 120);
+    return value || fallback;
+  };
   const options = Array.isArray(input.options)
-    ? input.options.filter((item): item is string => typeof item === "string").slice(0, 6)
+    ? input.options.filter((item): item is string => typeof item === "string").map((item) => item.trim().slice(0, 120)).filter(Boolean).slice(0, 6)
     : base.options;
+  const safeOptions = options.length >= 2 ? options : base.options;
+  const requestedCorrect = string("correctOption");
+  const color = (key: "accent" | "accentSoft") => {
+    const candidate = typeof input[key] === "string" ? input[key].trim() : "";
+    return /^#[0-9a-f]{6}$/i.test(candidate) ? candidate.toLowerCase() : base[key];
+  };
   return {
     recipient: string("recipient"), headline: string("headline"), subtitle: string("subtitle"),
-    options: options.length >= 2 ? options : base.options, correctOption: string("correctOption"),
-    successTitle: string("successTitle"), successText: string("successText"), whatsapp: string("whatsapp").replace(/\D/g, ""),
-    whatsappText: string("whatsappText"), buttonText: string("buttonText"), accent: string("accent"),
-    accentSoft: string("accentSoft"), emoji: string("emoji"),
+    options: safeOptions, correctOption: safeOptions.includes(requestedCorrect) ? requestedCorrect : safeOptions[0],
+    successTitle: string("successTitle"), successText: string("successText"), whatsapp: string("whatsapp").replace(/\D/g, "").slice(0, 15),
+    whatsappText: string("whatsappText"), buttonText: string("buttonText"), accent: color("accent"),
+    accentSoft: color("accentSoft"), emoji: string("emoji"),
   };
 }

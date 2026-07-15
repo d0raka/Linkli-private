@@ -1,11 +1,12 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { normalizeEmail } from "@/lib/security";
 
 export type ProductUser = { email: string; displayName: string };
 
 export async function getProductUser(): Promise<ProductUser | null> {
   const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
+  const email = normalizeEmail(requestHeaders.get("oai-authenticated-user-email"));
   if (email) {
     const encodedName = requestHeaders.get("oai-authenticated-user-full-name");
     const encoding = requestHeaders.get("oai-authenticated-user-full-name-encoding");
@@ -13,7 +14,7 @@ export async function getProductUser(): Promise<ProductUser | null> {
     if (encodedName && encoding === "percent-encoded-utf-8") {
       try { displayName = decodeURIComponent(encodedName); } catch { /* use email fallback */ }
     }
-    return { email, displayName };
+    return { email, displayName: displayName.trim().slice(0, 80) || email.split("@")[0] };
   }
 
   if (process.env.NODE_ENV === "development") {

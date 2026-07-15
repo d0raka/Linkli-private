@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 import { ensureDatabase } from "@/db";
 import { projectFromRow } from "@/lib/projects";
 import PublishedExperience from "./published-experience";
+import { validSlug } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
 
 async function getPublishedProject(slug: string) {
+  if (!validSlug(slug)) return null;
   const db = await ensureDatabase();
   return db.prepare(
     `SELECT projects.*, users.plan AS owner_plan
