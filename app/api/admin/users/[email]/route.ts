@@ -74,6 +74,7 @@ export async function DELETE(request: Request, context: Context) {
     if (!target) throw new RequestError(404, "המשתמש לא נמצא");
 
     await db.batch([
+      db.prepare("DELETE FROM login_aliases WHERE user_email = ?").bind(email),
       db.prepare("DELETE FROM auth_tokens WHERE user_email = ?").bind(email),
       db.prepare("DELETE FROM email_verifications WHERE user_email = ?").bind(email),
       db.prepare("DELETE FROM sessions WHERE user_email = ?").bind(email),

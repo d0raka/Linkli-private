@@ -67,6 +67,12 @@ export const schemaStatements = [
   )`,
   `CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions(user_email)`,
   `CREATE INDEX IF NOT EXISTS sessions_expires_idx ON sessions(expires_at)`,
+  `CREATE TABLE IF NOT EXISTS login_aliases (
+    username TEXT PRIMARY KEY,
+    user_email TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+  )`,
   `CREATE TABLE IF NOT EXISTS email_verifications (
     user_email TEXT PRIMARY KEY,
     verified_at TEXT,

@@ -58,6 +58,12 @@ export function normalizeEmail(value: unknown) {
   return email;
 }
 
+export function normalizeUsername(value: unknown) {
+  if (typeof value !== "string") return "";
+  const username = value.trim().toLowerCase();
+  return /^[a-z0-9][a-z0-9._-]{2,31}$/.test(username) ? username : "";
+}
+
 export function validUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }

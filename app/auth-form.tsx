@@ -28,7 +28,7 @@ export default function AuthForm({ mode, returnTo }: { mode: "login" | "register
 
   return <form className="auth-form" onSubmit={submit}>
     {mode === "register" && <label>שם מלא<input name="displayName" required minLength={2} maxLength={80} autoComplete="name" /></label>}
-    <label>כתובת דוא״ל<input name="email" type="email" required maxLength={160} autoComplete="email" inputMode="email" dir="ltr" /></label>
+    <label>{mode === "login" ? "דוא״ל או שם משתמש" : "כתובת דוא״ל"}<input name="email" type={mode === "login" ? "text" : "email"} required maxLength={160} autoComplete="username" inputMode={mode === "login" ? "text" : "email"} dir="ltr" /></label>
     <label>סיסמה<input name="password" type="password" required minLength={mode === "register" ? 15 : undefined} maxLength={128} autoComplete={mode === "register" ? "new-password" : "current-password"} dir="ltr" /></label>
     {mode === "register" && <>
       <p className="password-help">לפחות 15 תווים. מומלץ לבחור משפט שקל לך לזכור וקשה לאחרים לנחש.</p>

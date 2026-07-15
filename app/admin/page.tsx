@@ -18,17 +18,18 @@ export default async function AdminPage() {
       (SELECT COALESCE(SUM(views), 0) FROM projects) AS views,
       (SELECT COALESCE(SUM(clicks), 0) FROM projects) AS clicks,
       (SELECT COUNT(*) FROM support_requests WHERE status = 'new') AS open_support`),
-    db.prepare(`SELECT users.email, users.display_name, users.plan, users.created_at,
+    db.prepare(`SELECT users.email, login_aliases.username, users.display_name, users.plan, users.created_at,
       COALESCE(user_controls.status, 'active') AS status,
       COALESCE(user_controls.note, '') AS note,
       CASE WHEN email_verifications.user_email IS NULL OR email_verifications.verified_at IS NOT NULL THEN 1 ELSE 0 END AS email_verified,
       COUNT(projects.id) AS project_count,
       COALESCE(SUM(CASE WHEN projects.published = 1 THEN 1 ELSE 0 END), 0) AS published_count
       FROM users
+      LEFT JOIN login_aliases ON login_aliases.user_email = users.email
       LEFT JOIN user_controls ON user_controls.email = users.email
       LEFT JOIN email_verifications ON email_verifications.user_email = users.email
       LEFT JOIN projects ON projects.owner_email = users.email
-      GROUP BY users.email, users.display_name, users.plan, users.created_at, user_controls.status, user_controls.note, email_verifications.user_email, email_verifications.verified_at
+      GROUP BY users.email, login_aliases.username, users.display_name, users.plan, users.created_at, user_controls.status, user_controls.note, email_verifications.user_email, email_verifications.verified_at
       ORDER BY users.created_at DESC LIMIT 200`),
     db.prepare(`SELECT id, owner_email, title, slug, template_id, published, views, clicks, updated_at
       FROM projects ORDER BY updated_at DESC LIMIT 200`),
