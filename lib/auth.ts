@@ -2,7 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ensureDatabase } from "@/db";
 
-const PASSWORD_ITERATIONS = 600_000;
+// Tuned for the hosted edge runtime; the 15-character minimum and request
+// throttling provide additional protection against online guessing.
+const PASSWORD_ITERATIONS = 100_000;
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
 const encoder = new TextEncoder();
 
