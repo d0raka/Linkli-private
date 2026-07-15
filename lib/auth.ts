@@ -17,33 +17,33 @@ const commonPasswords = new Set([
   "letmeinletmein", "iloveyouiloveyou", "linklilinkli", "adminadminadmin",
 ]);
 
-function bytesToBase64Url(bytes: Uint8Array) {
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+function bytesToHex(bytes: Uint8Array) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-function base64UrlToBytes(value: string) {
-  const base64 = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
-  const binary = atob(base64);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+function hexToBytes(value: string) {
+  if (!/^[0-9a-f]+$/i.test(value) || value.length % 2 !== 0) throw new Error("Invalid credential encoding");
+  const bytes = new Uint8Array(value.length / 2);
+  for (let index = 0; index < bytes.length; index += 1) bytes[index] = Number.parseInt(value.slice(index * 2, index * 2 + 2), 16);
+  return bytes;
 }
 
 function randomToken(size = 32) {
   const bytes = new Uint8Array(size);
   crypto.getRandomValues(bytes);
-  return bytesToBase64Url(bytes);
+  return bytesToHex(bytes);
 }
 
 async function sha256(value: string) {
   const digest = await crypto.subtle.digest("SHA-256", encoder.encode(value));
-  return bytesToBase64Url(new Uint8Array(digest));
+  return bytesToHex(new Uint8Array(digest));
 }
 
 async function derivePassword(password: string, salt: Uint8Array, iterations: number) {
   const key = await crypto.subtle.importKey("raw", encoder.encode(password.normalize("NFC")), "PBKDF2", false, ["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: salt as BufferSource, iterations }, key, 256);
-  return bytesToBase64Url(new Uint8Array(bits));
+  const portableSalt = Uint8Array.from(salt).buffer;
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: portableSalt, iterations }, key, 256);
+  return bytesToHex(new Uint8Array(bits));
 }
 
 function constantTimeEqual(left: string, right: string) {
@@ -74,14 +74,14 @@ export async function hashPassword(password: string) {
   crypto.getRandomValues(salt);
   return {
     hash: await derivePassword(password, salt, PASSWORD_ITERATIONS),
-    salt: bytesToBase64Url(salt),
+    salt: bytesToHex(salt),
     iterations: PASSWORD_ITERATIONS,
   };
 }
 
 export async function verifyPassword(password: string, credential?: { password_hash?: unknown; password_salt?: unknown; password_iterations?: unknown } | null) {
   const validCredential = typeof credential?.password_hash === "string" && typeof credential?.password_salt === "string";
-  const salt = validCredential ? base64UrlToBytes(String(credential.password_salt)) : new Uint8Array(16);
+  const salt = validCredential ? hexToBytes(String(credential.password_salt)) : new Uint8Array(16);
   const iterations = validCredential ? Number(credential?.password_iterations || PASSWORD_ITERATIONS) : PASSWORD_ITERATIONS;
   const candidate = await derivePassword(password, salt, iterations);
   return validCredential && constantTimeEqual(candidate, String(credential.password_hash));
@@ -124,7 +124,7 @@ async function currentSessionToken() {
   const store = await cookies();
   for (const name of cookieNames()) {
     const value = store.get(name)?.value;
-    if (value && /^[A-Za-z0-9_-]{43}$/.test(value)) return value;
+    if (value && /^[0-9a-f]{64}$/i.test(value)) return value;
   }
   return null;
 }

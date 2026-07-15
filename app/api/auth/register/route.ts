@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { createSession, hashPassword, safeReturnTo, serializeSessionCookie, validatePassword } from "@/lib/auth";
 import { ensureDatabase } from "@/db";
-import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, requireSameOrigin } from "@/lib/security";
+import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, RequestError, requireSameOrigin } from "@/lib/security";
 
 export async function POST(request: Request) {
+  let stage = "request";
   try {
     requireSameOrigin(request);
     const body = await readJsonObject(request, 8_192);
@@ -16,9 +17,12 @@ export async function POST(request: Request) {
     const passwordError = validatePassword(password, email);
     if (passwordError) return NextResponse.json({ error: passwordError }, { status: 400 });
 
+    stage = "database";
     const db = await ensureDatabase();
     await enforceRateLimit(db, request, "auth-register", 5, 3_600, email);
+    stage = "password";
     const passwordRecord = await hashPassword(password);
+    stage = "account";
     await db.prepare("INSERT OR IGNORE INTO users (email, display_name) VALUES (?, ?)").bind(email, displayName).run();
     const inserted = await db.prepare(
       "INSERT OR IGNORE INTO auth_credentials (email, password_hash, password_salt, password_iterations) VALUES (?, ?, ?, ?)",
@@ -26,11 +30,16 @@ export async function POST(request: Request) {
     if (!inserted.meta?.changes) return NextResponse.json({ error: "כבר קיים חשבון עם כתובת הדוא״ל הזו. אפשר להתחבר במקום." }, { status: 409 });
     await db.prepare("UPDATE users SET display_name = ?, updated_at = CURRENT_TIMESTAMP WHERE email = ?").bind(displayName, email).run();
 
+    stage = "session";
     const token = await createSession(email);
     const response = NextResponse.json({ ok: true, redirectTo: safeReturnTo(body.returnTo) }, { status: 201 });
     response.headers.set("Set-Cookie", serializeSessionCookie(token));
     return response;
   } catch (error) {
+    if (!(error instanceof RequestError)) {
+      console.error(`Registration failed at ${stage}`, error);
+      return NextResponse.json({ error: "אירעה שגיאה. נסו שוב בעוד רגע.", reference: `REGISTER-${stage.toUpperCase()}` }, { status: 500 });
+    }
     return errorResponse(error);
   }
 }
