@@ -86,7 +86,7 @@ export default function PublishedExperience({ slug, config, showWatermark }: { s
       </div> : null}
 
       {screen === "question" && question ? <div className="experience-screen experience-question" key={step}>
-        <div className="experience-progress" aria-label={`שלב ${step + 1} מתוך ${config.questions.length}`}>{config.questions.map((_, index) => <i className={index <= step ? "active" : ""} key={index} />)}</div>
+        <div className="experience-progress" style={{ gridTemplateColumns: `repeat(${config.questions.length}, minmax(0, 1fr))` }} aria-label={`שלב ${step + 1} מתוך ${config.questions.length}`}>{config.questions.map((_, index) => <i className={index <= step ? "active" : ""} key={index} />)}</div>
         <span className="experience-step">שאלה {step + 1}</span>
         <h2>{question.prompt}</h2>
         <p className="experience-copy">{question.helper}</p>

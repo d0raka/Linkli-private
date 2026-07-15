@@ -4,7 +4,9 @@ import { ensureDatabase } from "@/db";
 import { projectFromRow } from "@/lib/projects";
 import { isAdminEmail } from "@/lib/auth";
 import PublishedExperience from "./published-experience";
+import PasswordGate from "./password-gate";
 import { validSlug } from "@/lib/security";
+import { hasPageAccess } from "@/lib/page-access";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
@@ -32,5 +34,8 @@ export default async function PublishedPage({ params }: Props) {
   const row = await getPublishedProject(slug);
   if (!row) notFound();
   const project = projectFromRow(row);
+  if (row.access_password_hash && !(await hasPageAccess(slug))) {
+    return <PasswordGate slug={slug} title={project.config.headline} emoji={project.config.emoji} accent={project.config.accent} accentSoft={project.config.accentSoft} />;
+  }
   return <PublishedExperience slug={slug} config={project.config} showWatermark={row.owner_plan !== "plus" && !isAdminEmail(String(row.owner_email))} />;
 }

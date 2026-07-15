@@ -45,10 +45,8 @@ export async function POST(request: Request) {
     stage = "session";
     const token = await createSession(email);
     const returnTo = safeReturnTo(body.returnTo);
-    const redirectTo = delivery.sent
-      ? `/verify-email?sent=1&returnTo=${encodeURIComponent(returnTo)}`
-      : returnTo;
-    const response = NextResponse.json({ ok: true, redirectTo, verificationEmailSent: delivery.sent }, { status: 201 });
+    const redirectTo = `/verify-email?${delivery.sent ? "sent=1" : "delivery=unavailable"}&returnTo=${encodeURIComponent(returnTo)}`;
+    const response = NextResponse.json({ ok: true, redirectTo, verificationEmailSent: delivery.sent, verificationEmailStatus: delivery.sent ? "sent" : delivery.reason }, { status: 201 });
     response.headers.set("Set-Cookie", serializeSessionCookie(token));
     return response;
   } catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { templates, type TemplateConfig, type TemplateQuestion } from "@/lib/templates";
 import type { ProjectRecord } from "@/lib/projects";
 
@@ -61,24 +61,37 @@ export default function StudioClient({ initialName }: { initialName: string }) {
   }
 
   async function saveProject() {
-    if (!selected) return;
+    if (!selected) return false;
     setSaving(true);
     const response = await fetch(`/api/projects/${selected.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: selected.title, config: selected.config }) });
     const data = await response.json();
     setSaving(false);
-    if (!response.ok) return flash(data.error || "לא הצלחנו לשמור את השינויים.", true);
+    if (!response.ok) { flash(data.error || "לא הצלחנו לשמור את השינויים.", true); return false; }
     updateSelected(data.project);
     flash("כל השינויים נשמרו בהצלחה.");
+    return true;
   }
 
   async function togglePublish() {
     if (!selected) return;
-    if (!selected.published) await saveProject();
+    if (!selected.published && !(await saveProject())) return;
     const response = await fetch(`/api/projects/${selected.id}/publish`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ published: !selected.published }) });
     const data = await response.json();
     if (!response.ok) return flash(data.error || "לא הצלחנו לעדכן את מצב הפרסום.", true);
     updateSelected(data.project);
     flash(data.project.published ? "העמוד פורסם ומוכן לשיתוף 🚀" : "העמוד הוחזר למצב טיוטה.");
+  }
+
+  async function updatePagePassword(password: string | null) {
+    if (!selected) return false;
+    setSaving(true);
+    const response = await fetch(`/api/projects/${selected.id}/password`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(password === null ? { remove: true } : { password }) });
+    const data = await response.json();
+    setSaving(false);
+    if (!response.ok) { flash(data.error || "לא הצלחנו לעדכן את הגנת העמוד.", true); return false; }
+    updateSelected(data.project);
+    flash(password === null ? "הגנת הסיסמה הוסרה מהעמוד." : "העמוד מוגן עכשיו בסיסמה.");
+    return true;
   }
 
   async function removeProject() {
@@ -124,7 +137,7 @@ export default function StudioClient({ initialName }: { initialName: string }) {
           <div className="editor-actions"><button className="button button-outline" onClick={() => setMode("dashboard")}>חזרה לעמודים שלי</button></div>
         </section>
       ) : mode === "editor" && selected ? (
-        <Editor key={selected.id} project={selected} profile={profile} saving={saving} onProject={updateSelected} onConfig={updateConfig} onSave={saveProject} onPublish={togglePublish} onDelete={removeProject} />
+        <Editor key={selected.id} project={selected} profile={profile} saving={saving} onProject={updateSelected} onConfig={updateConfig} onSave={saveProject} onPublish={togglePublish} onPassword={updatePagePassword} onDelete={removeProject} />
       ) : (
         <div className="studio-layout">
           <aside className="studio-panel project-sidebar"><h2>העמודים שלי</h2><div className="project-list">{projects.length ? projects.map((project) => <button key={project.id} className={`project-item ${selectedId === project.id ? "active" : ""}`} onClick={() => setSelectedId(project.id)}><b>{project.title}</b><span>{project.published ? "🟢 פורסם" : "טיוטה"} · /p/{project.slug}</span></button>) : <div className="empty-projects">עדיין לא יצרת עמודים.<br />אפשר להתחיל מבחירת תבנית ✨</div>}</div></aside>
@@ -148,7 +161,7 @@ const editorSections: { id: EditorSection; label: string; helper: string }[] = [
   { id: "design", label: "עיצוב ושיתוף", helper: "צבעים, פרסום וקישור" },
 ];
 
-function Editor({ project, profile, saving, onProject, onConfig, onSave, onPublish, onDelete }: { project: ProjectRecord; profile: Profile; saving: boolean; onProject: (patch: Partial<ProjectRecord>) => void; onConfig: <K extends keyof TemplateConfig>(key: K, value: TemplateConfig[K]) => void; onSave: () => void; onPublish: () => void; onDelete: () => void }) {
+function Editor({ project, profile, saving, onProject, onConfig, onSave, onPublish, onPassword, onDelete }: { project: ProjectRecord; profile: Profile; saving: boolean; onProject: (patch: Partial<ProjectRecord>) => void; onConfig: <K extends keyof TemplateConfig>(key: K, value: TemplateConfig[K]) => void; onSave: () => void; onPublish: () => void; onPassword: (password: string | null) => Promise<boolean>; onDelete: () => void }) {
   const c = project.config;
   const [section, setSection] = useState<EditorSection>("opening");
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -157,8 +170,8 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
   const [previewAnswers, setPreviewAnswers] = useState<string[]>(() => c.questions.map(() => ""));
   const [mobilePane, setMobilePane] = useState<"edit" | "preview">("edit");
   const [copied, setCopied] = useState(false);
+  const [passwordDraft, setPasswordDraft] = useState("");
   const shareUrl = typeof window === "undefined" ? `/p/${project.slug}` : `${window.location.origin}/p/${project.slug}`;
-  const questionOptionText = useMemo(() => c.questions.map((question) => question.options.join("\n")), [c.questions]);
   const activeSectionIndex = editorSections.findIndex((item) => item.id === section);
   const activeSection = editorSections[activeSectionIndex];
   const activeQuestion = c.questions[questionIndex];
@@ -166,6 +179,52 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
 
   function updateQuestion(index: number, patch: Partial<TemplateQuestion>) {
     onConfig("questions", c.questions.map((question, currentIndex) => currentIndex === index ? { ...question, ...patch } : question));
+  }
+
+  function updateQuestionOption(questionPosition: number, optionPosition: number, value: string) {
+    const question = c.questions[questionPosition];
+    const previous = question.options[optionPosition];
+    const options = question.options.map((option, index) => index === optionPosition ? value.slice(0, 120) : option);
+    updateQuestion(questionPosition, { options, correctOption: question.correctOption === previous ? value.slice(0, 120) : question.correctOption });
+  }
+
+  function addQuestionOption(questionPosition: number) {
+    const question = c.questions[questionPosition];
+    if (question.options.length >= 6) return;
+    updateQuestion(questionPosition, { options: [...question.options, `אפשרות ${question.options.length + 1}`] });
+  }
+
+  function removeQuestionOption(questionPosition: number, optionPosition: number) {
+    const question = c.questions[questionPosition];
+    if (question.options.length <= 2) return;
+    const removed = question.options[optionPosition];
+    updateQuestion(questionPosition, { options: question.options.filter((_, index) => index !== optionPosition), correctOption: question.correctOption === removed ? "" : question.correctOption });
+    if (previewAnswers[questionPosition] === removed) setPreviewAnswers((answers) => answers.map((answer, index) => index === questionPosition ? "" : answer));
+  }
+
+  function addQuestion() {
+    if (c.questions.length >= 10) return;
+    const nextQuestion: TemplateQuestion = { prompt: `שאלה ${c.questions.length + 1}`, helper: "הוסיפו הסבר קצר שיעזור לבחור תשובה.", options: ["אפשרות 1", "אפשרות 2"], correctOption: "" };
+    const nextIndex = c.questions.length;
+    onConfig("questions", [...c.questions, nextQuestion]);
+    setPreviewAnswers((answers) => [...answers, ""]);
+    setQuestionIndex(nextIndex);
+    setPreviewQuestion(nextIndex);
+    setPreviewScreen("question");
+  }
+
+  function removeQuestion(position: number) {
+    if (c.questions.length <= 1) return;
+    const nextQuestions = c.questions.filter((_, index) => index !== position);
+    const nextIndex = Math.min(position, nextQuestions.length - 1);
+    onConfig("questions", nextQuestions);
+    setPreviewAnswers((answers) => answers.filter((_, index) => index !== position));
+    setQuestionIndex(nextIndex);
+    setPreviewQuestion(nextIndex);
+  }
+
+  async function savePagePassword() {
+    if (await onPassword(passwordDraft)) setPasswordDraft("");
   }
 
   function chooseSection(nextSection: EditorSection) {
@@ -242,16 +301,14 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
         {section === "questions" && activeQuestion && <div className="questions-stage">
           <div className="question-tabs" role="tablist" aria-label="בחירת שאלה לעריכה">
             {c.questions.map((_, index) => <button type="button" role="tab" aria-selected={questionIndex === index} className={questionIndex === index ? "active" : ""} key={index} onClick={() => chooseQuestion(index)}>שאלה {index + 1}</button>)}
+            <button type="button" className="add-question-tab" disabled={c.questions.length >= 10} onClick={addQuestion}>+ הוספת שאלה</button>
           </div>
           <fieldset className="question-editor question-editor-focused">
             <legend><span>{questionIndex + 1}</span> עריכת שאלה {questionIndex + 1}</legend>
+            <button type="button" className="remove-question-button" disabled={c.questions.length === 1} onClick={() => removeQuestion(questionIndex)}>מחיקת השאלה</button>
             <label>נוסח השאלה<input value={activeQuestion.prompt} placeholder="כתבו שאלה קצרה וברורה" onChange={(event) => updateQuestion(questionIndex, { prompt: event.target.value })} /></label>
             <label>הסבר קצר<input value={activeQuestion.helper} placeholder="מידע שיעזור לבחור תשובה" onChange={(event) => updateQuestion(questionIndex, { helper: event.target.value })} /></label>
-            <label>אפשרויות <small>אפשרות אחת בכל שורה, עד שש אפשרויות</small><textarea value={questionOptionText[questionIndex]} onChange={(event) => {
-              const options = event.target.value.split("\n").map((value) => value.trim()).filter(Boolean).slice(0, 6);
-              updateQuestion(questionIndex, { options, correctOption: options.includes(activeQuestion.correctOption) ? activeQuestion.correctOption : "" });
-              if (!options.includes(previewAnswers[questionIndex])) setPreviewAnswers((answers) => answers.map((answer, index) => index === questionIndex ? "" : answer));
-            }} /></label>
+            <div className="option-editor"><div><b>אפשרויות תשובה</b><small>כל אפשרות נשמרת בשורה נפרדת.</small></div>{activeQuestion.options.map((option, index) => <div className="option-editor-row" key={index}><span>{index + 1}</span><input value={option} aria-label={`אפשרות ${index + 1}`} maxLength={120} onChange={(event) => updateQuestionOption(questionIndex, index, event.target.value)} /><button type="button" aria-label={`מחיקת אפשרות ${index + 1}`} disabled={activeQuestion.options.length <= 2} onClick={() => removeQuestionOption(questionIndex, index)}>×</button></div>)}<button type="button" className="add-option-button" disabled={activeQuestion.options.length >= 6} onClick={() => addQuestionOption(questionIndex)}>+ הוספת אפשרות</button></div>
             <label>תשובה נכונה <small>רשות — לחידונים עם ניקוד</small><select value={activeQuestion.correctOption} onChange={(event) => updateQuestion(questionIndex, { correctOption: event.target.value })}><option value="">ללא ניקוד</option>{activeQuestion.options.map((option) => <option value={option} key={option}>{option}</option>)}</select></label>
           </fieldset>
           <div className="question-stage-navigation"><button type="button" className="button button-outline" disabled={questionIndex === 0} onClick={() => chooseQuestion(questionIndex - 1)}>שאלה קודמת</button><span>{questionIndex + 1} / {c.questions.length}</span><button type="button" className="button button-dark" disabled={questionIndex === c.questions.length - 1} onClick={() => chooseQuestion(questionIndex + 1)}>שאלה הבאה</button></div>
@@ -273,6 +330,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
             <label className="color-field"><span><b>צבע ראשי</b><small>כפתורים והדגשות</small></span><input type="color" value={c.accent} aria-label="צבע ראשי" onChange={(event) => onConfig("accent", event.target.value)} /><code>{c.accent}</code></label>
             <label className="color-field"><span><b>צבע רקע</b><small>הרקע הרך של העמוד</small></span><input type="color" value={c.accentSoft} aria-label="צבע רקע" onChange={(event) => onConfig("accentSoft", event.target.value)} /><code>{c.accentSoft}</code></label>
           </div>
+          <div className={`page-access-card ${project.passwordProtected ? "protected" : ""}`}><div className="page-access-heading"><span>{project.passwordProtected ? "🔒" : "🔓"}</span><div><b>הגנה באמצעות סיסמה</b><p>{project.passwordProtected ? "המבקרים חייבים להזין סיסמה לפני הצגת העמוד." : "אפשר להפוך את העמוד לפרטי ולשתף את הסיסמה רק עם מי שצריך."}</p></div><strong>{project.passwordProtected ? "פעיל" : "כבוי"}</strong></div><label>{project.passwordProtected ? "סיסמה חדשה — רק אם רוצים להחליף" : "בחירת סיסמה לעמוד"}<input type="password" value={passwordDraft} minLength={6} maxLength={64} autoComplete="new-password" dir="ltr" placeholder="לפחות 6 תווים" onChange={(event) => setPasswordDraft(event.target.value)} /></label><div className="page-access-actions"><button type="button" className="button button-dark" disabled={saving || passwordDraft.length < 6} onClick={savePagePassword}>{saving ? "שומרים…" : project.passwordProtected ? "החלפת סיסמה" : "הפעלת הגנה"}</button>{project.passwordProtected && <button type="button" className="remove-access-button" disabled={saving} onClick={() => onPassword(null)}>הסרת ההגנה</button>}</div></div>
           <div className="publish-card">
             <div className="publish-card-heading"><span className={project.published ? "published" : ""}>{project.published ? "● באוויר" : "○ טיוטה"}</span><div><b>{project.published ? "העמוד זמין לשיתוף" : "העמוד עדיין פרטי"}</b><p>{project.published ? "אפשר להעתיק את הקישור או לפתוח את העמוד המלא." : "פרסמו כשתהיו מרוצים מהתצוגה המקדימה."}</p></div></div>
             <div className="share-url-row"><span dir="ltr">{shareUrl}</span><button type="button" onClick={copyShareUrl}>{copied ? "הועתק ✓" : "העתקת קישור"}</button></div>
@@ -284,7 +342,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
         <div className="editor-workflow-actions">
           <button type="button" className="button button-outline" disabled={activeSectionIndex === 0} onClick={() => moveSection(-1)}>חזרה</button>
           <button type="button" className="save-inline" onClick={onSave}>{saving ? "שומר שינויים…" : "שמירת שינויים"}</button>
-          {activeSectionIndex < editorSections.length - 1 ? <button type="button" className="button button-primary" onClick={() => moveSection(1)}>המשך: {editorSections[activeSectionIndex + 1].label} ←</button> : <button type="button" className="button button-primary" onClick={onPublish}>{project.published ? "עדכון העמוד" : "שמירה ופרסום"}</button>}
+          {activeSectionIndex < editorSections.length - 1 ? <button type="button" className="button button-primary" onClick={() => moveSection(1)}>המשך: {editorSections[activeSectionIndex + 1].label} ←</button> : <button type="button" className="button button-primary" onClick={project.published ? onSave : onPublish}>{project.published ? "שמירת עדכון" : "שמירה ופרסום"}</button>}
         </div>
       </section>
 
@@ -308,7 +366,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
             </div>}
 
             {previewScreen === "question" && previewQuestionData && <div className="preview-site-screen preview-site-question">
-              <div className="preview-progress">{c.questions.map((_, index) => <i className={index <= previewQuestion ? "active" : ""} key={index} />)}</div>
+              <div className="preview-progress" style={{ gridTemplateColumns: `repeat(${c.questions.length}, minmax(0, 1fr))` }}>{c.questions.map((_, index) => <i className={index <= previewQuestion ? "active" : ""} key={index} />)}</div>
               <span className="preview-step-label">שאלה {previewQuestion + 1} מתוך {c.questions.length}</span><h2>{previewQuestionData.prompt}</h2><p>{previewQuestionData.helper}</p>
               <div className="preview-options">{previewQuestionData.options.map((option, index) => <button type="button" aria-pressed={previewAnswers[previewQuestion] === option} className={previewAnswers[previewQuestion] === option ? "selected" : ""} key={option} onClick={() => setPreviewAnswer(option)}><span>{index + 1}</span><b>{option}</b><i>✓</i></button>)}</div>
               <div className="preview-navigation"><button type="button" className="preview-back" disabled={previewQuestion === 0} onClick={() => setPreviewQuestion((index) => Math.max(0, index - 1))}>חזרה</button><button type="button" className="preview-action" onClick={advancePreview}>{previewQuestion === c.questions.length - 1 ? c.finalButtonText : "לשאלה הבאה"}<span>←</span></button></div>

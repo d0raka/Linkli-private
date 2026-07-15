@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getProductUser } from "@/lib/auth";
 import { ensureDatabase } from "@/db";
+import { getProductUser, hashPassword } from "@/lib/auth";
 import { projectFromRow } from "@/lib/projects";
-import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, validUuid } from "@/lib/security";
+import { enforceRateLimit, errorResponse, readJsonObject, RequestError, requireSameOrigin, validUuid } from "@/lib/security";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -14,19 +14,18 @@ export async function POST(request: Request, context: Context) {
     const { id } = await context.params;
     if (!validUuid(id)) return NextResponse.json({ error: "העמוד לא נמצא" }, { status: 404 });
     const body = await readJsonObject(request, 2_048);
+    const remove = body.remove === true;
+    const password = typeof body.password === "string" ? body.password.normalize("NFC") : "";
+    if (!remove && (Array.from(password).length < 6 || Array.from(password).length > 64)) {
+      throw new RequestError(400, "הסיסמה לעמוד צריכה להכיל 6–64 תווים.");
+    }
     const db = await ensureDatabase();
-    await enforceRateLimit(db, request, "project-publish", 30, 600, user.email);
+    await enforceRateLimit(db, request, "project-password", 12, 900, user.email);
     const current = await db.prepare("SELECT * FROM projects WHERE id = ? AND owner_email = ?").bind(id, user.email).first();
     if (!current) return NextResponse.json({ error: "העמוד לא נמצא" }, { status: 404 });
-    const shouldPublish = body.published !== false;
-    if (shouldPublish && !user.emailVerified) return NextResponse.json({ error: "יש לאמת את כתובת הדוא״ל לפני פרסום עמוד." }, { status: 403 });
-    if (shouldPublish && !current.published) {
-      const count = await db.prepare("SELECT COUNT(*) AS total FROM projects WHERE owner_email = ? AND published = 1").bind(user.email).first();
-      const limit = user.plan === "plus" ? 10 : 1;
-      if (Number(count?.total || 0) >= limit) return NextResponse.json({ error: `המסלול שלך מאפשר לפרסם עד ${limit} עמודים.` }, { status: 403 });
-    }
-    await db.prepare("UPDATE projects SET published = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND owner_email = ?")
-      .bind(shouldPublish ? 1 : 0, id, user.email).run();
+    const passwordHash = remove ? null : (await hashPassword(password)).hash;
+    await db.prepare("UPDATE projects SET access_password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND owner_email = ?")
+      .bind(passwordHash, id, user.email).run();
     const row = await db.prepare("SELECT * FROM projects WHERE id = ? AND owner_email = ?").bind(id, user.email).first();
     return NextResponse.json({ project: projectFromRow(row) });
   } catch (error) {

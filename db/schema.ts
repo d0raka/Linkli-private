@@ -14,6 +14,7 @@ export const schemaStatements = [
     slug TEXT NOT NULL UNIQUE,
     template_id TEXT NOT NULL,
     config_json TEXT NOT NULL,
+    access_password_hash TEXT,
     published INTEGER NOT NULL DEFAULT 0,
     views INTEGER NOT NULL DEFAULT 0,
     clicks INTEGER NOT NULL DEFAULT 0,

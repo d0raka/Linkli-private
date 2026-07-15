@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 
-export default function VerifyEmailClient({ token, sent, returnTo }: { token: string; sent: boolean; returnTo: string }) {
-  const [state, setState] = useState<"idle" | "working" | "verified" | "sent" | "error">(sent ? "sent" : "idle");
-  const [message, setMessage] = useState(sent ? "שלחנו אליך הודעה עם קישור לאימות הכתובת." : "");
+export default function VerifyEmailClient({ token, sent, deliveryUnavailable, returnTo }: { token: string; sent: boolean; deliveryUnavailable: boolean; returnTo: string }) {
+  const [state, setState] = useState<"idle" | "working" | "verified" | "sent" | "error">(sent ? "sent" : deliveryUnavailable ? "error" : "idle");
+  const [message, setMessage] = useState(sent ? "שלחנו אליך הודעה עם קישור לאימות הכתובת." : deliveryUnavailable ? "החשבון נוצר, אבל שירות הדוא״ל עדיין לא הוגדר ולכן ההודעה לא נשלחה. אפשר להמשיך לעבוד ולנסות שוב לאחר שהשירות יחובר." : "");
 
   async function confirm() {
     setState("working"); setMessage("");
@@ -31,7 +31,7 @@ export default function VerifyEmailClient({ token, sent, returnTo }: { token: st
   if (state === "verified") return <div className="auth-complete"><div className="auth-complete-icon">✓</div><h2>הכתובת אומתה</h2><p>{message}</p><Link href={returnTo} className="button button-primary">המשך לסטודיו</Link></div>;
 
   return <div className="verification-actions">
-    {token ? <><p>לחצו על הכפתור כדי להשלים את אימות כתובת הדוא״ל.</p><button className="button button-primary" onClick={confirm} disabled={state === "working"}>{state === "working" ? "מאמתים…" : "אימות כתובת הדוא״ל"}</button></> : <><p>פתחו את ההודעה שנשלחה אליכם ולחצו על קישור האימות.</p><button className="button button-outline" onClick={resend} disabled={state === "working"}>{state === "working" ? "שולחים…" : "שליחת הודעה נוספת"}</button></>}
+    {token ? <><p>לחצו על הכפתור כדי להשלים את אימות כתובת הדוא״ל.</p><button className="button button-primary" onClick={confirm} disabled={state === "working"}>{state === "working" ? "מאמתים…" : "אימות כתובת הדוא״ל"}</button></> : <><p>{deliveryUnavailable ? "שירות הדוא״ל עדיין אינו זמין. לאחר החיבור אפשר יהיה לשלוח מכאן הודעת אימות חדשה." : "פתחו את ההודעה שנשלחה אליכם ולחצו על קישור האימות."}</p><button className="button button-outline" onClick={resend} disabled={state === "working"}>{state === "working" ? "שולחים…" : "שליחת הודעה נוספת"}</button></>}
     {message ? <div className={state === "error" ? "auth-error" : "auth-success"} role="status">{message}</div> : null}
     <Link href={returnTo} className="auth-secondary-link">המשך לסטודיו בינתיים</Link>
   </div>;

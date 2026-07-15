@@ -172,8 +172,10 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
   };
   const legacyOptions = safeOptions(input.options, base.questions[0].options);
   const legacyCorrect = limitedString(input.correctOption, base.questions[0].correctOption, 120);
-  const sourceQuestions = Array.isArray(input.questions) ? input.questions : [];
-  const questions = base.questions.map((fallback, index) => {
+  const sourceQuestions = Array.isArray(input.questions) ? input.questions.slice(0, 10) : [];
+  const questionCount = Math.max(1, sourceQuestions.length || base.questions.length);
+  const questions = Array.from({ length: questionCount }, (_, index) => {
+    const fallback = base.questions[index] || base.questions[base.questions.length - 1];
     const source = sourceQuestions[index] && typeof sourceQuestions[index] === "object"
       ? sourceQuestions[index] as Partial<TemplateQuestion>
       : index === 0 ? { prompt: input.headline, helper: input.subtitle, options: legacyOptions, correctOption: legacyCorrect } : {};
@@ -185,7 +187,7 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
       options,
       correctOption: requestedCorrect && options.includes(requestedCorrect) ? requestedCorrect : fallback.correctOption && options.includes(fallback.correctOption) ? fallback.correctOption : "",
     };
-  }).slice(0, 3);
+  });
   const color = (key: "accent" | "accentSoft") => {
     const candidate = typeof input[key] === "string" ? input[key]!.trim() : "";
     return /^#[0-9a-f]{6}$/i.test(candidate) ? candidate.toLowerCase() : base[key];

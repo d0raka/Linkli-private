@@ -7,6 +7,7 @@ export type ProjectRecord = {
   templateId: string;
   config: ReturnType<typeof safeConfig>;
   published: boolean;
+  passwordProtected: boolean;
   views: number;
   clicks: number;
   createdAt: string;
@@ -19,7 +20,7 @@ export function projectFromRow(row: any): ProjectRecord {
   return {
     id: String(row.id), title: String(row.title), slug: String(row.slug),
     templateId: String(row.template_id), config: safeConfig(parsed, String(row.template_id)),
-    published: Boolean(row.published), views: Number(row.views || 0), clicks: Number(row.clicks || 0),
+    published: Boolean(row.published), passwordProtected: Boolean(row.access_password_hash), views: Number(row.views || 0), clicks: Number(row.clicks || 0),
     createdAt: String(row.created_at), updatedAt: String(row.updated_at),
   };
 }
