@@ -1,12 +1,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ensureDatabase } from "@/db";
+import bcrypt from "bcryptjs";
+import { ensureDatabase, runtimeValue } from "@/db";
 
-// Tuned for the hosted edge runtime; the 15-character minimum and request
-// throttling provide additional protection against online guessing.
-const PASSWORD_ITERATIONS = 100_000;
+const BCRYPT_COST = 12;
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
 const encoder = new TextEncoder();
+const DUMMY_BCRYPT_HASH = "$2b$12$k3wtwobnSkXHia/YhSDUTuoi05UmQd9SDg6WvNhxqtbGq/p7VtX02";
 
 export type ProductUser = {
   email: string;
@@ -23,13 +23,6 @@ function bytesToHex(bytes: Uint8Array) {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-function hexToBytes(value: string) {
-  if (!/^[0-9a-f]+$/i.test(value) || value.length % 2 !== 0) throw new Error("Invalid credential encoding");
-  const bytes = new Uint8Array(value.length / 2);
-  for (let index = 0; index < bytes.length; index += 1) bytes[index] = Number.parseInt(value.slice(index * 2, index * 2 + 2), 16);
-  return bytes;
-}
-
 function randomToken(size = 32) {
   const bytes = new Uint8Array(size);
   crypto.getRandomValues(bytes);
@@ -41,20 +34,12 @@ async function sha256(value: string) {
   return bytesToHex(new Uint8Array(digest));
 }
 
-async function derivePassword(password: string, salt: Uint8Array, iterations: number) {
-  const key = await crypto.subtle.importKey("raw", encoder.encode(password.normalize("NFC")), "PBKDF2", false, ["deriveBits"]);
-  const portableSalt = Uint8Array.from(salt).buffer;
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: portableSalt, iterations }, key, 256);
-  return bytesToHex(new Uint8Array(bits));
-}
-
-function constantTimeEqual(left: string, right: string) {
-  const a = encoder.encode(left);
-  const b = encoder.encode(right);
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let index = 0; index < a.length; index += 1) mismatch |= a[index] ^ b[index];
-  return mismatch === 0;
+async function pepperPassword(password: string) {
+  const pepper = runtimeValue("AUTH_PEPPER") || (process.env.NODE_ENV === "development" ? "linkli-local-development-pepper" : null);
+  if (!pepper) throw new Error("Authentication pepper is unavailable");
+  const key = await crypto.subtle.importKey("raw", encoder.encode(pepper), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const digest = await crypto.subtle.sign("HMAC", key, encoder.encode(password.normalize("NFC")));
+  return bytesToHex(new Uint8Array(digest));
 }
 
 export function validatePassword(password: unknown, email: string) {
@@ -72,21 +57,19 @@ export function validatePassword(password: unknown, email: string) {
 }
 
 export async function hashPassword(password: string) {
-  const salt = new Uint8Array(16);
-  crypto.getRandomValues(salt);
   return {
-    hash: await derivePassword(password, salt, PASSWORD_ITERATIONS),
-    salt: bytesToHex(salt),
-    iterations: PASSWORD_ITERATIONS,
+    hash: await bcrypt.hash(await pepperPassword(password), BCRYPT_COST),
+    salt: "bcrypt-hmac-sha256",
+    iterations: BCRYPT_COST,
   };
 }
 
 export async function verifyPassword(password: string, credential?: { password_hash?: unknown; password_salt?: unknown; password_iterations?: unknown } | null) {
-  const validCredential = typeof credential?.password_hash === "string" && typeof credential?.password_salt === "string";
-  const salt = validCredential ? hexToBytes(String(credential.password_salt)) : new Uint8Array(16);
-  const iterations = validCredential ? Number(credential?.password_iterations || PASSWORD_ITERATIONS) : PASSWORD_ITERATIONS;
-  const candidate = await derivePassword(password, salt, iterations);
-  return validCredential && constantTimeEqual(candidate, String(credential.password_hash));
+  const hash = typeof credential?.password_hash === "string" && /^\$2[aby]\$\d{2}\$/.test(credential.password_hash)
+    ? credential.password_hash
+    : DUMMY_BCRYPT_HASH;
+  const valid = await bcrypt.compare(await pepperPassword(password), hash);
+  return hash !== DUMMY_BCRYPT_HASH && valid;
 }
 
 export function safeReturnTo(value: unknown, fallback = "/studio") {
