@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return <main className="auth-shell" id="main-content">
     <Link href="/" className="brand auth-brand">Link<span>li</span></Link>
     <section className="auth-layout">
-      <div className="auth-message"><span className="kicker">טוב שחזרתם</span><h1>העמודים שלכם<br />מחכים לכם.</h1><p>נכנסים וממשיכים ליצור, לערוך ולשתף - בדיוק מהמקום שבו עצרתם.</p><div className="auth-points"><span>✓ כניסה מאובטחת</span><span>✓ העמודים נשמרים בחשבון</span><span>✓ אין צורך בכרטיס אשראי במסלול החינמי</span></div></div>
+      <div className="auth-message"><span className="kicker">טוב שחזרתם</span><h1>העמודים שלכם<br />מחכים לכם.</h1><p>נכנסים וממשיכים ליצור, לערוך ולשתף — בדיוק מהמקום שבו עצרתם.</p><div className="auth-points"><span>✓ כניסה מאובטחת</span><span>✓ העמודים נשמרים בחשבון</span><span>✓ אין צורך בכרטיס אשראי במסלול החינמי</span></div></div>
       <div className="auth-card"><h2>כניסה ל־Linkli</h2><p>הזינו את כתובת הדוא״ל והסיסמה שלכם.</p>{query.passwordChanged === "1" ? <div className="auth-success" role="status">הסיסמה עודכנה. אפשר להתחבר מחדש.</div> : null}<AuthForm mode="login" returnTo={returnTo} /></div>
     </section>
   </main>;

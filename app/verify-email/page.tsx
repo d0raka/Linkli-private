@@ -11,7 +11,7 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
   return <main className="auth-shell" id="main-content">
     <Link href="/" className="brand auth-brand">Link<span>li</span></Link>
     <section className="auth-layout">
-      <div className="auth-message"><span className="kicker">הגנת החשבון</span><h1>מוודאים שזו<br />באמת הכתובת שלך.</h1><p>כדי להיכנס לסביבת העבודה, צריך לאמת את כתובת הדוא״ל באמצעות הקישור ששלחנו.</p><div className="auth-points"><span>✓ פעולה חד־פעמית</span><span>✓ קישור מאובטח</span><span>✓ נדרש לפני הכניסה לסטודיו</span></div></div>
+      <div className="auth-message"><span className="kicker">אבטחת החשבון</span><h1>מוודאים שזו<br />באמת הכתובת שלכם.</h1><p>כדי להיכנס לאזור האישי, צריך לאמת את כתובת הדוא״ל באמצעות הקישור ששלחנו.</p><div className="auth-points"><span>✓ פעולה חד־פעמית</span><span>✓ קישור מאובטח</span><span>✓ נדרש לפני הכניסה לאזור האישי</span></div></div>
       <div className="auth-card"><VerifyEmailClient token={token} sent={query.sent === "1"} deliveryUnavailable={query.delivery === "failed" || query.delivery === "unavailable"} returnTo={returnTo} /></div>
     </section>
   </main>;

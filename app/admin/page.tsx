@@ -45,7 +45,7 @@ export default async function AdminPage() {
       <header className="admin-header">
         <Link href="/studio" className="brand">Link<span>li</span></Link>
         <nav aria-label="ניווט מנהל">
-          <Link href="/studio">הסטודיו שלי</Link>
+          <Link href="/studio">העמודים שלי</Link>
           <span className="admin-owner-badge">OWNER</span>
           <span className="admin-email">{admin.email}</span>
           <LogoutButton />

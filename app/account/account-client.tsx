@@ -37,7 +37,7 @@ export default function AccountClient({ email, initialName, emailVerified }: { e
 
   return <div className="account-grid">
     <section className="account-card">
-      <div className="account-card-heading"><span>פרטים אישיים</span><h2>פרטי החשבון</h2><p>השם יוצג באזור האישי ובממשקי הניהול.</p></div>
+      <div className="account-card-heading"><span>פרטים אישיים</span><h2>פרטי החשבון</h2><p>השם יוצג באזור האישי ובפרטי החשבון.</p></div>
       <form className="account-form" onSubmit={updateProfile}>
         <label>שם מלא<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} minLength={2} maxLength={80} autoComplete="name" required /></label>
         <label>כתובת דוא״ל<input value={email} readOnly dir="ltr" aria-describedby="email-note" /></label>
@@ -55,7 +55,7 @@ export default function AccountClient({ email, initialName, emailVerified }: { e
     </section>
 
     <section className="account-card account-card-wide">
-      <div className="account-card-heading"><span>כניסה לחשבון</span><h2>שינוי סיסמה</h2><p>לאחר השינוי כל החיבורים הפעילים לחשבון ינותקו.</p></div>
+      <div className="account-card-heading"><span>כניסה לחשבון</span><h2>שינוי סיסמה</h2><p>לאחר השינוי תתבקשו להתחבר מחדש בכל המכשירים.</p></div>
       <form className="account-form password-change-grid" onSubmit={updatePassword}>
         <label>הסיסמה הנוכחית<input name="currentPassword" type="password" required maxLength={128} autoComplete="current-password" dir="ltr" /></label>
         <label>סיסמה חדשה<input name="newPassword" type="password" required minLength={15} maxLength={128} autoComplete="new-password" dir="ltr" /></label>

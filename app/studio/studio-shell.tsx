@@ -10,7 +10,7 @@ export default async function StudioShell({ createMode = false }: { createMode?:
   return (
     <main className="studio-body" id="main-content">
       <header className="studio-header">
-        <a href="/studio" className="brand" aria-label="חזרה לעמוד הבית של הסטודיו">Link<span>li</span></a>
+        <a href="/studio" className="brand" aria-label="חזרה לעמודים שלי">Link<span>li</span></a>
         <div className="studio-user">
           {user.isAdmin ? <Link href="/admin" className="admin-link">ניהול</Link> : null}
           <Link href="/account" className="account-link">הגדרות</Link>

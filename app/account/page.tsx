@@ -11,8 +11,8 @@ export default async function AccountPage() {
   return <main className="studio-body" id="main-content">
     <header className="studio-header">
       <Link href="/studio" className="brand">Link<span>li</span></Link>
-      <div className="studio-user"><Link href="/studio" className="account-link">חזרה לסטודיו</Link><span className="plan-pill">{user.plan === "plus" ? "PLUS" : "FREE"}</span><div><b>{user.displayName}</b><span>{user.email}</span></div><div className="user-avatar">{user.displayName.slice(0, 1)}</div><LogoutButton /></div>
+      <div className="studio-user"><Link href="/studio" className="account-link">חזרה לעמודים שלי</Link><span className="plan-pill">{user.plan === "plus" ? "PLUS" : "FREE"}</span><div><b>{user.displayName}</b><span>{user.email}</span></div><div className="user-avatar">{user.displayName.slice(0, 1)}</div><LogoutButton /></div>
     </header>
-    <section className="account-main"><div className="studio-title-row"><div><span className="kicker">החשבון שלי</span><h1>הגדרות חשבון</h1><p>עדכון פרטים, אימות כתובת דוא״ל וניהול הסיסמה.</p></div></div><AccountClient email={user.email} initialName={user.displayName} emailVerified={user.emailVerified} /></section>
+    <section className="account-main"><div className="studio-title-row"><div><span className="kicker">החשבון שלי</span><h1>הגדרות החשבון</h1><p>עדכון פרטים, אימות כתובת הדוא״ל ושינוי הסיסמה.</p></div></div><AccountClient email={user.email} initialName={user.displayName} emailVerified={user.emailVerified} /></section>
   </main>;
 }

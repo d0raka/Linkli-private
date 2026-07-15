@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export default function VerifyEmailClient({ token, sent, deliveryUnavailable, returnTo }: { token: string; sent: boolean; deliveryUnavailable: boolean; returnTo: string }) {
   const [state, setState] = useState<"idle" | "working" | "verified" | "sent" | "error">(sent ? "sent" : deliveryUnavailable ? "error" : "idle");
-  const [message, setMessage] = useState(sent ? "שלחנו אליך הודעה עם קישור לאימות הכתובת." : deliveryUnavailable ? "לא הצלחנו לשלוח את הודעת האימות. אפשר לנסות לשלוח הודעה חדשה." : "");
+  const [message, setMessage] = useState(sent ? "שלחנו אליכם הודעה עם קישור לאימות הכתובת." : deliveryUnavailable ? "לא הצלחנו לשלוח את הודעת האימות. אפשר לנסות לשלוח הודעה חדשה." : "");
 
   async function confirm() {
     setState("working"); setMessage("");
@@ -28,7 +28,7 @@ export default function VerifyEmailClient({ token, sent, deliveryUnavailable, re
     setMessage(data.alreadyVerified ? "כתובת הדוא״ל כבר מאומתת." : "שלחנו הודעת אימות חדשה.");
   }
 
-  if (state === "verified") return <div className="auth-complete"><div className="auth-complete-icon">✓</div><h2>הכתובת אומתה</h2><p>{message}</p><Link href={returnTo} className="button button-primary">המשך לסטודיו</Link></div>;
+  if (state === "verified") return <div className="auth-complete"><div className="auth-complete-icon">✓</div><h2>הכתובת אומתה</h2><p>{message}</p><Link href={returnTo} className="button button-primary">המשך לאזור האישי</Link></div>;
 
   return <div className="verification-actions">
     <h2>אימות כתובת דוא״ל</h2>

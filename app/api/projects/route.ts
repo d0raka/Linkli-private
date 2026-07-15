@@ -3,6 +3,7 @@ import { getProductUser } from "@/lib/auth";
 import { ensureDatabase } from "@/db";
 import { createSlug, projectFromRow } from "@/lib/projects";
 import { getTemplate, safeConfig } from "@/lib/templates";
+import { PROJECT_LIMITS } from "@/lib/plans";
 import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, validUuid } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const user = await getProductUser();
   if (!user) return NextResponse.json({ error: "נדרשת התחברות" }, { status: 401 });
-  if (!user.emailVerified) return NextResponse.json({ error: "יש לאמת את כתובת הדוא״ל לפני הכניסה לסטודיו." }, { status: 403 });
+  if (!user.emailVerified) return NextResponse.json({ error: "יש לאמת את כתובת הדוא״ל לפני הכניסה לאזור האישי." }, { status: 403 });
   const db = await ensureDatabase();
   const results = await db.prepare("SELECT * FROM projects WHERE owner_email = ? ORDER BY updated_at DESC").bind(user.email).all();
   return NextResponse.json({ profile: { email: user.email, displayName: user.displayName, plan: user.plan, emailVerified: user.emailVerified }, projects: results.results.map(projectFromRow) });
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     }
     const db = await ensureDatabase();
     await enforceRateLimit(db, request, "project-create", 20, 600, user.email);
-    const projectLimit = user.plan === "plus" ? 10 : 1;
+    const projectLimit = PROJECT_LIMITS[user.plan];
     const requestId = request.headers.get("idempotency-key") || crypto.randomUUID();
     if (!validUuid(requestId)) return NextResponse.json({ error: "מזהה הבקשה אינו תקין" }, { status: 400 });
     const existing = await db.prepare("SELECT * FROM projects WHERE id = ? AND owner_email = ?").bind(requestId, user.email).first();
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       if (duplicate) return NextResponse.json({ project: projectFromRow(duplicate), duplicate: true });
       const count = await db.prepare("SELECT COUNT(*) AS total FROM projects WHERE owner_email = ?").bind(user.email).first();
       if (Number(count?.total || 0) >= projectLimit) {
-        return NextResponse.json({ error: user.plan === "plus" ? "מסלול Plus מאפשר ליצור עד 10 עמודים פעילים." : "המסלול החינמי כולל עמוד פעיל אחד. אפשר למחוק אותו וליצור עמוד אחר, או לשדרג ל־Plus." }, { status: 403 });
+        return NextResponse.json({ error: user.plan === "plus" ? `מסלול Plus כולל עד ${PROJECT_LIMITS.plus} עמודים.` : "המסלול החינמי כולל עמוד אחד. אפשר למחוק אותו וליצור עמוד אחר, או לשדרג ל־Plus." }, { status: 403 });
       }
       return NextResponse.json({ error: "לא הצלחנו ליצור את העמוד. נסו שוב." }, { status: 409 });
     }

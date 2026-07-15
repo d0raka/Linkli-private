@@ -95,7 +95,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         <p className="experience-copy">{config.subtitle}</p>
         <div className="experience-meta">{config.highlights.map((highlight) => <span key={highlight}>✦ {highlight}</span>)}</div>
         <button className="experience-primary" onClick={start}>{config.startText}<span aria-hidden="true">←</span></button>
-        <p className="experience-hint">אפשר להשלים את התהליך בתוך כדקה</p>
+        <p className="experience-hint">זה לוקח בערך דקה</p>
       </div> : null}
 
       {screen === "question" && question ? <div className="experience-screen experience-question" key={step}>
@@ -105,7 +105,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         <p className="experience-copy">{question.helper}</p>
         <div className="experience-options">{question.options.map((option, index) => <button className={answers[step] === option ? "selected" : ""} onClick={() => choose(option)} key={`${option}-${index}`}><span>{String.fromCharCode(1488 + index)}</span><b>{option}</b><i aria-hidden="true">✓</i></button>)}</div>
         {error ? <p className="experience-error" role="alert">בחרו תשובה כדי להמשיך 😊</p> : null}
-        <div className="experience-navigation"><button className="experience-back" onClick={back}>לשלב הקודם</button><button className="experience-primary" onClick={next}>{step === config.questions.length - 1 ? config.finalButtonText : "לשאלה הבאה"}<span aria-hidden="true">←</span></button></div>
+        <div className="experience-navigation"><button className="experience-back" onClick={back}>חזרה</button><button className="experience-primary" onClick={next}>{step === config.questions.length - 1 ? config.finalButtonText : "לשאלה הבאה"}<span aria-hidden="true">←</span></button></div>
       </div> : null}
 
       {screen === "result" ? <div className="experience-screen experience-result">

@@ -31,13 +31,13 @@ export default function AuthForm({ mode, returnTo }: { mode: "login" | "register
     <label>{mode === "login" ? "דוא״ל או שם משתמש" : "כתובת דוא״ל"}<input name="email" type={mode === "login" ? "text" : "email"} required maxLength={160} autoComplete="username" inputMode={mode === "login" ? "text" : "email"} dir="ltr" /></label>
     <label>סיסמה<input name="password" type="password" required minLength={mode === "register" ? 15 : undefined} maxLength={128} autoComplete={mode === "register" ? "new-password" : "current-password"} dir="ltr" /></label>
     {mode === "register" && <>
-      <p className="password-help">לפחות 15 תווים. מומלץ לבחור משפט שקל לך לזכור וקשה לאחרים לנחש.</p>
+      <p className="password-help">לפחות 15 תווים. מומלץ לבחור משפט שקל לכם לזכור וקשה לאחרים לנחש.</p>
       <label className="auth-honeypot" aria-hidden="true">חברה<input name="company" tabIndex={-1} autoComplete="off" /></label>
       <label className="auth-consent"><input name="acceptTerms" type="checkbox" required /><span>קראתי ואני מאשר/ת את <Link href="/legal#terms">תנאי השימוש</Link> ואת <Link href="/legal#privacy">מדיניות הפרטיות</Link>.</span></label>
     </>}
     {mode === "login" && <div className="auth-recovery-link"><Link href="/forgot-password">שכחת את הסיסמה?</Link></div>}
     {error && <div className="auth-error" role="alert">{error}</div>}
     <button className="button button-primary auth-submit" disabled={sending}>{sending ? "רגע…" : mode === "login" ? "כניסה לחשבון" : "פתיחת חשבון בחינם"}</button>
-    <p className="auth-switch">{mode === "login" ? "עדיין אין לך חשבון?" : "כבר יש לך חשבון?"} <Link href={alternateHref}>{mode === "login" ? "פתיחת חשבון בחינם" : "כניסה לחשבון"}</Link></p>
+    <p className="auth-switch">{mode === "login" ? "עדיין אין לכם חשבון?" : "כבר יש לכם חשבון?"} <Link href={alternateHref}>{mode === "login" ? "פתיחת חשבון בחינם" : "כניסה לחשבון"}</Link></p>
   </form>;
 }

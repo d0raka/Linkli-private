@@ -24,7 +24,7 @@ export default function CheckoutClient({ email }: { email: string }) {
     else window.location.assign("/payment/success?demo=1");
   }
 
-  return <section className="payment-card"><h2>איך נוח לך לשלם?</h2>{error && <div className="checkout-error" role="alert">{error}</div>}<div className="payment-methods">
+  return <section className="payment-card"><h2>איך נוח לכם לשלם?</h2>{error && <div className="checkout-error" role="alert">{error}</div>}<div className="payment-methods">
     {methods.map((method) => <button className="payment-method" key={method.id} onClick={() => pay(method.id)} disabled={loading !== null} aria-label={`תשלום באמצעות ${method.name}`}><span className="payment-icon">{method.icon}</span><span><b>{method.name}</b><span>{method.description}</span></span><span className="payment-arrow">←</span></button>)}
-  </div><p className="checkout-security">🔒 פרטי התשלום מוזנים ונשמרים אצל ספק התשלום בלבד. Linkli מקבל רק אישור על מצב המנוי ואינו שומר מספר כרטיס מלא.</p><p className="checkout-consent">בהמשך לתשלום אני מאשר/ת חיוב בסך ₪9.90 ואת <Link href="/terms">תנאי השימוש</Link>, <Link href="/privacy">מדיניות הפרטיות</Link> ו<Link href="/refunds">מדיניות הביטולים</Link>. אמצעי שתומך במנוי יחויב מדי חודש עד לביטול; אם אמצעי התשלום אינו תומך בחידוש אוטומטי, יידרש אישור תשלום מחדש. אישור יישלח ל־{email}.</p></section>;
+  </div><p className="checkout-security">🔒 פרטי התשלום מוזנים ונשמרים אצל ספק התשלום בלבד. Linkli מקבלת רק אישור על מצב המנוי, ללא מספר הכרטיס המלא.</p><p className="checkout-consent">בהמשך לתשלום אני מאשר/ת חיוב בסך ₪9.90 ואת <Link href="/terms">תנאי השימוש</Link>, <Link href="/privacy">מדיניות הפרטיות</Link> ו<Link href="/refunds">מדיניות הביטולים</Link>. אמצעי תשלום שתומך במנוי יחויב מדי חודש עד לביטול. אם אמצעי התשלום אינו תומך בחידוש אוטומטי, יהיה צורך לאשר כל תשלום מחדש. האישור יישלח ל־{email}.</p></section>;
 }

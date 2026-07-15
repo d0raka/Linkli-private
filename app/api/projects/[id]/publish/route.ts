@@ -3,6 +3,7 @@ import { getProductUser } from "@/lib/auth";
 import { ensureDatabase } from "@/db";
 import { projectFromRow } from "@/lib/projects";
 import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, validUuid } from "@/lib/security";
+import { PROJECT_LIMITS } from "@/lib/plans";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -22,8 +23,8 @@ export async function POST(request: Request, context: Context) {
     const shouldPublish = body.published !== false;
     if (shouldPublish && !current.published) {
       const count = await db.prepare("SELECT COUNT(*) AS total FROM projects WHERE owner_email = ? AND published = 1").bind(user.email).first();
-      const limit = user.plan === "plus" ? 10 : 1;
-      if (Number(count?.total || 0) >= limit) return NextResponse.json({ error: `המסלול שלך מאפשר לפרסם עד ${limit} עמודים.` }, { status: 403 });
+      const limit = PROJECT_LIMITS[user.plan];
+      if (Number(count?.total || 0) >= limit) return NextResponse.json({ error: `המסלול שלכם מאפשר לפרסם עד ${limit} עמודים.` }, { status: 403 });
     }
     await db.prepare("UPDATE projects SET published = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND owner_email = ?")
       .bind(shouldPublish ? 1 : 0, id, user.email).run();
