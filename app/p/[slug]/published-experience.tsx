@@ -91,6 +91,26 @@ function ScratchCanvas({ secretText }: { secretText: string }) {
   );
 }
 
+/* Birthday Candle Blow-out Component */
+function BirthdayCandle({ onExtinguish }: { onExtinguish: () => void }) {
+  const [lit, setLit] = useState(true);
+
+  function blow() {
+    setLit(false);
+    onExtinguish();
+  }
+
+  return (
+    <div className="birthday-candle-box" onClick={blow}>
+      <div className={`candle ${lit ? "lit" : "extinguished"}`}>
+        {lit ? <span className="flame">🔥</span> : <span className="smoke">💨</span>}
+        <div className="stick" />
+      </div>
+      <p>{lit ? "לחצו על הלהבה לכבויה ולבקש משאלה! 🕯️✨" : "המשאלה בדרך אליך! 🎉"}</p>
+    </div>
+  );
+}
+
 export default function PublishedExperience({ slug, config, showWatermark, trackAnalytics = true, previewMode = false, previewCtaHref = "/register" }: { slug: string; config: TemplateConfig; showWatermark: boolean; trackAnalytics?: boolean; previewMode?: boolean; previewCtaHref?: string }) {
   const [screen, setScreen] = useState<Screen>("intro");
   const [step, setStep] = useState(0);
@@ -99,9 +119,10 @@ export default function PublishedExperience({ slug, config, showWatermark, track
 
   // Interactive step states
   const [waxOpened, setWaxOpened] = useState(false);
-  const [giftOpened, setGiftOpened] = useState(false);
+  const [candleExtinguished, setCandleExtinguished] = useState(false);
   const [prankDone, setPrankDone] = useState(false);
   const [prankProgress, setPrankProgress] = useState(0);
+  const [customSong, setCustomSong] = useState("");
 
   useEffect(() => {
     if (!trackAnalytics) return;
@@ -140,7 +161,12 @@ export default function PublishedExperience({ slug, config, showWatermark, track
 
   const scoredQuestions = config.questions.filter((question) => question.correctOption);
   const score = config.questions.reduce((total, question, index) => total + (question.correctOption && answers[index] === question.correctOption ? 1 : 0), 0);
-  const answerSummary = config.questions.map((question, index) => `• ${question.prompt}: ${answers[index]}`).join("\n");
+  
+  const formattedAnswers = [...answers];
+  if (config.theme === "elegant" && customSong.trim()) {
+    formattedAnswers[2] = `${answers[2]} (שיר ל-DJ: ${customSong.trim()})`;
+  }
+  const answerSummary = config.questions.map((question, index) => `• ${question.prompt}: ${formattedAnswers[index] || "נבחר"}`).join("\n");
   const whatsappMessage = whatsappSafeText(`${config.whatsappText}\n\n${answerSummary}`).slice(0, 1800);
   const whatsappUrl = `https://wa.me/${config.whatsapp || ""}?text=${encodeURIComponent(whatsappMessage)}`;
   const question = config.questions[step];
@@ -173,9 +199,10 @@ export default function PublishedExperience({ slug, config, showWatermark, track
     setStep(0);
     setError(false);
     setWaxOpened(false);
-    setGiftOpened(false);
+    setCandleExtinguished(false);
     setPrankDone(false);
     setPrankProgress(0);
+    setCustomSong("");
     setScreen("intro");
   }
 
@@ -186,6 +213,9 @@ export default function PublishedExperience({ slug, config, showWatermark, track
 
   // Friendship badge formula
   const friendshipBadge = score === scoredQuestions.length ? "🥇 חבר זהב — 100% נפש תאומה!" : score >= 1 ? "🥈 חבר כסף — 80% שותף אמת" : "🥉 חבר כבוד — 50% מתחבר על כוס קפה";
+
+  // Google calendar link helper for RSVP
+  const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(config.headline)}&details=${encodeURIComponent(config.subtitle)}&location=${encodeURIComponent(config.highlights[1] || "")}`;
 
   return <main className={`experience-shell experience-${config.theme}`} id="main-content" style={{ "--page-soft": config.accentSoft, "--page-accent": config.accent } as React.CSSProperties}>
     {previewMode ? <div className="template-preview-bar"><Link href="/#templates" className="template-preview-back">חזרה לכל התבניות</Link><Link href={previewCtaHref} data-marketing-event="preview_create" className="button button-primary button-small">יצירת התבנית בחינם</Link></div> : null}
@@ -200,7 +230,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         {config.theme === "letter" && !waxOpened ? (
           <div className="wax-envelope-card" onClick={() => setWaxOpened(true)}>
             <div className="wax-seal">💌</div>
-            <h3>מכתב אישי מיוחד</h3>
+            <h3>מכתב אישי מהלב</h3>
             <p>לחצו לפתיחת חותם השעווה ✉️</p>
           </div>
         ) : (
@@ -231,6 +261,20 @@ export default function PublishedExperience({ slug, config, showWatermark, track
             </button>
           ))}
         </div>
+
+        {/* DJ Song input for RSVP step 3 */}
+        {config.theme === "elegant" && step === 2 && (
+          <div className="dj-song-input-box">
+            <label>🎵 רצו שיר שאתם חייבים לשמוע ברחבה (רשות):</label>
+            <input
+              type="text"
+              value={customSong}
+              placeholder="שם השיר והאמן..."
+              onChange={(e) => setCustomSong(e.target.value)}
+              className="dj-input-field"
+            />
+          </div>
+        )}
 
         {error ? <p className="experience-error" role="alert">בחרו תשובה כדי להמשיך 😊</p> : null}
         <div className="experience-navigation"><button className="experience-back" onClick={back}>חזרה</button><button className="experience-primary" onClick={next}>{step === config.questions.length - 1 ? config.finalButtonText : "לשאלה הבאה"}<span aria-hidden="true">←</span></button></div>
@@ -263,13 +307,12 @@ export default function PublishedExperience({ slug, config, showWatermark, track
 
             <h2>{config.successTitle}</h2>
 
-            {/* Special Gift Box for Birthday */}
-            {config.theme === "party" && !giftOpened ? (
-              <div className="gift-unwrapper" onClick={() => setGiftOpened(true)}>
-                <span className="gift-emoji">🎁</span>
-                <p>לחצו לפתיחת קופסת ההפתעה!</p>
-              </div>
-            ) : (
+            {/* Special Interactive Candle for Birthday */}
+            {config.theme === "party" && (
+              <BirthdayCandle onExtinguish={() => setCandleExtinguished(true)} />
+            )}
+
+            {config.theme === "party" && !candleExtinguished ? null : (
               <p className="experience-copy">{config.successText}</p>
             )}
 
@@ -278,7 +321,14 @@ export default function PublishedExperience({ slug, config, showWatermark, track
               <ScratchCanvas secretText={config.successTitle} />
             )}
 
-            <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{answers[index]}</b></p></div>)}</div>
+            {/* Special RSVP Add to Calendar Button */}
+            {config.theme === "elegant" && (
+              <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer" className="calendar-add-button">
+                <span>📅</span> הוספת האירוע ל-Google Calendar
+              </a>
+            )}
+
+            <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>
             {config.whatsapp || previewMode ? <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="experience-primary experience-whatsapp" onClick={trackClick}><span aria-hidden="true">◉</span>{previewMode ? "שיתוף התוצאה ב־WhatsApp" : config.buttonText}</a> : null}
             <button onClick={restart} className="experience-restart">התחלה מחדש</button>
           </>

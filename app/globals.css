@@ -405,3 +405,17 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
 
 @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 @keyframes wiggle { 0%,100%{transform:rotate(0deg);} 25%{transform:rotate(-10deg);} 75%{transform:rotate(10deg);} }
+
+.birthday-candle-box { border:2px dashed #7c3aed; background:#f5efff; border-radius:18px; padding:20px; text-align:center; cursor:pointer; margin:15px 0; }
+.candle { font-size:48px; line-height:1; margin-bottom:8px; display:inline-block; }
+.flame { animation:flicker .8s infinite alternate ease-in-out; display:inline-block; }
+.birthday-candle-box p { color:#7c3aed; font-weight:800; font-size:12px; margin:4px 0 0; }
+
+.dj-song-input-box { margin-top:14px; text-align:right; }
+.dj-song-input-box label { font-size:11px; font-weight:800; color:var(--muted); display:block; margin-bottom:5px; }
+.dj-input-field { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:13px; outline:0; }
+.dj-input-field:focus { border-color:var(--page-accent); }
+
+.calendar-add-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:12px; border-radius:12px; background:#f0fdf4; border:1px solid #86efac; color:#166534; font-weight:800; font-size:13px; text-decoration:none; margin:12px 0 6px; }
+
+@keyframes flicker { 0%{transform:scale(1) rotate(-2deg);} 100%{transform:scale(1.15) rotate(2deg);} }
