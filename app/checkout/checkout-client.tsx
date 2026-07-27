@@ -14,17 +14,23 @@ const methods: Array<{ id: PaymentMethod; icon: string; name: string; descriptio
 export default function CheckoutClient({ email }: { email: string }) {
   const [loading, setLoading] = useState<PaymentMethod | null>(null);
   const [error, setError] = useState("");
+  const [billingUnavailable, setBillingUnavailable] = useState(false);
 
   async function pay(method: PaymentMethod) {
     setLoading(method); setError("");
     const response = await fetch("/api/billing/upgrade", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ method }) });
     const data = await response.json();
-    if (!response.ok) { setLoading(null); setError(data.error || "לא הצלחנו לפתוח את התשלום"); return; }
+    if (!response.ok) {
+      setLoading(null);
+      setBillingUnavailable(data.code === "billing_unavailable");
+      setError(data.error || "לא הצלחנו לפתוח את התשלום");
+      return;
+    }
     if (data.url) window.location.assign(data.url);
     else window.location.assign("/payment/success?demo=1");
   }
 
-  return <section className="payment-card"><h2>איך נוח לכם לשלם?</h2>{error && <div className="checkout-error" role="alert">{error}</div>}<div className="payment-methods">
+  return <section className="payment-card"><h2>איך נוח לכם לשלם?</h2>{error && <div className={billingUnavailable ? "checkout-beta-note" : "checkout-error"} role="alert"><strong>{error}</strong>{billingUnavailable ? <><span>אם תרצו להצטרף כמשתמשים הראשונים של Plus, כתבו לנו ונעדכן אתכם אישית.</span><Link className="button button-outline button-small" href="/contact?topic=billing">כתיבת הודעה</Link></> : null}</div>}<div className="payment-methods">
     {methods.map((method) => <button className="payment-method" key={method.id} onClick={() => pay(method.id)} disabled={loading !== null} aria-label={`תשלום באמצעות ${method.name}`}><span className="payment-icon">{method.icon}</span><span><b>{method.name}</b><span>{method.description}</span></span><span className="payment-arrow">←</span></button>)}
   </div><p className="checkout-security">🔒 פרטי התשלום מוזנים ונשמרים אצל ספק התשלום בלבד. Linkli מקבלת רק אישור על מצב המנוי, ללא מספר הכרטיס המלא.</p><p className="checkout-consent">בהמשך לתשלום אני מאשר/ת חיוב בסך ₪9.90 ואת <Link href="/terms">תנאי השימוש</Link>, <Link href="/privacy">מדיניות הפרטיות</Link> ו<Link href="/refunds">מדיניות הביטולים</Link>. אמצעי תשלום שתומך במנוי יחויב מדי חודש עד לביטול. אם אמצעי התשלום אינו תומך בחידוש אוטומטי, יהיה צורך לאשר כל תשלום מחדש. האישור יישלח ל־{email}.</p></section>;
 }

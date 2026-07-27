@@ -24,15 +24,16 @@ export default async function LandingPage() {
 
       <section className="hero wrap">
         <div className="hero-copy">
-          <h1>הופכים רעיון קטן<br />לקישור ש<span className="marker">מרגיש כמו חוויה.</span></h1>
-          <p>יוצרים הזמנה, הפתעה, חידון או ברכה אישית עם שאלות, אנימציות ועמוד סיום מעוצב — ומשתפים קישור שנראה מצוין בכל מכשיר.</p>
+          <span className="eyebrow"><i className="live-dot" /> בטא פתוחה · העמוד הראשון בחינם</span>
+          <h1>הופכים רגע מיוחד<br />לקישור ש<span className="marker">אי אפשר להתעלם ממנו.</span></h1>
+          <p>יוצרים הזמנה, הפתעה, חידון או ברכה אישית עם שאלות, אנימציות ועמוד סיום מעוצב — ואז שולחים קישור אחד שנראה מצוין בכל מכשיר.</p>
           <div className="hero-actions">
             <Link className="button button-primary" href={startHref}>{user ? "לעמודים שלי" : "יצירת עמוד בחינם"} <span>←</span></Link>
             <a className="text-link" href="#templates">לצפייה בתבניות</a>
           </div>
           <div className="trust-row">
             <div className="avatar-stack"><i>ע</i><i>ד</i><i>נ</i><i>+</i></div>
-            <span>ללא כרטיס אשראי · עמוד ראשון בתוך דקות</span>
+            <span>ללא כרטיס אשראי · מוכנים לשיתוף בתוך דקות</span>
           </div>
         </div>
 
@@ -63,7 +64,7 @@ export default async function LandingPage() {
       </section>
 
       <section className="section wrap" id="templates">
-        <div className="section-heading"><div><span className="kicker">מתחילים מתבנית</span><h2>משהו לכל רגע</h2></div><p>כל תבנית מגיעה מוכנה. נשאר רק להפוך אותה לשלכם.</p></div>
+        <div className="section-heading"><div><span className="kicker">מתחילים מתבנית</span><h2>משהו לכל רגע</h2></div><p>בוחרים רגע, פותחים תצוגה חיה, ואז הופכים אותה לעמוד משלכם.</p></div>
         <div className="template-grid landing-templates">
           {templates.map((template, index) => (
             <article className={`template-showcase template-tone-${index + 1}`} key={template.id}>
@@ -86,10 +87,10 @@ export default async function LandingPage() {
       </section>
 
       <section className="section wrap" id="pricing">
-        <div className="center-heading"><span className="kicker">פשוט לבחור</span><h2>המסלול שמתאים לכם</h2><p>כל כלי העריכה זמינים בשני המסלולים. Plus מוסיף עוד עמודים, את כל התבניות ועמודים ללא מיתוג Linkli.</p></div>
+        <div className="center-heading"><span className="kicker">פשוט להתחיל</span><h2>מתחילים בחינם, משדרגים כשצריך</h2><p>העמוד הראשון נותן לכם לבדוק את הרעיון באמת. Plus מיועד ליוצרים, זוגות ומארחים שרוצים כמה עמודים וקישור נקי בלי מיתוג.</p></div>
         <div className="pricing-grid">
-          <article className="price-card"><div><span className="plan-label">חינם</span><h3>₪0 <small>/ ללא הגבלת זמן</small></h3><p>כל מה שצריך כדי ליצור ולשתף עמוד אחד.</p></div><ul><li>✓ עמוד אחד</li><li>✓ {freeTemplateCount} תבניות לבחירה</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li className="muted">כולל מיתוג Linkli</li></ul><Link href={startHref} className="button button-outline">{user ? "לעמודים שלי" : "מתחילים בחינם"}</Link></article>
-          <article className="price-card featured"><div className="popular">יותר מקום ליצור</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>יותר עמודים, כל התבניות וללא מיתוג Linkli.</p></div><ul><li>✓ עד {PROJECT_LIMITS.plus} עמודים</li><li>✓ כל {totalTemplateCount} התבניות, כולל תבניות חדשות</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li>✓ ללא מיתוג Linkli</li></ul><Link href="/checkout" className="button button-primary">שדרוג ל־Plus <span>←</span></Link></article>
+          <article className="price-card"><div><span className="plan-label">חינם</span><h3>₪0 <small>/ ללא הגבלת זמן</small></h3><p>דרך מהירה ליצור עמוד אחד ולבדוק איך הוא עובד אצלכם.</p></div><ul><li>✓ עמוד אחד</li><li>✓ {freeTemplateCount} תבניות לבחירה</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li className="muted">כולל מיתוג Linkli</li></ul><Link href={startHref} className="button button-outline">{user ? "לעמודים שלי" : "מתחילים בחינם"}</Link></article>
+          <article className="price-card featured"><div className="popular">ליוצרים סדרתיים</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>למי שיוצר כמה רגעים, אירועים או גרסאות ורוצה לשתף בלי הסחות.</p></div><ul><li>✓ עד {PROJECT_LIMITS.plus} עמודים</li><li>✓ כל {totalTemplateCount} התבניות, כולל תבניות חדשות</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li>✓ ללא מיתוג Linkli</li></ul><Link href="/checkout" className="button button-primary">שדרוג ל־Plus <span>←</span></Link></article>
         </div>
       </section>
 

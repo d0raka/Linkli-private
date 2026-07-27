@@ -27,7 +27,11 @@ export async function POST(request: Request) {
       await db.prepare("UPDATE users SET plan = 'plus', updated_at = CURRENT_TIMESTAMP WHERE email = ?").bind(user.email).run();
       return NextResponse.json({ demo: true });
     }
-    return NextResponse.json({ error: `אמצעי התשלום עדיין לא הופעל. יש לחבר את ${key} בהגדרות האתר.` }, { status: 503 });
+    return NextResponse.json({
+      code: "billing_unavailable",
+      error: "השדרוג ל־Plus עדיין נפתח בהדרגה במהלך הבטא.",
+      nextStep: "אפשר להשאיר לנו הודעה ונעדכן כשאפשר יהיה לשדרג.",
+    }, { status: 503 });
   } catch (error) {
     return errorResponse(error);
   }
