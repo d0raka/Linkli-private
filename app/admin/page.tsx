@@ -13,12 +13,15 @@ export default async function AdminPage() {
     db.prepare(`SELECT
       (SELECT COUNT(*) FROM users) AS users,
       (SELECT COUNT(*) FROM users WHERE plan = 'plus') AS plus_users,
+      (SELECT COUNT(*) FROM users WHERE plan = 'plus' AND billing_customer_id IS NOT NULL AND TRIM(billing_customer_id) <> '') AS paying_customers,
+      (SELECT COUNT(DISTINCT owner_email) FROM projects) AS activated_users,
+      (SELECT COUNT(DISTINCT owner_email) FROM projects WHERE published = 1) AS publishing_users,
       (SELECT COUNT(*) FROM projects) AS projects,
       (SELECT COUNT(*) FROM projects WHERE published = 1) AS published,
       (SELECT COALESCE(SUM(views), 0) FROM projects) AS views,
       (SELECT COALESCE(SUM(clicks), 0) FROM projects) AS clicks,
       (SELECT COUNT(*) FROM support_requests WHERE status = 'new') AS open_support`),
-    db.prepare(`SELECT users.email, login_aliases.username, users.display_name, users.plan, users.created_at,
+    db.prepare(`SELECT users.email, login_aliases.username, users.display_name, users.plan, users.billing_customer_id, users.created_at,
       COALESCE(user_controls.status, 'active') AS status,
       COALESCE(user_controls.note, '') AS note,
       CASE WHEN email_verifications.user_email IS NULL OR email_verifications.verified_at IS NOT NULL THEN 1 ELSE 0 END AS email_verified,
@@ -29,7 +32,7 @@ export default async function AdminPage() {
       LEFT JOIN user_controls ON user_controls.email = users.email
       LEFT JOIN email_verifications ON email_verifications.user_email = users.email
       LEFT JOIN projects ON projects.owner_email = users.email
-      GROUP BY users.email, login_aliases.username, users.display_name, users.plan, users.created_at, user_controls.status, user_controls.note, email_verifications.user_email, email_verifications.verified_at
+      GROUP BY users.email, login_aliases.username, users.display_name, users.plan, users.billing_customer_id, users.created_at, user_controls.status, user_controls.note, email_verifications.user_email, email_verifications.verified_at
       ORDER BY users.created_at DESC LIMIT 200`),
     db.prepare(`SELECT id, owner_email, title, slug, template_id, published, views, clicks, updated_at
       FROM projects ORDER BY updated_at DESC LIMIT 200`),
@@ -55,6 +58,9 @@ export default async function AdminPage() {
         initialMetrics={{
           users: Number(metrics.users || 0),
           plusUsers: Number(metrics.plus_users || 0),
+          payingCustomers: Number(metrics.paying_customers || 0),
+          activatedUsers: Number(metrics.activated_users || 0),
+          publishingUsers: Number(metrics.publishing_users || 0),
           projects: Number(metrics.projects || 0),
           published: Number(metrics.published || 0),
           views: Number(metrics.views || 0),

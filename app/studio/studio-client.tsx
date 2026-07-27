@@ -126,6 +126,12 @@ export default function StudioClient({ initialName, initialMode = "dashboard" }:
   const publishedCount = projects.filter((project) => project.published).length;
   const totalViews = projects.reduce((sum, project) => sum + project.views, 0);
   const totalClicks = projects.reduce((sum, project) => sum + project.clicks, 0);
+  const firstPublishedProject = projects.find((project) => project.published);
+  const firstPublishedUrl = firstPublishedProject ? `https://linkli.online/p/${firstPublishedProject.slug}` : "";
+  const whatsappLaunchUrl = firstPublishedProject
+    ? `https://wa.me/?text=${encodeURIComponent(`${firstPublishedProject.config.headline}\n${firstPublishedUrl}`)}`
+    : "";
+  const launchProgress = Number(projects.length > 0) + Number(publishedCount > 0) + Number(totalViews > 0);
 
   if (loading) return <div className="loading">טוענים את האזור האישי…</div>;
 
@@ -140,6 +146,24 @@ export default function StudioClient({ initialName, initialMode = "dashboard" }:
       {!profile.emailVerified && <div className="verification-banner"><div><b>כתובת הדוא״ל עדיין לא אומתה</b><span>אימות הכתובת שומר על החשבון ומאפשר שחזור גישה.</span></div><a className="button button-outline" href="/verify-email">אימות עכשיו</a></div>}
 
       {profile.plan === "free" && mode !== "editor" && <div className="upgrade-banner"><div><h3>צריכים יותר מעמוד אחד?</h3><p>Plus כולל עד {PROJECT_LIMITS.plus} עמודים, את כל התבניות ועמודים ללא מיתוג Linkli — ב־₪9.90 לחודש.</p></div><button className="button" onClick={upgrade}>שדרוג ל־Plus</button></div>}
+
+      {mode === "dashboard" && launchProgress < 3 ? <section className="launch-checklist" aria-labelledby="launch-checklist-title">
+        <div className="launch-checklist-heading">
+          <div><span>מסלול השקה</span><h2 id="launch-checklist-title">מעמוד ראשון לביקור ראשון</h2><p>שלושה צעדים קצרים עד שהעמוד שלכם עובד באמת.</p></div>
+          <strong>{launchProgress}/3</strong>
+        </div>
+        <div className="launch-progress" aria-label={`${launchProgress} מתוך 3 צעדים הושלמו`}><span style={{ width: `${(launchProgress / 3) * 100}%` }} /></div>
+        <ol>
+          <li className={projects.length ? "complete" : "current"}><span>{projects.length ? "✓" : "1"}</span><div><b>יצירת עמוד</b><small>{projects.length ? "העמוד הראשון מוכן לעריכה" : "בחרו תבנית והתחילו להתאים"}</small></div></li>
+          <li className={publishedCount ? "complete" : projects.length ? "current" : ""}><span>{publishedCount ? "✓" : "2"}</span><div><b>פרסום העמוד</b><small>{publishedCount ? "יש לכם קישור פעיל" : "שמרו ופרסמו כשהעמוד מוכן"}</small></div></li>
+          <li className={totalViews ? "complete" : publishedCount ? "current" : ""}><span>{totalViews ? "✓" : "3"}</span><div><b>הביקור הראשון</b><small>{totalViews ? "מישהו כבר נכנס לעמוד" : "שתפו את הקישור עם אדם אחד"}</small></div></li>
+        </ol>
+        <div className="launch-checklist-action">
+          {!projects.length ? <Link className="button button-primary" href="/studio/create">יצירת העמוד הראשון</Link>
+            : !publishedCount ? <button className="button button-primary" onClick={() => { setSelectedId(projects[0].id); setMode("editor"); }}>המשך לעריכה ופרסום</button>
+              : <a className="button button-whatsapp" href={whatsappLaunchUrl} target="_blank" rel="noreferrer">שיתוף ראשון ב־WhatsApp</a>}
+        </div>
+      </section> : null}
 
       {mode === "templates" ? (
         <section className="studio-panel">
@@ -161,7 +185,7 @@ export default function StudioClient({ initialName, initialMode = "dashboard" }:
           <aside className="studio-panel project-sidebar"><h2>העמודים שלי</h2><div className="project-list">{projects.length ? projects.map((project) => <div className="project-list-row" key={project.id}><button className={`project-item ${selectedId === project.id ? "active" : ""}`} onClick={() => setSelectedId(project.id)}><b>{project.title}</b><span>{project.published ? "🟢 פורסם" : "טיוטה"} · /p/{project.slug}</span></button><button className="project-quick-delete" onClick={() => removeProject(project)} aria-label={`מחיקת העמוד ${project.title}`} title="מחיקת העמוד">🗑️</button></div>) : <div className="empty-projects">עדיין לא יצרת עמודים.<br />אפשר להתחיל מבחירת תבנית ✨</div>}</div></aside>
           <section>
             <div className="metrics"><div className="metric"><strong>{publishedCount}</strong><span>עמודים שפורסמו</span></div><div className="metric"><strong>{totalViews}</strong><span>צפיות</span></div><div className="metric"><strong>{totalClicks}</strong><span>לחיצות על הכפתור</span></div></div>
-            <div className="studio-panel">{selected ? <><h2>{selected.title}</h2><p style={{color:"var(--muted)",fontSize:13}}>תבנית: {templates.find((item) => item.id === selected.templateId)?.name} · עודכן לאחרונה {new Date(selected.updatedAt).toLocaleDateString("he-IL")}</p><div className="editor-actions"><button className="button button-primary" onClick={() => setMode("editor")}>עריכת העמוד</button>{selected.published && <a className="button button-outline" href={`/p/${selected.slug}`} target="_blank" rel="noreferrer">פתיחת העמוד ↗</a>}</div></> : <><h2>העמוד הראשון מחכה לכם</h2><p style={{color:"var(--muted)"}}>בוחרים תבנית ומקבלים עמוד מוכן לעריכה ולשיתוף.</p><Link className="button button-primary" href="/studio/create">בחירת תבנית</Link></>}</div>
+            <div className="studio-panel">{selected ? <><h2>{selected.title}</h2><p style={{color:"var(--muted)",fontSize:13}}>תבנית: {templates.find((item) => item.id === selected.templateId)?.name} · עודכן לאחרונה {new Date(selected.updatedAt).toLocaleDateString("he-IL")}</p><div className="editor-actions"><button className="button button-primary" onClick={() => setMode("editor")}>עריכת העמוד</button>{selected.published && <><a className="button button-outline" href={`/p/${selected.slug}`} target="_blank" rel="noreferrer">פתיחת העמוד ↗</a><a className="button button-whatsapp" href={`https://wa.me/?text=${encodeURIComponent(`${selected.config.headline}\nhttps://linkli.online/p/${selected.slug}`)}`} target="_blank" rel="noreferrer">שיתוף ב־WhatsApp</a></>}</div></> : <><h2>העמוד הראשון מחכה לכם</h2><p style={{color:"var(--muted)"}}>בוחרים תבנית ומקבלים עמוד מוכן לעריכה ולשיתוף.</p><Link className="button button-primary" href="/studio/create">בחירת תבנית</Link></>}</div>
           </section>
         </div>
       )}
