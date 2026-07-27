@@ -11,7 +11,7 @@ const methods: Array<{ id: PaymentMethod; icon: string; name: string; descriptio
   { id: "bit", icon: "bit", name: "bit", description: "תשלום דרך bit, בהתאם לאפשרויות ספק הסליקה" },
 ];
 
-export default function CheckoutClient({ email }: { email: string }) {
+export default function CheckoutClient({ email, paymentReady }: { email: string; paymentReady: boolean }) {
   const [loading, setLoading] = useState<PaymentMethod | null>(null);
   const [error, setError] = useState("");
   const [billingUnavailable, setBillingUnavailable] = useState(false);
@@ -29,6 +29,8 @@ export default function CheckoutClient({ email }: { email: string }) {
     if (data.url) window.location.assign(data.url);
     else window.location.assign("/payment/success?demo=1");
   }
+
+  if (!paymentReady) return <section className="payment-card"><h2>Plus נפתח בהדרגה</h2><div className="checkout-beta-note" role="status"><strong>אנחנו עדיין מחברים את מערכת התשלום.</strong><span>אם תרצו להצטרף כמשתמשים הראשונים ולקבל גישה כש־Plus נפתח, כתבו לנו ונעדכן אתכם אישית.</span><Link className="button button-outline button-small" href="/contact?topic=billing">הצטרפות לרשימת המתנה</Link></div><p className="checkout-security">בינתיים אפשר ליצור ולשתף עמוד ראשון בחינם, בלי כרטיס אשראי.</p></section>;
 
   return <section className="payment-card"><h2>איך נוח לכם לשלם?</h2>{error && <div className={billingUnavailable ? "checkout-beta-note" : "checkout-error"} role="alert"><strong>{error}</strong>{billingUnavailable ? <><span>אם תרצו להצטרף כמשתמשים הראשונים של Plus, כתבו לנו ונעדכן אתכם אישית.</span><Link className="button button-outline button-small" href="/contact?topic=billing">כתיבת הודעה</Link></> : null}</div>}<div className="payment-methods">
     {methods.map((method) => <button className="payment-method" key={method.id} onClick={() => pay(method.id)} disabled={loading !== null} aria-label={`תשלום באמצעות ${method.name}`}><span className="payment-icon">{method.icon}</span><span><b>{method.name}</b><span>{method.description}</span></span><span className="payment-arrow">←</span></button>)}

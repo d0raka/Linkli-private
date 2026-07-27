@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 import AccessibilityControls from "./accessibility-controls";
+import CookieNotice from "./cookie-notice";
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <a className="skip-link" href="#main-content">דילוג לתוכן הראשי</a>
         {children}
         <AccessibilityControls />
+        <CookieNotice />
       </body>
     </html>
   );

@@ -5,7 +5,7 @@ export const metadata = { title: "הצהרת נגישות | Linkli" };
 
 export default function AccessibilityPage() {
   return <main className="legal-shell" id="main-content"><LegalHeader /><article className="legal-main"><div className="legal-card">
-    <span className="kicker">שירות שוויוני לכולם</span><h1>הצהרת נגישות</h1><p className="updated">עודכן לאחרונה: 15 ביולי 2026</p>
+    <span className="kicker">שירות שוויוני לכולם</span><h1>הצהרת נגישות</h1><p className="updated">עודכן לאחרונה: 27 ביולי 2026</p>
     <p>Linkli רואה חשיבות רבה במתן אפשרות שווה לאנשים עם מוגבלות להשתמש בשירות, ליצור עמודים אינטראקטיביים ולצפות בהם באופן עצמאי, נוח ומכבד.</p>
     <div className="legal-note">האתר תוכנן מתוך שאיפה לעמוד בדרישות תקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), התשע״ג–2013, ובהוראות התקן הישראלי ת״י 5568 המבוסס על WCAG 2.0 ברמת AA. הצהרה זו אינה מהווה אישור של מורשה נגישות או תוצאות של בדיקת התאמה חיצונית.</div>
     <h2>התאמות הנגישות שבוצעו</h2><ul>

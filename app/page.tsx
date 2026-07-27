@@ -32,7 +32,7 @@ export default async function LandingPage() {
             <a className="text-link" href="#templates">לצפייה בתבניות</a>
           </div>
           <div className="trust-row">
-            <div className="avatar-stack"><i>ע</i><i>ד</i><i>נ</i><i>+</i></div>
+            <span className="trust-icon" aria-hidden="true">✦</span>
             <span>ללא כרטיס אשראי · מוכנים לשיתוף בתוך דקות</span>
           </div>
         </div>
@@ -54,8 +54,8 @@ export default async function LandingPage() {
               <div className="mini-button">לשאלה הבאה ←</div>
             </div>
           </div>
-          <div className="stat-bubble stat-views"><strong>1,248</strong><span>צפיות 👀</span></div>
-          <div className="stat-bubble stat-time"><strong>2:14</strong><span>זמן יצירה ⚡</span></div>
+          <div className="stat-bubble stat-views"><strong>3</strong><span>שאלות קצרות ✍️</span></div>
+          <div className="stat-bubble stat-time"><strong>1</strong><span>קישור לשיתוף ⚡</span></div>
         </div>
       </section>
 
