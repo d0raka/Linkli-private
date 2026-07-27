@@ -16,6 +16,58 @@ function whatsappSafeText(value: string) {
     .trim();
 }
 
+/* Live Countdown Component for Event RSVP */
+function EventCountdown() {
+  const [timeLeft, setTimeLeft] = useState({ days: 48, hours: 14, minutes: 32, seconds: 45 });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
+        return { ...prev, seconds: 59, minutes: Math.max(0, prev.minutes - 1) };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="event-countdown-box">
+      <span className="countdown-title">⏱️ סופרים את הימים לאירוע:</span>
+      <div className="countdown-grid">
+        <div className="countdown-unit"><b>{timeLeft.days}</b><small>ימים</small></div>
+        <div className="countdown-unit"><b>{timeLeft.hours}</b><small>שעות</small></div>
+        <div className="countdown-unit"><b>{timeLeft.minutes}</b><small>דקות</small></div>
+        <div className="countdown-unit"><b>{timeLeft.seconds}</b><small>שניות</small></div>
+      </div>
+    </div>
+  );
+}
+
+/* Interactive Memories Story Slide Component */
+function MemoriesSlider() {
+  const slides = [
+    { icon: "🌄", title: "איך הכול התחיל", text: "הטיול הראשון שלנו שבו הבנו שאנחנו בלתי נפרדים." },
+    { icon: "🥂", title: "הרגעים הגדולים", text: "החגיגות והערבים המטורפים שעד היום מדברים עליהם." },
+    { icon: "❤️", title: "הרגעים הקטנים", text: "הקפה של הבוקר, הבדיחות הפנימיות והחיוך שבבית." },
+  ];
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  return (
+    <div className="memories-slider-box">
+      <div className="memory-slide-card">
+        <span className="slide-icon">{slides[currentSlide].icon}</span>
+        <h4>{slides[currentSlide].title}</h4>
+        <p>{slides[currentSlide].text}</p>
+      </div>
+      <div className="slider-dots">
+        {slides.map((_, i) => (
+          <button key={i} className={i === currentSlide ? "active" : ""} onClick={() => setCurrentSlide(i)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* Scratch Card Canvas Component for Date Theme */
 function ScratchCanvas({ secretText }: { secretText: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -256,16 +308,24 @@ export default function PublishedExperience({ slug, config, showWatermark, track
             <h1>{config.headline}</h1>
             <p className="experience-copy">{config.subtitle}</p>
 
-            {/* Special Event Pass Details Header for RSVP */}
+            {/* Live Event Pass & Countdown for RSVP */}
             {config.theme === "elegant" && (
-              <div className="rsvp-ticket-header">
-                <div className="rsvp-ticket-row"><span>📅 תאריך ושעה:</span><b>{config.highlights[0] || "18.09.2026 · 19:30"}</b></div>
-                <div className="rsvp-ticket-row"><span>📍 מיקום:</span><b>{config.highlights[1] || "חוות רונית"}</b></div>
-                <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className="rsvp-waze-link">🧭 ניווט ב-Waze</a>
-              </div>
+              <>
+                <EventCountdown />
+                <div className="rsvp-ticket-header">
+                  <div className="rsvp-ticket-row"><span>📅 תאריך ושעה:</span><b>{config.highlights[0] || "18.09.2026 · 19:30"}</b></div>
+                  <div className="rsvp-ticket-row"><span>📍 מיקום:</span><b>{config.highlights[1] || "חוות רונית"}</b></div>
+                  <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className="rsvp-waze-link">🧭 ניווט ב-Waze למקום האירוע</a>
+                </div>
+              </>
             )}
 
-            {config.theme !== "elegant" && (
+            {/* Photo Slide Carousel for Memories Theme */}
+            {config.theme === "memories" && (
+              <MemoriesSlider />
+            )}
+
+            {config.theme !== "elegant" && config.theme !== "memories" && (
               <div className="experience-meta">{config.highlights.map((highlight) => <span key={highlight}>✦ {highlight}</span>)}</div>
             )}
 

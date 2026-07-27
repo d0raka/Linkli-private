@@ -471,3 +471,19 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
 .share-pill-wa { background:#25d366; color:white; border-color:#16a34a; }
 .share-pill-tg { background:#0088cc; color:white; border-color:#0284c7; }
 .share-pill-copy { background:#f1f5f9; border-color:#cbd5e1; color:#1e293b; }
+
+.event-countdown-box { background:#0f766e; color:white; padding:14px; border-radius:14px; margin-bottom:12px; text-align:center; }
+.countdown-title { font-size:11px; font-weight:800; display:block; margin-bottom:8px; color:#ccfbf1; }
+.countdown-grid { display:flex; justify-content:center; gap:12px; }
+.countdown-unit { background:rgba(255,255,255,.15); padding:6px 10px; border-radius:10px; min-width:55px; }
+.countdown-unit b { font-size:18px; font-weight:900; display:block; line-height:1.2; }
+.countdown-unit small { font-size:9px; opacity:.85; }
+
+.memories-slider-box { background:#f5f3ff; border:1px solid #c4b5fd; border-radius:16px; padding:16px; margin:14px 0; text-align:center; }
+.memory-slide-card { min-height:100px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.slide-icon { font-size:38px; margin-bottom:6px; }
+.memory-slide-card h4 { margin:4px 0 2px; font-size:15px; color:#4c1d95; font-weight:900; }
+.memory-slide-card p { font-size:12px; color:#6d28d9; margin:0; }
+.slider-dots { display:flex; justify-content:center; gap:6px; margin-top:12px; }
+.slider-dots button { width:8px; height:8px; border-radius:50%; border:0; background:#ddd6fe; cursor:pointer; padding:0; transition:all .2s; }
+.slider-dots button.active { width:20px; border-radius:4px; background:#7c3aed; }
