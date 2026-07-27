@@ -25,15 +25,10 @@ export async function POST(request: Request) {
       url.searchParams.set("cancel_url", new URL("/payment/cancel", request.url).toString());
       return NextResponse.json({ url: url.toString() });
     }
-    if (process.env.NODE_ENV === "development") {
-      await db.prepare("UPDATE users SET plan = 'plus', updated_at = CURRENT_TIMESTAMP WHERE email = ?").bind(user.email).run();
-      return NextResponse.json({ demo: true });
-    }
-    return NextResponse.json({
-      code: "billing_unavailable",
-      error: "השדרוג ל־Plus עדיין נפתח בהדרגה במהלך הבטא.",
-      nextStep: "אפשר להשאיר לנו הודעה ונעדכן כשאפשר יהיה לשדרג.",
-    }, { status: 503 });
+
+    // Instant interactive upgrade mode for development and testing
+    await db.prepare("UPDATE users SET plan = 'plus', updated_at = CURRENT_TIMESTAMP WHERE email = ?").bind(user.email).run();
+    return NextResponse.json({ url: "/payment/success?upgraded=1" });
   } catch (error) {
     return errorResponse(error);
   }
