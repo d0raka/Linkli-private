@@ -81,6 +81,8 @@ export async function DELETE(request: Request, context: Context) {
       db.prepare("DELETE FROM auth_credentials WHERE email = ?").bind(email),
       db.prepare("DELETE FROM user_controls WHERE email = ?").bind(email),
       db.prepare("DELETE FROM projects WHERE owner_email = ?").bind(email),
+      db.prepare("DELETE FROM marketing_leads WHERE email = ?").bind(email),
+      db.prepare("UPDATE marketing_events SET user_email = NULL WHERE user_email = ?").bind(email),
       db.prepare("DELETE FROM users WHERE email = ?").bind(email),
     ]);
     await writeAdminAudit(admin.email, "user.deleted", "user", email, {

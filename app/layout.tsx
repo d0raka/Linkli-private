@@ -15,8 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: base,
     title,
     description,
-    openGraph: { title, description, type: "website", images: [{ url: "/og-v2.png", width: 1536, height: 1024, alt: "Linkli — חוויות אינטראקטיביות בכמה צעדים" }] },
-    twitter: { card: "summary_large_image", title, description, images: ["/og-v2.png"] },
+    icons: { icon: [{ url: "/favicon.png", type: "image/png", sizes: "64x64" }], apple: [{ url: "/favicon.png", sizes: "64x64" }] },
+    openGraph: { title, description, type: "website", images: [{ url: "/og-marketing.png", width: 1200, height: 630, alt: "Linkli — עמוד קטן, רגע גדול" }] },
+    twitter: { card: "summary_large_image", title, description, images: ["/og-marketing.png"] },
   };
 }
 

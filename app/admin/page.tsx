@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const admin = await requireAdminUser();
   const db = await ensureDatabase();
-  const [metricsResult, usersResult, projectsResult, supportResult, auditResult] = await db.batch([
+  const [metricsResult, usersResult, projectsResult, supportResult, auditResult, campaignsResult, leadsResult] = await db.batch([
     db.prepare(`SELECT
       (SELECT COUNT(*) FROM users) AS users,
       (SELECT COUNT(*) FROM users WHERE plan = 'plus') AS plus_users,
@@ -20,7 +20,8 @@ export default async function AdminPage() {
       (SELECT COUNT(*) FROM projects WHERE published = 1) AS published,
       (SELECT COALESCE(SUM(views), 0) FROM projects) AS views,
       (SELECT COALESCE(SUM(clicks), 0) FROM projects) AS clicks,
-      (SELECT COUNT(*) FROM support_requests WHERE status = 'new') AS open_support`),
+      (SELECT COUNT(*) FROM support_requests WHERE status = 'new') AS open_support,
+      (SELECT COUNT(*) FROM marketing_leads WHERE status = 'new') AS open_leads`),
     db.prepare(`SELECT users.email, login_aliases.username, users.display_name, users.plan, users.billing_customer_id, users.created_at,
       COALESCE(user_controls.status, 'active') AS status,
       COALESCE(user_controls.note, '') AS note,
@@ -40,6 +41,22 @@ export default async function AdminPage() {
       FROM support_requests ORDER BY created_at DESC LIMIT 200`),
     db.prepare(`SELECT id, admin_email, action, target_type, target_id, details_json, created_at
       FROM admin_audit_log ORDER BY created_at DESC LIMIT 100`),
+    db.prepare(`SELECT
+      COALESCE(NULLIF(campaign_source, ''), 'direct') AS source,
+      COALESCE(NULLIF(campaign_name, ''), 'ללא קמפיין') AS campaign,
+      SUM(CASE WHEN event_name = 'landing_view' THEN 1 ELSE 0 END) AS landing_views,
+      SUM(CASE WHEN event_name = 'cta_click' THEN 1 ELSE 0 END) AS cta_clicks,
+      SUM(CASE WHEN event_name = 'signup' THEN 1 ELSE 0 END) AS signups,
+      SUM(CASE WHEN event_name = 'project_created' THEN 1 ELSE 0 END) AS projects,
+      SUM(CASE WHEN event_name = 'project_published' THEN 1 ELSE 0 END) AS publishes,
+      SUM(CASE WHEN event_name = 'checkout_started' THEN 1 ELSE 0 END) AS checkouts,
+      SUM(CASE WHEN event_name = 'waitlist_joined' THEN 1 ELSE 0 END) AS leads
+      FROM marketing_events
+      WHERE created_at >= datetime('now', '-30 days')
+      GROUP BY COALESCE(NULLIF(campaign_source, ''), 'direct'), COALESCE(NULLIF(campaign_name, ''), 'ללא קמפיין')
+      ORDER BY signups DESC, landing_views DESC LIMIT 100`),
+    db.prepare(`SELECT email, name, use_case, campaign_source, campaign_medium, campaign_name, status, created_at, updated_at
+      FROM marketing_leads ORDER BY created_at DESC LIMIT 200`),
   ]);
   const metrics = (metricsResult.results?.[0] || {}) as Record<string, unknown>;
 
@@ -66,11 +83,14 @@ export default async function AdminPage() {
           views: Number(metrics.views || 0),
           clicks: Number(metrics.clicks || 0),
           openSupport: Number(metrics.open_support || 0),
+          openLeads: Number(metrics.open_leads || 0),
         }}
         initialUsers={usersResult.results || []}
         initialProjects={projectsResult.results || []}
         initialSupport={supportResult.results || []}
         initialAudit={auditResult.results || []}
+        initialCampaigns={campaignsResult.results || []}
+        initialLeads={leadsResult.results || []}
         adminEmail={admin.email}
       />
     </main>

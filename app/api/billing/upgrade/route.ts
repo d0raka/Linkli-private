@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getProductUser } from "@/lib/auth";
 import { ensureDatabase, runtimeValue } from "@/db";
 import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, safeHostedCheckoutUrl } from "@/lib/security";
+import { recordMarketingEventSafely } from "@/lib/marketing";
 
 export async function POST(request: Request) {
   try {
@@ -13,6 +14,7 @@ export async function POST(request: Request) {
     const method = ["card", "paypal", "bit"].includes(String(body.method || "")) ? String(body.method) : "card";
     const db = await ensureDatabase();
     await enforceRateLimit(db, request, "billing-upgrade", 10, 600, user.email);
+    await recordMarketingEventSafely(db, "checkout_started", { userEmail: user.email });
     const key = method === "paypal" ? "BILLING_PAYPAL_URL" : method === "bit" ? "BILLING_BIT_URL" : "BILLING_CREDIT_CARD_URL";
     const checkoutUrl = runtimeValue(key) || runtimeValue("BILLING_CHECKOUT_URL");
     if (checkoutUrl) {

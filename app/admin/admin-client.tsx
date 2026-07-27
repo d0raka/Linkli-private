@@ -2,20 +2,24 @@
 
 import { type FormEvent, useMemo, useState } from "react";
 
-type Metrics = { users: number; plusUsers: number; payingCustomers: number; activatedUsers: number; publishingUsers: number; projects: number; published: number; views: number; clicks: number; openSupport: number };
+type Metrics = { users: number; plusUsers: number; payingCustomers: number; activatedUsers: number; publishingUsers: number; projects: number; published: number; views: number; clicks: number; openSupport: number; openLeads: number };
 type UserRow = { email: string; username?: string | null; display_name: string; plan: "free" | "plus"; billing_customer_id?: string | null; created_at: string; status: "active" | "suspended"; note: string; email_verified: number | boolean; project_count: number; published_count: number };
 type ProjectRow = { id: string; owner_email: string; title: string; slug: string; template_id: string; published: number | boolean; views: number; clicks: number; updated_at: string };
 type SupportRow = { id: string; name: string; email: string; topic: string; message: string; page_url?: string | null; status: "new" | "in_progress" | "closed"; created_at: string };
 type AuditRow = { id: string; admin_email: string; action: string; target_type: string; target_id: string; details_json?: string | null; created_at: string };
-type Tab = "overview" | "users" | "projects" | "support" | "audit";
+type CampaignRow = { source: string; campaign: string; landing_views: number; cta_clicks: number; signups: number; projects: number; publishes: number; checkouts: number; leads: number };
+type LeadRow = { email: string; name: string; use_case: string; campaign_source?: string | null; campaign_medium?: string | null; campaign_name?: string | null; status: "new" | "contacted" | "converted" | "closed"; created_at: string; updated_at: string };
+type Tab = "overview" | "marketing" | "users" | "projects" | "support" | "audit";
 
 const topicLabels: Record<string, string> = { general: "כללי", billing: "חיוב", accessibility: "נגישות", privacy: "פרטיות", technical: "טכני" };
-const statusLabels: Record<string, string> = { new: "חדש", in_progress: "בטיפול", closed: "סגור", active: "פעיל", suspended: "מושעה" };
+const statusLabels: Record<string, string> = { new: "חדש", in_progress: "בטיפול", contacted: "נוצר קשר", converted: "הומר", closed: "סגור", active: "פעיל", suspended: "מושעה" };
+const useCaseLabels: Record<string, string> = { events: "אירועים והזמנות", birthdays: "ימי הולדת", couples: "זוגיות ודייטים", creators: "תוכן וקהל", business: "שימוש עסקי", other: "אחר" };
 const actionLabels: Record<string, string> = {
   "user.plan_changed": "שינוי מסלול", "user.suspended": "השעיית משתמש", "user.active": "החזרת משתמש",
   "user.deleted": "מחיקת משתמש",
   "user.created": "יצירת משתמש דמו",
   "project.published": "פרסום עמוד", "project.unpublished": "הסרת עמוד מפרסום", "support.status_changed": "עדכון פנייה",
+  "marketing.lead_status_changed": "עדכון ליד שיווקי",
 };
 
 function date(value: string) {
@@ -49,14 +53,16 @@ function safeCsvCell(value: unknown) {
   return `"${text.replaceAll('"', '""')}"`;
 }
 
-export default function AdminClient({ initialMetrics, initialUsers, initialProjects, initialSupport, initialAudit, adminEmail }: {
-  initialMetrics: Metrics; initialUsers: unknown[]; initialProjects: unknown[]; initialSupport: unknown[]; initialAudit: unknown[]; adminEmail: string;
+export default function AdminClient({ initialMetrics, initialUsers, initialProjects, initialSupport, initialAudit, initialCampaigns, initialLeads, adminEmail }: {
+  initialMetrics: Metrics; initialUsers: unknown[]; initialProjects: unknown[]; initialSupport: unknown[]; initialAudit: unknown[]; initialCampaigns: unknown[]; initialLeads: unknown[]; adminEmail: string;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [metrics, setMetrics] = useState(initialMetrics);
   const [users, setUsers] = useState(initialUsers as UserRow[]);
   const [projects, setProjects] = useState(initialProjects as ProjectRow[]);
   const [support, setSupport] = useState(initialSupport as SupportRow[]);
+  const campaigns = initialCampaigns as CampaignRow[];
+  const [leads, setLeads] = useState(initialLeads as LeadRow[]);
   const [query, setQuery] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState("");
@@ -68,6 +74,15 @@ export default function AdminClient({ initialMetrics, initialUsers, initialProje
   const conversion = metrics.views ? Math.round((metrics.clicks / metrics.views) * 1000) / 10 : 0;
   const activationRate = metrics.users ? Math.round((metrics.activatedUsers / metrics.users) * 1000) / 10 : 0;
   const publishRate = metrics.activatedUsers ? Math.round((metrics.publishingUsers / metrics.activatedUsers) * 1000) / 10 : 0;
+  const campaignTotals = useMemo(() => campaigns.reduce((totals, row) => ({
+    landingViews: totals.landingViews + Number(row.landing_views),
+    ctaClicks: totals.ctaClicks + Number(row.cta_clicks),
+    signups: totals.signups + Number(row.signups),
+    projects: totals.projects + Number(row.projects),
+    publishes: totals.publishes + Number(row.publishes),
+    checkouts: totals.checkouts + Number(row.checkouts),
+    leads: totals.leads + Number(row.leads),
+  }), { landingViews: 0, ctaClicks: 0, signups: 0, projects: 0, publishes: 0, checkouts: 0, leads: 0 }), [campaigns]);
 
   async function createDemoUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -178,6 +193,20 @@ export default function AdminClient({ initialMetrics, initialUsers, initialProje
     } catch (error) { setNotice(error instanceof Error ? error.message : "הפעולה נכשלה"); } finally { setBusy(""); }
   }
 
+  async function updateLead(item: LeadRow, status: LeadRow["status"]) {
+    setBusy(item.email); setNotice("");
+    try {
+      await patch(`/api/admin/leads/${encodeURIComponent(item.email)}`, { status });
+      setLeads((current) => current.map((lead) => lead.email === item.email ? { ...lead, status } : lead));
+      setMetrics((current) => ({
+        ...current,
+        openLeads: Math.max(0, current.openLeads
+          + (item.status !== "new" && status === "new" ? 1 : item.status === "new" && status !== "new" ? -1 : 0)),
+      }));
+      setNotice("מצב הליד עודכן.");
+    } catch (error) { setNotice(error instanceof Error ? error.message : "הפעולה נכשלה"); } finally { setBusy(""); }
+  }
+
   function exportUsers() {
     const rows = [["email", "username", "name", "plan", "email_verified", "status", "projects", "published", "created_at"], ...users.map((user) => [user.username ? "" : user.email, user.username || "", user.display_name, user.plan, user.email_verified ? "yes" : "no", user.status, user.project_count, user.published_count, user.created_at])];
     const csv = `\uFEFF${rows.map((row) => row.map(safeCsvCell).join(",")).join("\n")}`;
@@ -190,11 +219,11 @@ export default function AdminClient({ initialMetrics, initialUsers, initialProje
   return <div className="admin-layout">
     <aside className="admin-sidebar" aria-label="תפריט ניהול">
       <div><b>מרכז ניהול</b><span>שליטה ובקרה על Linkli</span></div>
-      {([['overview','סקירה','⌂'],['users','משתמשים','♙'],['projects','עמודים','▤'],['support','פניות','✉'],['audit','יומן פעילות','✓']] as [Tab,string,string][]).map(([id,label,icon]) =>
-        <button key={id} className={tab === id ? "active" : ""} onClick={() => { setTab(id); setQuery(""); }}><span>{icon}</span>{label}{id === "support" && metrics.openSupport ? <i>{metrics.openSupport}</i> : null}</button>)}
+      {([['overview','סקירה','⌂'],['marketing','שיווק ומכירות','↗'],['users','משתמשים','♙'],['projects','עמודים','▤'],['support','פניות','✉'],['audit','יומן פעילות','✓']] as [Tab,string,string][]).map(([id,label,icon]) =>
+        <button key={id} className={tab === id ? "active" : ""} onClick={() => { setTab(id); setQuery(""); }}><span>{icon}</span>{label}{id === "support" && metrics.openSupport ? <i>{metrics.openSupport}</i> : id === "marketing" && metrics.openLeads ? <i>{metrics.openLeads}</i> : null}</button>)}
     </aside>
     <section className="admin-main">
-      <div className="admin-title-row"><div><span className="kicker">מרכז ניהול</span><h1>{tab === "overview" ? "תמונת מצב" : tab === "users" ? "משתמשים ולקוחות" : tab === "projects" ? "עמודים שפורסמו" : tab === "support" ? "פניות שירות" : "יומן פעילות"}</h1></div>{tab === "users" ? <div className="admin-title-actions"><button className="button button-primary button-small" onClick={() => setShowCreate((value) => !value)}>{showCreate ? "ביטול" : "יצירת משתמש דמו"}</button><button className="button button-outline button-small" onClick={exportUsers}>ייצוא CSV</button></div> : null}</div>
+      <div className="admin-title-row"><div><span className="kicker">מרכז ניהול</span><h1>{tab === "overview" ? "תמונת מצב" : tab === "marketing" ? "שיווק ומכירות" : tab === "users" ? "משתמשים ולקוחות" : tab === "projects" ? "עמודים שפורסמו" : tab === "support" ? "פניות שירות" : "יומן פעילות"}</h1></div>{tab === "users" ? <div className="admin-title-actions"><button className="button button-primary button-small" onClick={() => setShowCreate((value) => !value)}>{showCreate ? "ביטול" : "יצירת משתמש דמו"}</button><button className="button button-outline button-small" onClick={exportUsers}>ייצוא CSV</button></div> : null}</div>
       {notice ? <div className="admin-notice" role="status">{notice}<button onClick={() => setNotice("")} aria-label="סגירה">×</button></div> : null}
       {tab === "overview" ? <>
         <div className="admin-metric-grid">
@@ -209,6 +238,27 @@ export default function AdminClient({ initialMetrics, initialUsers, initialProje
           <article className="admin-card"><h2>לקוחות אחרונים</h2>{users.slice(0,5).map((user) => <div className="admin-feed-row" key={user.email}><div className="admin-avatar">{user.display_name.slice(0,1)}</div><div><b>{user.display_name}</b><span>{user.email}</span></div><em className={`admin-status ${user.plan}`}>{user.plan.toUpperCase()}</em></div>)}</article>
           <article className="admin-card"><h2>עמודים מובילים</h2>{[...projects].sort((a,b) => Number(b.views)-Number(a.views)).slice(0,5).map((project) => <div className="admin-feed-row" key={project.id}><div className="admin-avatar">↗</div><div><b>{project.title}</b><span>{project.owner_email}</span></div><em>{Number(project.views).toLocaleString("he-IL")} צפיות</em></div>)}</article>
         </div>
+      </> : null}
+      {tab === "marketing" ? <>
+        <div className="admin-metric-grid marketing-metrics">
+          <article><span>כניסות לקמפיינים</span><strong>{campaignTotals.landingViews.toLocaleString("he-IL")}</strong><small>30 הימים האחרונים</small></article>
+          <article><span>לחיצות לפעולה</span><strong>{campaignTotals.ctaClicks.toLocaleString("he-IL")}</strong><small>{campaignTotals.landingViews ? Math.round((campaignTotals.ctaClicks / campaignTotals.landingViews) * 1000) / 10 : 0}% מהכניסות</small></article>
+          <article><span>הרשמות</span><strong>{campaignTotals.signups.toLocaleString("he-IL")}</strong><small>{campaignTotals.landingViews ? Math.round((campaignTotals.signups / campaignTotals.landingViews) * 1000) / 10 : 0}% מהכניסות</small></article>
+          <article><span>עמודים שנוצרו</span><strong>{campaignTotals.projects.toLocaleString("he-IL")}</strong><small>{campaignTotals.publishes} הגיעו לפרסום</small></article>
+          <article><span>כוונת רכישה</span><strong>{campaignTotals.checkouts.toLocaleString("he-IL")}</strong><small>כניסות לתשלום</small></article>
+          <article><span>לידים ל־Plus</span><strong>{leads.length.toLocaleString("he-IL")}</strong><small>{metrics.openLeads} חדשים לטיפול</small></article>
+        </div>
+        <section className="admin-card marketing-section">
+          <div className="marketing-section-heading"><div><h2>ביצועי קמפיינים</h2><p>מקור וקמפיין לפי UTM, ללא עוגיות פרסום.</p></div><small>30 ימים</small></div>
+          <div className="admin-table-wrap"><table><thead><tr><th>מקור / קמפיין</th><th>כניסות</th><th>CTA</th><th>הרשמות</th><th>נוצרו</th><th>פורסמו</th><th>תשלום</th><th>לידים</th></tr></thead><tbody>{campaigns.length ? campaigns.map((row) => <tr key={`${row.source}-${row.campaign}`}><td><b>{row.campaign}</b><span>{row.source}</span></td><td>{Number(row.landing_views)}</td><td>{Number(row.cta_clicks)}</td><td>{Number(row.signups)}</td><td>{Number(row.projects)}</td><td>{Number(row.publishes)}</td><td>{Number(row.checkouts)}</td><td>{Number(row.leads)}</td></tr>) : <tr><td colSpan={8}>נתוני הקמפיינים יופיעו אחרי הכניסות הראשונות.</td></tr>}</tbody></table></div>
+        </section>
+        <section className="admin-card marketing-section">
+          <div className="marketing-section-heading"><div><h2>לידים ל־Plus</h2><p>אנשים שביקשו שניצור איתם קשר בנושא המסלול בתשלום.</p></div><strong>{metrics.openLeads} חדשים</strong></div>
+          <div className="marketing-lead-list">{leads.length ? leads.map((lead) => <article key={lead.email}>
+            <div><b>{lead.name}</b><a href={`mailto:${lead.email}?subject=${encodeURIComponent("Linkli Plus — המשך לבקשת הגישה")}`}>{lead.email}</a><small>{useCaseLabels[lead.use_case] || lead.use_case} · {lead.campaign_source || "ישיר"}{lead.campaign_name ? ` / ${lead.campaign_name}` : ""} · {date(lead.created_at)}</small></div>
+            <select disabled={busy === lead.email} value={lead.status} onChange={(event) => updateLead(lead, event.target.value as LeadRow["status"])} aria-label={`סטטוס ליד ${lead.email}`}><option value="new">חדש</option><option value="contacted">נוצר קשר</option><option value="converted">הומר ללקוח</option><option value="closed">סגור</option></select>
+          </article>) : <p className="admin-empty">עדיין אין לידים. טופס Plus באתר מוכן לאסוף אותם.</p>}</div>
+        </section>
       </> : null}
       {tab === "users" && showCreate ? <form className="admin-create-user" onSubmit={createDemoUser}><h2>חשבון דמו ללא דוא״ל</h2><label>שם משתמש<input name="username" required minLength={3} maxLength={32} pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}" dir="ltr" autoComplete="off" /></label><label>שם תצוגה<input name="displayName" required minLength={2} maxLength={80} /></label><label>סיסמה<input name="password" type="password" required minLength={15} maxLength={128} dir="ltr" autoComplete="new-password" /></label><label>מסלול<select name="plan" defaultValue="free"><option value="free">Free</option><option value="plus">Plus</option></select></label><button className="button button-primary" disabled={busy === "create"}>{busy === "create" ? "יוצר…" : "יצירת החשבון"}</button><small>המשתמש יוכל להתחבר עם שם המשתמש והסיסמה. אין צורך באימות דוא״ל.</small></form> : null}
       {(tab === "users" || tab === "projects") ? <div className="admin-search"><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === "users" ? "חיפוש לפי שם, משתמש או דוא״ל..." : "חיפוש עמוד, בעלים או כתובת..."} aria-label="חיפוש" /></div> : null}

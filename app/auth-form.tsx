@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import type { CampaignAttribution } from "@/lib/marketing";
+import { withCampaign } from "@/lib/marketing";
 
-export default function AuthForm({ mode, returnTo }: { mode: "login" | "register"; returnTo: string }) {
+export default function AuthForm({ mode, returnTo, campaign }: { mode: "login" | "register"; returnTo: string; campaign?: CampaignAttribution }) {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
-  const alternateHref = `${mode === "login" ? "/register" : "/login"}?returnTo=${encodeURIComponent(returnTo)}`;
+  const alternateHref = withCampaign(`${mode === "login" ? "/register" : "/login"}?returnTo=${encodeURIComponent(returnTo)}`, campaign || { source: "", medium: "", campaign: "", content: "", term: "" });
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -15,6 +17,7 @@ export default function AuthForm({ mode, returnTo }: { mode: "login" | "register
     const payload: Record<string, unknown> = Object.fromEntries(form.entries());
     payload.acceptTerms = form.get("acceptTerms") === "on";
     payload.returnTo = returnTo;
+    if (campaign) Object.assign(payload, campaign);
     const response = await fetch(`/api/auth/${mode}`, {
       method: "POST",
       headers: { "content-type": "application/json" },

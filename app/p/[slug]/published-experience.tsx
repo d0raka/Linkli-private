@@ -16,7 +16,7 @@ function whatsappSafeText(value: string) {
     .trim();
 }
 
-export default function PublishedExperience({ slug, config, showWatermark, trackAnalytics = true, previewMode = false }: { slug: string; config: TemplateConfig; showWatermark: boolean; trackAnalytics?: boolean; previewMode?: boolean }) {
+export default function PublishedExperience({ slug, config, showWatermark, trackAnalytics = true, previewMode = false, previewCtaHref = "/register" }: { slug: string; config: TemplateConfig; showWatermark: boolean; trackAnalytics?: boolean; previewMode?: boolean; previewCtaHref?: string }) {
   const [screen, setScreen] = useState<Screen>("intro");
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>(() => config.questions.map(() => ""));
@@ -82,7 +82,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   }
 
   return <main className={`experience-shell experience-${config.theme}`} id="main-content" style={{ "--page-soft": config.accentSoft, "--page-accent": config.accent } as React.CSSProperties}>
-    {previewMode ? <Link href="/#templates" className="template-preview-back">חזרה לכל התבניות</Link> : null}
+    {previewMode ? <div className="template-preview-bar"><Link href="/#templates" className="template-preview-back">חזרה לכל התבניות</Link><Link href={previewCtaHref} data-marketing-event="preview_create" className="button button-primary button-small">יצירת התבנית בחינם</Link></div> : null}
     <div className="experience-aurora experience-aurora-one" aria-hidden="true" />
     <div className="experience-aurora experience-aurora-two" aria-hidden="true" />
     <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size }}>{item.value}</span>)}</div>

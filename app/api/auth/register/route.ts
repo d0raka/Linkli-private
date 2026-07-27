@@ -5,6 +5,7 @@ import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, Reques
 import { actionUrl, issueAuthToken } from "@/lib/account-security";
 import { emailDeliveryConfigured, sendAuthEmail } from "@/lib/email";
 import { plainText } from "@/lib/text";
+import { campaignFromObject, recordMarketingEventSafely } from "@/lib/marketing";
 
 export async function POST(request: Request) {
   let stage = "request";
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
 
     stage = "session";
     const token = await createSession(email);
+    await recordMarketingEventSafely(db, "signup", { userEmail: email, campaign: campaignFromObject(body) });
     const redirectTo = `/verify-email?${delivery.sent ? "sent=1" : "delivery=failed"}&returnTo=${encodeURIComponent(returnTo)}`;
     const response = NextResponse.json({ ok: true, redirectTo, verificationEmailSent: delivery.sent, verificationEmailStatus: delivery.sent ? "sent" : delivery.reason }, { status: 201 });
     response.headers.set("Set-Cookie", serializeSessionCookie(token));

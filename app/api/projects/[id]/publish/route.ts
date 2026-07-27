@@ -4,6 +4,7 @@ import { ensureDatabase } from "@/db";
 import { projectFromRow } from "@/lib/projects";
 import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, validUuid } from "@/lib/security";
 import { PROJECT_LIMITS } from "@/lib/plans";
+import { recordMarketingEventSafely } from "@/lib/marketing";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -28,6 +29,9 @@ export async function POST(request: Request, context: Context) {
     }
     await db.prepare("UPDATE projects SET published = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND owner_email = ?")
       .bind(shouldPublish ? 1 : 0, id, user.email).run();
+    if (shouldPublish && !current.published) {
+      await recordMarketingEventSafely(db, "project_published", { userEmail: user.email, templateId: String(current.template_id || "") });
+    }
     const row = await db.prepare("SELECT * FROM projects WHERE id = ? AND owner_email = ?").bind(id, user.email).first();
     return NextResponse.json({ project: projectFromRow(row) });
   } catch (error) {

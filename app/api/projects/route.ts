@@ -5,6 +5,7 @@ import { createSlug, projectFromRow } from "@/lib/projects";
 import { getTemplate, safeConfig } from "@/lib/templates";
 import { PROJECT_LIMITS } from "@/lib/plans";
 import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, validUuid } from "@/lib/security";
+import { recordMarketingEventSafely } from "@/lib/marketing";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ error: "לא הצלחנו ליצור את העמוד. נסו שוב." }, { status: 409 });
     }
+    await recordMarketingEventSafely(db, "project_created", { userEmail: user.email, templateId: template.id });
     return NextResponse.json({ project: projectFromRow(row) }, { status: 201 });
   } catch (error) {
     return errorResponse(error);

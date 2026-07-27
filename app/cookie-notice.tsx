@@ -26,7 +26,7 @@ export default function CookieNotice() {
   }
 
   return <aside className="cookie-notice" role="region" aria-label="מידע על עוגיות ואחסון מקומי">
-    <div><strong>מידע קצר על עוגיות</strong><p>Linkli משתמשת בעוגיות חיוניות להתחברות ולפתיחת עמודים מוגנים, ובהעדפות נגישות שנשמרות מקומית במכשיר. אין באתר עוגיות פרסום או מעקב שיווקי.</p><Link href="/legal#privacy">למדיניות הפרטיות המלאה ←</Link></div>
+    <div><strong>מידע קצר על עוגיות</strong><p>Linkli משתמשת בעוגיות חיוניות להתחברות ולפתיחת עמודים מוגנים, ובהעדפות שנשמרות מקומית. אנחנו מודדים באופן מצטבר כניסות ושלבי שימוש, ללא עוגיות פרסום או מעקב של צד שלישי.</p><Link href="/legal#privacy">למדיניות הפרטיות המלאה ←</Link></div>
     <button className="button button-dark button-small" onClick={acknowledge}>הבנתי</button>
   </aside>;
 }
