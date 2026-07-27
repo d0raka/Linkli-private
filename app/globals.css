@@ -75,6 +75,7 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
 .button-dark { background: var(--ink); color: white; }
 .button-light { background: white; color: var(--pink-dark); }
 .button-outline { border: 1.5px solid var(--ink); background: transparent; }
+.button-whatsapp { color:white; background:#159447; box-shadow:0 9px 20px rgba(21,148,71,.2); }
 
 .hero { min-height: 670px; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 60px; padding-block: 55px 75px; }
 .hero-copy { padding-right: 20px; }

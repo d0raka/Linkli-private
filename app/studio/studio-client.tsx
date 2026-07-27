@@ -190,6 +190,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
   const [copied, setCopied] = useState(false);
   const [passwordDraft, setPasswordDraft] = useState("");
   const shareUrl = typeof window === "undefined" ? `/p/${project.slug}` : `${window.location.origin}/p/${project.slug}`;
+  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(`${c.headline}\n${shareUrl}`)}`;
   const activeSectionIndex = editorSections.findIndex((item) => item.id === section);
   const activeSection = editorSections[activeSectionIndex];
   const activeQuestion = c.questions[questionIndex];
@@ -365,7 +366,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
           <div className="publish-card">
             <div className="publish-card-heading"><span className={project.published ? "published" : ""}>{project.published ? "● באוויר" : "○ טיוטה"}</span><div><b>{project.published ? "העמוד זמין לשיתוף" : "העמוד עדיין פרטי"}</b><p>{project.published ? "אפשר להעתיק את הקישור או לפתוח את העמוד המלא." : "פרסמו כשתהיו מרוצים מהתצוגה המקדימה."}</p></div></div>
             <div className="share-url-row"><span dir="ltr">{shareUrl}</span><button type="button" onClick={copyShareUrl}>{copied ? "הועתק ✓" : "העתקת קישור"}</button></div>
-            <div className="publish-actions"><button type="button" className="button button-primary" onClick={onPublish}>{project.published ? "הסרה מהאוויר" : "שמירה ופרסום"}</button>{project.published && <a className="button button-outline" href={`/p/${project.slug}`} target="_blank" rel="noreferrer">פתיחת העמוד ↗</a>}</div>
+            <div className="publish-actions"><button type="button" className="button button-primary" onClick={onPublish}>{project.published ? "הסרה מהאוויר" : "שמירה ופרסום"}</button>{project.published && <><a className="button button-outline" href={`/p/${project.slug}`} target="_blank" rel="noreferrer">פתיחת העמוד ↗</a><a className="button button-whatsapp" href={whatsappShareUrl} target="_blank" rel="noreferrer">שיתוף ב־WhatsApp</a></>}</div>
           </div>
           <button type="button" className="delete-project-link" onClick={onDelete}>מחיקת העמוד</button>
         </div>}
