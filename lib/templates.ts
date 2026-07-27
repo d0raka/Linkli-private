@@ -151,23 +151,6 @@ export const templates: LinkliTemplate[] = [
       accent: "#db2777", accentSoft: "#fff0f7", emoji: "💌", decorations: ["❤️", "💌", "✨", "🌹"], theme: "letter",
     }),
   },
-  {
-    id: "prank", name: "עמוד מתיחה", category: "מצחיק", emoji: "😈", free: false,
-    description: "מתיחה ויראלית רשמית עם בדיקת אבטחה מזויפת ומד התקדמות דרמטי.",
-    config: config({
-      recipient: "הזוכה המאושר", headline: "🔍 הודעה דחופה: בדיקת אבטחה נדרשת", subtitle: "אותר ניסיון גישה חריג למכשירך. נא להשלים את שלבי האימות כדי למנוע נעילת מערכת.",
-      introLabel: "התראת אבטחה חמורה", startText: "התחלת האימות", highlights: ["אימות זהות 🔒", "סריקת מכשיר 📲"],
-      questions: [
-        { prompt: "האם את/ה הבעלים החוקי של מכשיר זה?", helper: "זיהוי משתמש נדרש.", options: ["כן, אני הבעלים 🙋‍♂️", "לא בטוח/ה 😅", "מה קורה כאן?! 😱", "אני מבטל/ת את זה!"], correctOption: "כן, אני הבעלים 🙋‍♂️" },
-        { prompt: "איזה קוד שחזור כדאי להזניק כעת?", helper: "בחירה שגויה תגרום למחיקת נתונים. בערך.", options: ["קוד 101 🚨", "קוד 999 💥", "קוד חרום 🔴", "ביטול מיידי!"], correctOption: "קוד חרום 🔴" },
-        { prompt: "ללחוץ על הכפתור האדום לביטול הנעילה?", helper: "זה הרגע לבדוק אם הדופק שלך עלה.", options: ["כן! ללחוץ מהר! 🔴", "אני בלחץ מטורף 😱", "זה אמיתי בכלל?!", "קדימה, לבטל!"], correctOption: "כן! ללחוץ מהר! 🔴" },
-      ],
-      finalButtonText: "לביטול הנעילה המיידית", resultLabel: "האימות הושלם",
-      successTitle: "סתאאם! נפלת במתיחה 😂", successText: "עבדנו עליך! המכשיר שלך בסדר גמור. החדשות העוד יותר טובות: עכשיו תורך להעביר את המתיחה לחבר הבא!",
-      whatsapp: "", whatsappText: "נפלתי במתיחה שלך חזק! 😂", buttonText: "להודות שנפלתי בפח 😈",
-      accent: "#ea580c", accentSoft: "#fff3e9", emoji: "😈", decorations: ["😂", "😈", "💥", "🎁"], theme: "mischief",
-    }),
-  },
 ];
 
 export function getTemplate(id: string) {

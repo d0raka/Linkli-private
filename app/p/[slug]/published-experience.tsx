@@ -144,10 +144,9 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   // Interactive step states
   const [waxOpened, setWaxOpened] = useState(false);
   const [candleExtinguished, setCandleExtinguished] = useState(false);
-  const [prankDone, setPrankDone] = useState(false);
-  const [prankProgress, setPrankProgress] = useState(0);
   const [guestCount, setGuestCount] = useState(1);
   const [customSong, setCustomSong] = useState("");
+  const [copiedToast, setCopiedToast] = useState(false);
 
   useEffect(() => {
     if (!trackAnalytics) return;
@@ -157,24 +156,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen, step]);
-
-  // Prank fake loading simulation
-  useEffect(() => {
-    if (screen === "result" && config.theme === "mischief" && !prankDone) {
-      let current = 0;
-      const interval = setInterval(() => {
-        current += Math.floor(Math.random() * 25) + 10;
-        if (current >= 100) {
-          setPrankProgress(100);
-          clearInterval(interval);
-          setTimeout(() => setPrankDone(true), 600);
-        } else {
-          setPrankProgress(current);
-        }
-      }, 350);
-      return () => clearInterval(interval);
-    }
-  }, [screen, config.theme, prankDone]);
 
   const fallingItems = useMemo(() => Array.from({ length: 18 }, (_, index) => ({
     value: config.decorations[index % config.decorations.length] || config.emoji,
@@ -192,8 +173,11 @@ export default function PublishedExperience({ slug, config, showWatermark, track
     }
   }
   const answerSummary = config.questions.map((question, index) => `• ${question.prompt}: ${formattedAnswers[index] || "נבחר"}`).join("\n");
+  const fullShareText = `${config.whatsappText}\n\n${answerSummary}\n\nקישור: ${typeof window !== "undefined" ? window.location.href : ""}`;
   const whatsappMessage = whatsappSafeText(`${config.whatsappText}\n\n${answerSummary}`).slice(0, 1800);
   const whatsappUrl = `https://wa.me/${config.whatsapp || ""}?text=${encodeURIComponent(whatsappMessage)}`;
+  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}&text=${encodeURIComponent(whatsappMessage)}`;
+
   const question = config.questions[step];
 
   function start() {
@@ -225,11 +209,15 @@ export default function PublishedExperience({ slug, config, showWatermark, track
     setError(false);
     setWaxOpened(false);
     setCandleExtinguished(false);
-    setPrankDone(false);
-    setPrankProgress(0);
     setGuestCount(1);
     setCustomSong("");
     setScreen("intro");
+  }
+
+  function copySummaryToClipboard() {
+    void navigator.clipboard.writeText(fullShareText);
+    setCopiedToast(true);
+    setTimeout(() => setCopiedToast(false), 3000);
   }
 
   function trackClick() {
@@ -336,54 +324,57 @@ export default function PublishedExperience({ slug, config, showWatermark, track
       </div> : null}
 
       {screen === "result" ? <div className="experience-screen experience-result">
-        {/* Mischief/Prank fake system popup */}
-        {config.theme === "mischief" && !prankDone ? (
-          <div className="prank-fake-alert">
-            <div className="prank-spinner">⚙️</div>
-            <h3>🚨 אזהרת אבטחה חמורה!</h3>
-            <p>המערכת מבצעת בדיקת תאימות ונעילת נתונים...</p>
-            <div className="prank-progress-bar">
-              <div className="prank-progress-fill" style={{ width: `${prankProgress}%` }} />
-            </div>
-            <span>{prankProgress}% הושלמו · קוד ERR_SYSTEM_901</span>
-          </div>
-        ) : (
-          <>
-            <div className="success-burst" aria-hidden="true"><i>✦</i><i>★</i><i>✦</i><span>🎉</span></div>
-            <span className="score-pill">{config.resultLabel}</span>
-            <h2>{config.successTitle}</h2>
+        <div className="success-burst" aria-hidden="true"><i>✦</i><i>★</i><i>✦</i><span>🎉</span></div>
+        <span className="score-pill">{config.resultLabel}</span>
+        <h2>{config.successTitle}</h2>
 
-            {/* Special Gift Voucher Box */}
-            {config.theme === "gift" && (
-              <GiftVoucherBox title={config.successTitle} text={config.successText} />
-            )}
-
-            {/* Special Interactive Candle for Birthday */}
-            {config.theme === "party" && (
-              <BirthdayCandle onExtinguish={() => setCandleExtinguished(true)} />
-            )}
-
-            {config.theme === "party" && !candleExtinguished ? null : (
-              <p className="experience-copy">{config.successText}</p>
-            )}
-
-            {/* Special Scratch Card for Date Theme */}
-            {config.theme === "romance" && (
-              <ScratchCanvas secretText={config.successTitle} />
-            )}
-
-            {/* Special RSVP Add to Calendar Button */}
-            {config.theme === "elegant" && (
-              <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer" className="calendar-add-button">
-                <span>📅</span> הוספת האירוע ל-Google Calendar
-              </a>
-            )}
-
-            <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>
-            {config.whatsapp || previewMode ? <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="experience-primary experience-whatsapp" onClick={trackClick}><span aria-hidden="true">◉</span>{previewMode ? "שיתוף התוצאה ב־WhatsApp" : config.buttonText}</a> : null}
-            <button onClick={restart} className="experience-restart">התחלה מחדש</button>
-          </>
+        {/* Special Gift Voucher Box */}
+        {config.theme === "gift" && (
+          <GiftVoucherBox title={config.successTitle} text={config.successText} />
         )}
+
+        {/* Special Interactive Candle for Birthday */}
+        {config.theme === "party" && (
+          <BirthdayCandle onExtinguish={() => setCandleExtinguished(true)} />
+        )}
+
+        {config.theme === "party" && !candleExtinguished ? null : (
+          <p className="experience-copy">{config.successText}</p>
+        )}
+
+        {/* Special Scratch Card for Date Theme */}
+        {config.theme === "romance" && (
+          <ScratchCanvas secretText={config.successTitle} />
+        )}
+
+        {/* Special RSVP Add to Calendar Button */}
+        {config.theme === "elegant" && (
+          <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer" className="calendar-add-button">
+            <span>📅</span> הוספת האירוע ל-Google Calendar
+          </a>
+        )}
+
+        <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>
+
+        {/* Multi-Channel Response & Share Bar */}
+        <div className="multi-share-section">
+          <p className="share-title">שליחת המענה בדרכים נוספות:</p>
+          <div className="multi-share-grid">
+            {config.whatsapp || previewMode ? (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="share-pill share-pill-wa" onClick={trackClick}>
+                <span>🟢</span> WhatsApp
+              </a>
+            ) : null}
+            <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="share-pill share-pill-tg" onClick={trackClick}>
+              <span>✈️</span> Telegram
+            </a>
+            <button type="button" onClick={copySummaryToClipboard} className="share-pill share-pill-copy">
+              <span>📋</span> {copiedToast ? "הועתק בהצלחה! ✨" : "העתקת מענה"}
+            </button>
+          </div>
+        </div>
+
+        <button onClick={restart} className="experience-restart">התחלה מחדש</button>
       </div> : null}
     </section>
     {showWatermark ? <Link href="/" className="watermark">נוצר עם <b>Linkli</b> · גם אני רוצה</Link> : null}
