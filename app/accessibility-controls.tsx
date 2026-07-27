@@ -16,19 +16,28 @@ function applyPreferences(preferences: Preferences) {
 export default function AccessibilityControls() {
   const [open, setOpen] = useState(false);
   const [preferences, setPreferences] = useState<Preferences>(defaults);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     try {
+      if (sessionStorage.getItem("linkli-a11y-dismissed") === "true") {
+        setDismissed(true);
+      }
       const saved = localStorage.getItem("linkli-accessibility");
       if (saved) {
         const parsed = { ...defaults, ...JSON.parse(saved) } as Preferences;
-        // Loading a device-local preference is the purpose of this mount effect.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPreferences(parsed);
         applyPreferences(parsed);
       }
     } catch { /* keep accessible defaults */ }
   }, []);
+
+  function dismiss(e: React.MouseEvent) {
+    e.stopPropagation();
+    setDismissed(true);
+    setOpen(false);
+    try { sessionStorage.setItem("linkli-a11y-dismissed", "true"); } catch { /* session storage unavailable */ }
+  }
 
   function update(next: Preferences) {
     setPreferences(next);
@@ -38,8 +47,13 @@ export default function AccessibilityControls() {
 
   function reset() { update(defaults); }
 
+  if (dismissed) return null;
+
   return <div className="a11y-widget">
-    <button className="a11y-trigger" aria-label="פתיחת תפריט נגישות" aria-expanded={open} aria-controls="a11y-menu" onClick={() => setOpen((value) => !value)}>♿</button>
+    <div className="a11y-trigger-wrapper">
+      <button className="a11y-dismiss" aria-label="הסתרת תפריט נגישות לסשן זה" title="הסתרת תפריט נגישות" onClick={dismiss}>×</button>
+      <button className="a11y-trigger" aria-label="פתיחת תפריט נגישות" aria-expanded={open} aria-controls="a11y-menu" onClick={() => setOpen((value) => !value)}>♿</button>
+    </div>
     {open && <section className="a11y-menu" id="a11y-menu" aria-label="אפשרויות נגישות">
       <div className="a11y-menu-head"><strong>התאמות נגישות</strong><button aria-label="סגירת תפריט נגישות" onClick={() => setOpen(false)}>×</button></div>
       <div className="a11y-font-row"><button onClick={() => update({ ...preferences, font: Math.max(90, preferences.font - 10) })} aria-label="הקטנת טקסט">א−</button><span>{preferences.font}%</span><button onClick={() => update({ ...preferences, font: Math.min(130, preferences.font + 10) })} aria-label="הגדלת טקסט">א+</button></div>

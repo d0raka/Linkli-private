@@ -5,6 +5,7 @@ import { PROJECT_LIMITS } from "@/lib/plans";
 import { campaignFromObject, withCampaign } from "@/lib/marketing";
 import MarketingTracker from "./marketing-tracker";
 import MarketingWaitlistForm from "./marketing-waitlist-form";
+import HeroInteractive from "./hero-interactive";
 
 export const dynamic = "force-dynamic";
 export const metadata = { alternates: { canonical: "/" } };
@@ -62,26 +63,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           </div>
         </div>
 
-        <div className="hero-stage" aria-label="תצוגה מקדימה של עמוד Linkli">
-          <div className="hero-emoji-rain" aria-hidden="true"><i>💕</i><i>✨</i><i>🌸</i><i>💗</i></div>
-          <div className="spark spark-one">✦</div><div className="spark spark-two">✦</div>
-          <div className="phone-card">
-            <div className="phone-top"><span /><span /><span /></div>
-            <div className="phone-content">
-              <div className="floating-emoji">💘</div>
-              <p className="mini-greeting">שאלה 2 מתוך 3</p>
-              <div className="mini-progress"><i /><i /><i /></div>
-              <h2>מתי הכי כיף לך לצאת?</h2>
-              <p>כדי שאוכל להתחיל לתכנן</p>
-              <div className="mini-option active">חמישי בערב <b>✓</b></div>
-              <div className="mini-option">שישי בצהריים <b>○</b></div>
-              <div className="mini-option">עדיף להשאיר כהפתעה <b>○</b></div>
-              <div className="mini-button">לשאלה הבאה ←</div>
-            </div>
-          </div>
-          <div className="stat-bubble stat-views"><strong>3</strong><span>שאלות קצרות ✍️</span></div>
-          <div className="stat-bubble stat-time"><strong>1</strong><span>קישור לשיתוף ⚡</span></div>
-        </div>
+        <HeroInteractive />
       </section>
 
       <section className="logo-strip">
@@ -115,9 +97,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <div className="center-heading"><span className="kicker">פשוט להתחיל</span><h2>מתחילים בחינם, משדרגים כשצריך</h2><p>העמוד הראשון נותן לכם לבדוק את הרעיון באמת. Plus מיועד ליוצרים, זוגות ומארחים שרוצים כמה עמודים וקישור נקי בלי מיתוג.</p></div>
         <div className="pricing-grid">
           <article className="price-card"><div><span className="plan-label">חינם</span><h3>₪0 <small>/ ללא הגבלת זמן</small></h3><p>דרך מהירה ליצור עמוד אחד ולבדוק איך הוא עובד אצלכם.</p></div><ul><li>✓ עמוד אחד</li><li>✓ {freeTemplateCount} תבניות לבחירה</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li className="muted">כולל מיתוג Linkli</li></ul><Link href={startHref} className="button button-outline">{user ? "לעמודים שלי" : "מתחילים בחינם"}</Link></article>
-          <article className="price-card featured"><div className="popular">ליוצרים סדרתיים</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>למי שיוצר כמה רגעים, אירועים או גרסאות ורוצה לשתף בלי הסחות.</p></div><ul><li>✓ עד {PROJECT_LIMITS.plus} עמודים</li><li>✓ כל {totalTemplateCount} התבניות, כולל תבניות חדשות</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li>✓ ללא מיתוג Linkli</li></ul><Link href="/checkout" className="button button-primary">שדרוג ל־Plus <span>←</span></Link></article>
+          <article className="price-card featured"><div className="popular">ליוצרים סדרתיים</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>למי שיוצר כמה רגעים, אירועים או גרסאות ורוצה לשתף בלי הסחות.</p></div><ul><li>✓ עד {PROJECT_LIMITS.plus} עמודים</li><li>✓ כל {totalTemplateCount} התבניות, כולל תבניות חדשות</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li>✓ ללא מיתוג Linkli</li></ul><a href="#marketing-pilot" className="button button-primary">בקשת גישת Plus <span>←</span></a></article>
         </div>
-        <div className="marketing-pilot">
+        <div className="marketing-pilot" id="marketing-pilot">
           <div><span className="kicker">Plus למשתמשים הראשונים</span><h3>רוצים יותר מעמוד אחד כבר בבטא?</h3><p>השאירו פרטים. נלמד מה אתם צריכים וניצור קשר כשנוכל לפתוח עבורכם גישת Plus ותשלום מסודר.</p></div>
           <MarketingWaitlistForm campaign={campaign} compact />
         </div>

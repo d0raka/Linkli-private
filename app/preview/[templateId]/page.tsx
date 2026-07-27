@@ -17,7 +17,18 @@ export async function generateMetadata({ params }: Pick<Props, "params">): Promi
     description: template.description,
     alternates: { canonical: `/preview/${template.id}` },
     robots: { index: true, follow: true },
-    openGraph: { title, description: template.description, type: "website" },
+    openGraph: {
+      title,
+      description: template.description,
+      type: "website",
+      images: [{ url: "https://linkli.online/og-marketing.png", width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: template.description,
+      images: ["https://linkli.online/og-marketing.png"],
+    },
   };
 }
 

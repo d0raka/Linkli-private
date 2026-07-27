@@ -26,7 +26,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const row = await getPublishedProject(slug);
   if (!row) return { title: "העמוד לא נמצא | Linkli" };
   const project = projectFromRow(row);
-  return { title: `${project.config.headline} | Linkli`, description: project.config.subtitle };
+  const title = `${project.config.headline} | Linkli`;
+  const description = project.config.subtitle;
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: [{ url: "https://linkli.online/og-marketing.png", width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["https://linkli.online/og-marketing.png"],
+    },
+  };
 }
 
 export default async function PublishedPage({ params }: Props) {

@@ -9,6 +9,29 @@ import { PROJECT_LIMITS } from "@/lib/plans";
 type Profile = { email: string; displayName: string; plan: "free" | "plus"; emailVerified: boolean };
 type Notice = { text: string; error?: boolean } | null;
 
+function toDisplayPhone(raw: string): string {
+  if (!raw) return "";
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("972")) {
+    digits = "0" + digits.slice(3);
+  }
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+}
+
+function toNormalizedPhone(val: string): string {
+  const digits = val.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("0")) {
+    return "972" + digits.slice(1);
+  }
+  if (digits.startsWith("972")) {
+    return digits;
+  }
+  return "972" + digits;
+}
+
 export default function StudioClient({ initialName, initialMode = "dashboard" }: { initialName: string; initialMode?: "dashboard" | "templates" }) {
   const [profile, setProfile] = useState<Profile>({ email: "", displayName: initialName, plan: "free", emailVerified: true });
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
@@ -376,7 +399,21 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
           <label className="full">כותרת הסיום<input value={c.successTitle} maxLength={140} placeholder="הכותרת שתופיע לאחר השאלות" onChange={(event) => onConfig("successTitle", event.target.value)} /></label>
           <label className="full">הודעת הסיום<textarea value={c.successText} maxLength={700} placeholder="הודעת תודה, ברכה או הסבר על השלב הבא" onChange={(event) => onConfig("successText", event.target.value)} /></label>
           <div className="field-divider full"><b>כפתור WhatsApp</b><span>אפשר להשאיר את המספר ריק ולחבר אותו בהמשך.</span></div>
-          <label>מספר כולל קידומת המדינה<input value={c.whatsapp} maxLength={15} placeholder="972501234567" inputMode="numeric" dir="ltr" onChange={(event) => onConfig("whatsapp", event.target.value.replace(/\D/g, ""))} /></label>
+          <label>מספר טלפון לקבלת תשובות ב-WhatsApp
+            <div style={{ display: "flex", gap: "8px", marginTop: "6px" }} dir="ltr">
+              <span style={{ padding: "10px 12px", background: "#f3eff6", border: "1px solid #e2d9eb", borderRadius: "10px", fontWeight: "bold", fontSize: "14px", display: "flex", alignItems: "center" }}>🇮🇱 +972</span>
+              <input
+                type="tel"
+                value={toDisplayPhone(c.whatsapp)}
+                maxLength={14}
+                placeholder="050-123-4567"
+                inputMode="numeric"
+                dir="ltr"
+                onChange={(event) => onConfig("whatsapp", toNormalizedPhone(event.target.value))}
+              />
+            </div>
+            <small style={{ color: "var(--muted)", fontSize: "11px", marginTop: "4px", display: "block" }}>הקלידו מספר נייד רגיל (כמו 050-1234567) והוא יחובר אוטומטית ל-WhatsApp</small>
+          </label>
           <label>טקסט על הכפתור<input value={c.buttonText} maxLength={80} placeholder="לדוגמה: שליחת האישור" onChange={(event) => onConfig("buttonText", event.target.value)} /></label>
           <label className="full">הודעת WhatsApp<textarea value={c.whatsappText} maxLength={500} placeholder="הטקסט שיופיע לפני סיכום התשובות" onChange={(event) => onConfig("whatsappText", event.target.value)} /></label>
         </div>}
