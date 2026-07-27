@@ -91,6 +91,30 @@ function ScratchCanvas({ secretText }: { secretText: string }) {
   );
 }
 
+/* Gift Voucher Box Component */
+function GiftVoucherBox({ title, text }: { title: string; text: string }) {
+  const [unwrapped, setUnwrapped] = useState(false);
+
+  return (
+    <div className="gift-voucher-card" onClick={() => setUnwrapped(true)}>
+      {!unwrapped ? (
+        <div className="gift-cover">
+          <span className="gift-icon">🎁</span>
+          <h3>לחצו לפתיחת קופסת המתנה!</h3>
+          <p>הפתעה מיוחדת מחכה לך בפנים ✨</p>
+        </div>
+      ) : (
+        <div className="gift-unwrapped-details">
+          <span className="voucher-badge">🎟️ שובר מתנה אישי</span>
+          <h3>{title}</h3>
+          <p>{text}</p>
+          <div className="voucher-code">קוד מימוש: <strong>LINKLI-GIFT-2026</strong></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* Birthday Candle Blow-out Component */
 function BirthdayCandle({ onExtinguish }: { onExtinguish: () => void }) {
   const [lit, setLit] = useState(true);
@@ -124,7 +148,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   const [prankProgress, setPrankProgress] = useState(0);
   const [guestCount, setGuestCount] = useState(1);
   const [customSong, setCustomSong] = useState("");
-  const [reactionMsg, setReactionMsg] = useState("");
 
   useEffect(() => {
     if (!trackAnalytics) return;
@@ -161,9 +184,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
     size: `${17 + (index % 4) * 5}px`,
   })), [config.decorations, config.emoji]);
 
-  const scoredQuestions = config.questions.filter((question) => question.correctOption);
-  const score = config.questions.reduce((total, question, index) => total + (question.correctOption && answers[index] === question.correctOption ? 1 : 0), 0);
-
   const formattedAnswers = [...answers];
   if (config.theme === "elegant") {
     formattedAnswers[1] = `${guestCount} אורחים`;
@@ -184,24 +204,17 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   function choose(option: string) {
     setAnswers((current) => current.map((answer, index) => index === step ? option : answer));
     setError(false);
-
-    if (config.theme === "playful") {
-      const reactions = ["בול! 😂", "מההה?! מתי זה קרה? 😱", "אין ספק! 😎", "תשובה חזקה! 🔥"];
-      setReactionMsg(reactions[Math.floor(Math.random() * reactions.length)]);
-    }
   }
 
   function next() {
     if (!answers[step]) { setError(true); return; }
     setError(false);
-    setReactionMsg("");
     if (step < config.questions.length - 1) setStep((current) => current + 1);
     else setScreen("result");
   }
 
   function back() {
     setError(false);
-    setReactionMsg("");
     if (step > 0) setStep((current) => current - 1);
     else setScreen("intro");
   }
@@ -216,7 +229,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
     setPrankProgress(0);
     setGuestCount(1);
     setCustomSong("");
-    setReactionMsg("");
     setScreen("intro");
   }
 
@@ -224,9 +236,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
     if (!trackAnalytics) return;
     void fetch("/api/analytics", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ slug, event: "click" }), keepalive: true });
   }
-
-  // Friendship badge formula
-  const friendshipBadge = score === scoredQuestions.length ? "🥇 100% שותף אמת — נפש תאומה!" : score >= 1 ? "🥈 80% חבר נפש — צוות מנצח" : "🥉 חבר כבוד — צריכים לצאת יותר!";
 
   // Google calendar link helper for RSVP
   const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(config.headline)}&details=${encodeURIComponent(config.subtitle)}&location=${encodeURIComponent(config.highlights[1] || "")}`;
@@ -308,13 +317,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           </div>
         )}
 
-        {/* Reaction micro-copy popup for Friendship theme */}
-        {config.theme === "playful" && reactionMsg ? (
-          <div className="quiz-reaction-popup">
-            <span>{reactionMsg}</span>
-          </div>
-        ) : null}
-
         {/* DJ Song input for RSVP step 3 */}
         {config.theme === "elegant" && step === 2 && (
           <div className="dj-song-input-box">
@@ -348,17 +350,13 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         ) : (
           <>
             <div className="success-burst" aria-hidden="true"><i>✦</i><i>★</i><i>✦</i><span>🎉</span></div>
-
-            {scoredQuestions.length > 0 && config.theme === "playful" ? (
-              <div className="friendship-badge-box">
-                <span className="badge-title">{friendshipBadge}</span>
-                <small>{score} תשובות נכונות מתוך {scoredQuestions.length}</small>
-              </div>
-            ) : (
-              <span className="score-pill">{config.resultLabel}</span>
-            )}
-
+            <span className="score-pill">{config.resultLabel}</span>
             <h2>{config.successTitle}</h2>
+
+            {/* Special Gift Voucher Box */}
+            {config.theme === "gift" && (
+              <GiftVoucherBox title={config.successTitle} text={config.successText} />
+            )}
 
             {/* Special Interactive Candle for Birthday */}
             {config.theme === "party" && (
