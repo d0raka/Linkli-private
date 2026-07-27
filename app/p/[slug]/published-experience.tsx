@@ -106,7 +106,7 @@ function BirthdayCandle({ onExtinguish }: { onExtinguish: () => void }) {
         {lit ? <span className="flame">🔥</span> : <span className="smoke">💨</span>}
         <div className="stick" />
       </div>
-      <p>{lit ? "לחצו על הלהבה לכבויה ולבקש משאלה! 🕯️✨" : "המשאלה בדרך אליך! 🎉"}</p>
+      <p>{lit ? "לחצו על הלהבה לכביה ולבקשת משאלה! 🕯️✨" : "המשאלה בדרך אליך! 🎉"}</p>
     </div>
   );
 }
@@ -122,7 +122,9 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   const [candleExtinguished, setCandleExtinguished] = useState(false);
   const [prankDone, setPrankDone] = useState(false);
   const [prankProgress, setPrankProgress] = useState(0);
+  const [guestCount, setGuestCount] = useState(1);
   const [customSong, setCustomSong] = useState("");
+  const [reactionMsg, setReactionMsg] = useState("");
 
   useEffect(() => {
     if (!trackAnalytics) return;
@@ -161,10 +163,13 @@ export default function PublishedExperience({ slug, config, showWatermark, track
 
   const scoredQuestions = config.questions.filter((question) => question.correctOption);
   const score = config.questions.reduce((total, question, index) => total + (question.correctOption && answers[index] === question.correctOption ? 1 : 0), 0);
-  
+
   const formattedAnswers = [...answers];
-  if (config.theme === "elegant" && customSong.trim()) {
-    formattedAnswers[2] = `${answers[2]} (שיר ל-DJ: ${customSong.trim()})`;
+  if (config.theme === "elegant") {
+    formattedAnswers[1] = `${guestCount} אורחים`;
+    if (customSong.trim()) {
+      formattedAnswers[2] = `${answers[2] || "מוזיקה מעולה"} (שיר ל-DJ: ${customSong.trim()})`;
+    }
   }
   const answerSummary = config.questions.map((question, index) => `• ${question.prompt}: ${formattedAnswers[index] || "נבחר"}`).join("\n");
   const whatsappMessage = whatsappSafeText(`${config.whatsappText}\n\n${answerSummary}`).slice(0, 1800);
@@ -179,17 +184,24 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   function choose(option: string) {
     setAnswers((current) => current.map((answer, index) => index === step ? option : answer));
     setError(false);
+
+    if (config.theme === "playful") {
+      const reactions = ["בול! 😂", "מההה?! מתי זה קרה? 😱", "אין ספק! 😎", "תשובה חזקה! 🔥"];
+      setReactionMsg(reactions[Math.floor(Math.random() * reactions.length)]);
+    }
   }
 
   function next() {
     if (!answers[step]) { setError(true); return; }
     setError(false);
+    setReactionMsg("");
     if (step < config.questions.length - 1) setStep((current) => current + 1);
     else setScreen("result");
   }
 
   function back() {
     setError(false);
+    setReactionMsg("");
     if (step > 0) setStep((current) => current - 1);
     else setScreen("intro");
   }
@@ -202,7 +214,9 @@ export default function PublishedExperience({ slug, config, showWatermark, track
     setCandleExtinguished(false);
     setPrankDone(false);
     setPrankProgress(0);
+    setGuestCount(1);
     setCustomSong("");
+    setReactionMsg("");
     setScreen("intro");
   }
 
@@ -212,17 +226,22 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   }
 
   // Friendship badge formula
-  const friendshipBadge = score === scoredQuestions.length ? "🥇 חבר זהב — 100% נפש תאומה!" : score >= 1 ? "🥈 חבר כסף — 80% שותף אמת" : "🥉 חבר כבוד — 50% מתחבר על כוס קפה";
+  const friendshipBadge = score === scoredQuestions.length ? "🥇 100% שותף אמת — נפש תאומה!" : score >= 1 ? "🥈 80% חבר נפש — צוות מנצח" : "🥉 חבר כבוד — צריכים לצאת יותר!";
 
   // Google calendar link helper for RSVP
   const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(config.headline)}&details=${encodeURIComponent(config.subtitle)}&location=${encodeURIComponent(config.highlights[1] || "")}`;
+  const wazeUrl = `https://waze.com/ul?q=${encodeURIComponent(config.highlights[1] || "חוות רונית")}&navigate=yes`;
 
-  return <main className={`experience-shell experience-${config.theme}`} id="main-content" style={{ "--page-soft": config.accentSoft, "--page-accent": config.accent } as React.CSSProperties}>
+  const themeClass = `experience-shell experience-${config.theme}`;
+  const cardClass = `experience-card experience-card-${config.theme}`;
+
+  return <main className={themeClass} id="main-content" style={{ "--page-soft": config.accentSoft, "--page-accent": config.accent } as React.CSSProperties}>
     {previewMode ? <div className="template-preview-bar"><Link href="/#templates" className="template-preview-back">חזרה לכל התבניות</Link><Link href={previewCtaHref} data-marketing-event="preview_create" className="button button-primary button-small">יצירת התבנית בחינם</Link></div> : null}
     <div className="experience-aurora experience-aurora-one" aria-hidden="true" />
     <div className="experience-aurora experience-aurora-two" aria-hidden="true" />
     <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size }}>{item.value}</span>)}</div>
-    <section className="experience-card" aria-live="polite">
+    
+    <section className={cardClass} aria-live="polite">
       <div className="experience-topline">{showWatermark ? <span className="experience-brand">Link<span>li</span></span> : <span aria-hidden="true">{config.emoji}</span>}{screen === "question" ? <span dir="ltr">{step + 1} / {config.questions.length}</span> : <span>{config.introLabel}</span>}</div>
 
       {screen === "intro" ? <div className="experience-screen experience-intro">
@@ -239,7 +258,20 @@ export default function PublishedExperience({ slug, config, showWatermark, track
             <p className="experience-greeting">שלום {config.recipient},</p>
             <h1>{config.headline}</h1>
             <p className="experience-copy">{config.subtitle}</p>
-            <div className="experience-meta">{config.highlights.map((highlight) => <span key={highlight}>✦ {highlight}</span>)}</div>
+
+            {/* Special Event Pass Details Header for RSVP */}
+            {config.theme === "elegant" && (
+              <div className="rsvp-ticket-header">
+                <div className="rsvp-ticket-row"><span>📅 תאריך ושעה:</span><b>{config.highlights[0] || "18.09.2026 · 19:30"}</b></div>
+                <div className="rsvp-ticket-row"><span>📍 מיקום:</span><b>{config.highlights[1] || "חוות רונית"}</b></div>
+                <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className="rsvp-waze-link">🧭 ניווט ב-Waze</a>
+              </div>
+            )}
+
+            {config.theme !== "elegant" && (
+              <div className="experience-meta">{config.highlights.map((highlight) => <span key={highlight}>✦ {highlight}</span>)}</div>
+            )}
+
             <button className="experience-primary" onClick={start}>{config.startText}<span aria-hidden="true">←</span></button>
             <p className="experience-hint">זה לוקח בערך דקה</p>
           </>
@@ -248,24 +280,45 @@ export default function PublishedExperience({ slug, config, showWatermark, track
 
       {screen === "question" && question ? <div className="experience-screen experience-question" key={step}>
         <div className="experience-progress" style={{ gridTemplateColumns: `repeat(${config.questions.length}, minmax(0, 1fr))` }} aria-label={`שלב ${step + 1} מתוך ${config.questions.length}`}>{config.questions.map((_, index) => <i className={index <= step ? "active" : ""} key={index} />)}</div>
-        <span className="experience-step">שאלה {step + 1}</span>
+        <span className="experience-step">שלב {step + 1}</span>
         <h2>{question.prompt}</h2>
         <p className="experience-copy">{question.helper}</p>
 
-        <div className="experience-options">
-          {question.options.map((option, index) => (
-            <button className={answers[step] === option ? "selected" : ""} onClick={() => choose(option)} key={`${option}-${index}`}>
-              <span>{String.fromCharCode(1488 + index)}</span>
-              <b>{option}</b>
-              <i aria-hidden="true">✓</i>
-            </button>
-          ))}
-        </div>
+        {/* Special Guest Stepper for RSVP Question 2 */}
+        {config.theme === "elegant" && step === 1 ? (
+          <div className="guest-stepper-box">
+            <div className="stepper-controls">
+              <button type="button" onClick={() => { const val = Math.max(1, guestCount - 1); setGuestCount(val); choose(`${val} אורחים`); }}>−</button>
+              <span className="guest-num">{guestCount}</span>
+              <button type="button" onClick={() => { const val = Math.min(10, guestCount + 1); setGuestCount(val); choose(`${val} אורחים`); }}>+</button>
+            </div>
+            <div className="guest-avatars">
+              {Array.from({ length: guestCount }).map((_, i) => <span key={i}>👤</span>)}
+            </div>
+          </div>
+        ) : (
+          <div className="experience-options">
+            {question.options.map((option, index) => (
+              <button className={answers[step] === option ? "selected" : ""} onClick={() => choose(option)} key={`${option}-${index}`}>
+                <span>{String.fromCharCode(1488 + index)}</span>
+                <b>{option}</b>
+                <i aria-hidden="true">✓</i>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Reaction micro-copy popup for Friendship theme */}
+        {config.theme === "playful" && reactionMsg ? (
+          <div className="quiz-reaction-popup">
+            <span>{reactionMsg}</span>
+          </div>
+        ) : null}
 
         {/* DJ Song input for RSVP step 3 */}
         {config.theme === "elegant" && step === 2 && (
           <div className="dj-song-input-box">
-            <label>🎵 רצו שיר שאתם חייבים לשמוע ברחבה (רשות):</label>
+            <label>🎵 רשמו שיר שאתם חייבים לשמוע ברחבה (רשות):</label>
             <input
               type="text"
               value={customSong}
@@ -277,7 +330,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         )}
 
         {error ? <p className="experience-error" role="alert">בחרו תשובה כדי להמשיך 😊</p> : null}
-        <div className="experience-navigation"><button className="experience-back" onClick={back}>חזרה</button><button className="experience-primary" onClick={next}>{step === config.questions.length - 1 ? config.finalButtonText : "לשאלה הבאה"}<span aria-hidden="true">←</span></button></div>
+        <div className="experience-navigation"><button className="experience-back" onClick={back}>חזרה</button><button className="experience-primary" onClick={next}>{step === config.questions.length - 1 ? config.finalButtonText : "לשלב הבא"}<span aria-hidden="true">←</span></button></div>
       </div> : null}
 
       {screen === "result" ? <div className="experience-screen experience-result">
@@ -286,11 +339,11 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           <div className="prank-fake-alert">
             <div className="prank-spinner">⚙️</div>
             <h3>🚨 אזהרת אבטחה חמורה!</h3>
-            <p>המערכת מבצעת בדיקת תאימות נתונים...</p>
+            <p>המערכת מבצעת בדיקת תאימות ונעילת נתונים...</p>
             <div className="prank-progress-bar">
               <div className="prank-progress-fill" style={{ width: `${prankProgress}%` }} />
             </div>
-            <span>{prankProgress}% הושלמו</span>
+            <span>{prankProgress}% הושלמו · קוד ERR_SYSTEM_901</span>
           </div>
         ) : (
           <>
