@@ -393,6 +393,20 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
           <div className="question-stage-navigation"><button type="button" className="button button-outline" disabled={questionIndex === 0} onClick={() => chooseQuestion(questionIndex - 1)}>שאלה קודמת</button><span>{questionIndex + 1} / {c.questions.length}</span><button type="button" className="button button-dark" disabled={questionIndex === c.questions.length - 1} onClick={() => chooseQuestion(questionIndex + 1)}>שאלה הבאה</button></div>
         </div>}
 
+        {section === "interactive" && <div className="form-section editor-stage-fields">
+          <div className="field-divider full"><b>⏱️ רכיב ספירה לאחור</b><span>מציג טיימר חי שסופר ימים, שעות ודקות לאירוע.</span></div>
+          <label className="full">תאריך ושעת האירוע<input value={c.eventDate || "18.09.2026 · 19:30"} maxLength={60} placeholder="לדוגמה: 18.09.2026 · 19:30" onChange={(e) => onConfig("eventDate", e.target.value)} /></label>
+
+          <div className="field-divider full"><b>🧭 מיקום וניווט Waze</b><span>מאפשר לאורחים ללחוץ ולנווט ישירות לאירוע.</span></div>
+          <label>שם המקום / אולם<input value={c.venueName || "חוות רונית, השרון"} maxLength={80} placeholder="לדוגמה: חוות רונית" onChange={(e) => onConfig("venueName", e.target.value)} /></label>
+          <label>קישור לניווט ב-Waze<input value={c.wazeUrl || "https://waze.com/ul?q=חוות%20רונית"} maxLength={300} placeholder="https://waze.com/ul?..." onChange={(e) => onConfig("wazeUrl", e.target.value)} /></label>
+
+          <div className="field-divider full"><b>🎟️ שובר מתנה & קוד קופון</b><span>להתאמה אישית של כרטיסי מתנה והפתעות.</span></div>
+          <label>כותרת השובר<input value={c.voucherTitle || "סופשבוע מפנק בסוויטה"} maxLength={100} placeholder="לדוגמה: שובר ספא זוגי" onChange={(e) => onConfig("voucherTitle", e.target.value)} /></label>
+          <label>קוד מימוש אישי<input value={c.voucherCode || "LINKLI-GIFT-2026"} maxLength={40} placeholder="LINKLI-GIFT-2026" onChange={(e) => onConfig("voucherCode", e.target.value)} /></label>
+          <label className="full">תנאי מימוש ומידע נוסף<textarea value={c.voucherTerms || "בתוקף לשנה מיום ההנפקה · כולל ארוחת בוקר וספא"} maxLength={200} placeholder="תנאים ופרטי מימוש..." onChange={(e) => onConfig("voucherTerms", e.target.value)} /></label>
+        </div>}
+
         {section === "completion" && <div className="form-section editor-stage-fields">
           <label>טקסט מעל כותרת הסיום<input value={c.resultLabel} maxLength={80} placeholder="לדוגמה: הסיכום מוכן" onChange={(event) => onConfig("resultLabel", event.target.value)} /></label>
           <label>טקסט על כפתור הסיום<input value={c.finalButtonText} maxLength={80} placeholder="לדוגמה: להצגת הסיכום" onChange={(event) => onConfig("finalButtonText", event.target.value)} /></label>

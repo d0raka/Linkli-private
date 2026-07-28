@@ -29,6 +29,22 @@ export type TemplateConfig = {
   emoji: string;
   decorations: string[];
   theme: TemplateTheme;
+
+  // Interactive Customization Fields
+  showCountdown?: boolean;
+  eventDate?: string;
+  wazeUrl?: string;
+  venueName?: string;
+  showGuests?: boolean;
+  maxGuests?: number;
+  showDjSong?: boolean;
+  showCalendar?: boolean;
+  voucherTitle?: string;
+  voucherCode?: string;
+  voucherTerms?: string;
+  showCandle?: boolean;
+  showWaxEnvelope?: boolean;
+
   // Kept in the normalized record for compatibility with pages created before multi-step templates.
   options: string[];
   correctOption: string;
@@ -211,6 +227,22 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     buttonText: limitedString(input.buttonText, base.buttonText, 80),
     accent: color("accent"), accentSoft: color("accentSoft"),
     emoji: limitedString(input.emoji, base.emoji, 16), decorations: base.decorations, theme: base.theme,
+
+    // Interactive Customization Controls
+    showCountdown: typeof input.showCountdown === "boolean" ? input.showCountdown : true,
+    eventDate: limitedString(input.eventDate, base.eventDate || "18.09.2026 · 19:30", 60),
+    wazeUrl: typeof input.wazeUrl === "string" ? input.wazeUrl.trim() : base.wazeUrl,
+    venueName: limitedString(input.venueName, base.venueName || "חוות רונית", 80),
+    showGuests: typeof input.showGuests === "boolean" ? input.showGuests : true,
+    maxGuests: typeof input.maxGuests === "number" ? Math.min(20, Math.max(1, input.maxGuests)) : 10,
+    showDjSong: typeof input.showDjSong === "boolean" ? input.showDjSong : true,
+    showCalendar: typeof input.showCalendar === "boolean" ? input.showCalendar : true,
+    voucherTitle: limitedString(input.voucherTitle, base.voucherTitle || "שובר מתנה מפנק", 100),
+    voucherCode: limitedString(input.voucherCode, base.voucherCode || "LINKLI-GIFT-2026", 40),
+    voucherTerms: limitedString(input.voucherTerms, base.voucherTerms || "בתוקף לשנה מיום ההנפקה", 200),
+    showCandle: typeof input.showCandle === "boolean" ? input.showCandle : true,
+    showWaxEnvelope: typeof input.showWaxEnvelope === "boolean" ? input.showWaxEnvelope : true,
+
     options: questions[0].options, correctOption: questions[0].correctOption,
   };
 }

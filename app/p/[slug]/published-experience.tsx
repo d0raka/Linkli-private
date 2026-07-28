@@ -144,7 +144,7 @@ function ScratchCanvas({ secretText }: { secretText: string }) {
 }
 
 /* Gift Voucher Box Component */
-function GiftVoucherBox({ title, text }: { title: string; text: string }) {
+function GiftVoucherBox({ title, text, code, terms }: { title: string; text: string; code?: string; terms?: string }) {
   const [unwrapped, setUnwrapped] = useState(false);
 
   return (
@@ -160,7 +160,8 @@ function GiftVoucherBox({ title, text }: { title: string; text: string }) {
           <span className="voucher-badge">🎟️ שובר מתנה אישי</span>
           <h3>{title}</h3>
           <p>{text}</p>
-          <div className="voucher-code">קוד מימוש: <strong>LINKLI-GIFT-2026</strong></div>
+          <div className="voucher-code">קוד מימוש: <strong>{code || "LINKLI-GIFT-2026"}</strong></div>
+          {terms && <small style={{ display: "block", marginTop: "6px", opacity: 0.8 }}>{terms}</small>}
         </div>
       )}
     </div>
@@ -390,7 +391,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
 
         {/* Special Gift Voucher Box */}
         {config.theme === "gift" && (
-          <GiftVoucherBox title={config.successTitle} text={config.successText} />
+          <GiftVoucherBox title={config.voucherTitle || config.successTitle} text={config.successText} code={config.voucherCode} terms={config.voucherTerms} />
         )}
 
         {/* Special Interactive Candle for Birthday */}
