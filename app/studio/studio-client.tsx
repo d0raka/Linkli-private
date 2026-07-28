@@ -437,6 +437,54 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
             <label className="color-field"><span><b>צבע ראשי</b><small>כפתורים והדגשות</small></span><input type="color" value={c.accent} aria-label="צבע ראשי" onChange={(event) => onConfig("accent", event.target.value)} /><code>{c.accent}</code></label>
             <label className="color-field"><span><b>צבע רקע</b><small>הרקע הרך של העמוד</small></span><input type="color" value={c.accentSoft} aria-label="צבע רקע" onChange={(event) => onConfig("accentSoft", event.target.value)} /><code>{c.accentSoft}</code></label>
           </div>
+
+          <div className="form-section editor-stage-fields" style={{ marginTop: "20px" }}>
+            <div className="field-divider full"><b>✨ טיפוגרפיה וצורניות הקארד</b><span>בחירת גופן עברי, צורת הקארד ורמת הטשטוש.</span></div>
+            <label>גופן עברי ראשי
+              <select value={c.fontFamily || "Rubik"} onChange={(e) => onConfig("fontFamily", e.target.value)}>
+                <option value="Rubik">Rubik (מודרני ודינמי)</option>
+                <option value="Heebo">Heebo (נקי ואלגנטי)</option>
+                <option value="Assistant">Assistant (קליל ונעים)</option>
+                <option value="Varela Round">Varela Round (מעוגל ורך)</option>
+                <option value="Secular One">Secular One (בולט וחגיגי)</option>
+              </select>
+            </label>
+
+            <label>צורת הקארד
+              <select value={c.cardShape || "rounded-3d"} onChange={(e) => onConfig("cardShape", e.target.value)}>
+                <option value="rounded-3d">3D Glassmorphism (מעוגל תלת-מימדי)</option>
+                <option value="rounded-pill">Pill Badge (עיגול רך מושלם)</option>
+                <option value="square-minimal">Minimal Clean (פינות מעוגלות קלות)</option>
+              </select>
+            </label>
+
+            <label className="full">רמת טשטוש הזכוכית (Glassmorphism Blur) — <span>{c.glassBlur ?? 30}px</span>
+              <input type="range" min={0} max={50} value={c.glassBlur ?? 30} onChange={(e) => onConfig("glassBlur", Number(e.target.value))} />
+            </label>
+
+            <div className="field-divider full"><b>🌐 דומיין מותאם אישית & מיתוג (Plus & Max)</b><span>חיבור תת-דומיין, דומיין אישי והסרת לוגו.</span></div>
+
+            <label className="full" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f8fafc", padding: "14px 18px", borderRadius: "14px", border: "1px solid #e2e8f0" }}>
+              <div>
+                <b style={{ display: "block", fontSize: "14px", color: "#0f172a" }}>הסרת מיתוג Linkli בתחתית העמוד</b>
+                <small style={{ color: "#64748b", fontSize: "12px" }}>מציג עמוד 100% נקי וממותג אישית בלבד</small>
+              </div>
+              <input type="checkbox" checked={c.hideBranding || profile.plan !== "free"} onChange={(e) => onConfig("hideBranding", e.target.checked)} style={{ width: "20px", height: "20px", cursor: "pointer" }} />
+            </label>
+
+            <label>תת-דומיין מותאם (Custom Subdomain)
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }} dir="ltr">
+                <input value={c.customSubdomain || ""} placeholder="my-event" onChange={(e) => onConfig("customSubdomain", e.target.value)} />
+                <span style={{ fontSize: "13px", fontWeight: "bold", color: "#64748b" }}>.linkli.app</span>
+              </div>
+            </label>
+
+            <label>דומיין אישי מלא (Custom Domain)
+              <input value={c.customDomain || ""} placeholder="www.my-event.co.il" dir="ltr" onChange={(e) => onConfig("customDomain", e.target.value)} />
+              <small style={{ fontSize: "11px", color: "#64748b", display: "block", marginTop: "4px" }}>הגדירו תקליט CNAME בדומיין שלכם לכתובת: <code>cname.linkli.app</code></small>
+            </label>
+          </div>
+
           <div className={`page-access-card ${project.passwordProtected ? "protected" : ""}`}><div className="page-access-heading"><span>{project.passwordProtected ? "🔒" : "🔓"}</span><div><b>הגנה באמצעות סיסמה</b><p>{project.passwordProtected ? "המבקרים חייבים להזין סיסמה לפני הצגת העמוד." : "אפשר להגן על העמוד ולשתף את הסיסמה רק עם מי שצריך."}</p></div><strong>{project.passwordProtected ? "פעיל" : "כבוי"}</strong></div><label>{project.passwordProtected ? "סיסמה חדשה — רק אם רוצים להחליף" : "בחירת סיסמה לעמוד"}<input type="password" value={passwordDraft} minLength={6} maxLength={64} autoComplete="new-password" dir="ltr" placeholder="לפחות 6 תווים" onChange={(event) => setPasswordDraft(event.target.value)} /></label><div className="page-access-actions"><button type="button" className="button button-dark" disabled={saving || passwordDraft.length < 6} onClick={savePagePassword}>{saving ? "שומרים…" : project.passwordProtected ? "החלפת סיסמה" : "הפעלת הגנה"}</button>{project.passwordProtected && <button type="button" className="remove-access-button" disabled={saving} onClick={() => onPassword(null)}>הסרת ההגנה</button>}</div></div>
           <div className="publish-card">
             <div className="publish-card-heading"><span className={project.published ? "published" : ""}>{project.published ? "● באוויר" : "○ טיוטה"}</span><div><b>{project.published ? "העמוד זמין לשיתוף" : "העמוד עדיין פרטי"}</b><p>{project.published ? "אפשר להעתיק את הקישור או לפתוח את העמוד המלא." : "פרסמו כשתהיו מרוצים מהתצוגה המקדימה."}</p></div></div>

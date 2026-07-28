@@ -284,15 +284,21 @@ export default function PublishedExperience({ slug, config, showWatermark, track
 
   const themeClass = `experience-shell experience-${config.theme}`;
   const cardClass = `experience-card experience-card-${config.theme}`;
+  const isBrandingHidden = config.hideBranding || !showWatermark;
 
-  return <main className={themeClass} id="main-content" style={{ "--page-soft": config.accentSoft, "--page-accent": config.accent } as React.CSSProperties}>
+  return <main className={themeClass} id="main-content" style={{
+    fontFamily: config.fontFamily ? `"${config.fontFamily}", sans-serif` : undefined,
+    "--page-soft": config.accentSoft,
+    "--page-accent": config.accent,
+    "--card-blur": `${config.glassBlur ?? 30}px`,
+  } as React.CSSProperties}>
     {previewMode ? <div className="template-preview-bar"><Link href="/#templates" className="template-preview-back">חזרה לכל התבניות</Link><Link href={previewCtaHref} data-marketing-event="preview_create" className="button button-primary button-small">יצירת התבנית בחינם</Link></div> : null}
     <div className="experience-aurora experience-aurora-one" aria-hidden="true" />
     <div className="experience-aurora experience-aurora-two" aria-hidden="true" />
     <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size }}>{item.value}</span>)}</div>
     
-    <section className={cardClass} aria-live="polite">
-      <div className="experience-topline">{showWatermark ? <span className="experience-brand">Link<span>li</span></span> : <span aria-hidden="true">{config.emoji}</span>}{screen === "question" ? <span dir="ltr">{step + 1} / {config.questions.length}</span> : <span>{config.introLabel}</span>}</div>
+    <section className={`${cardClass} ${config.cardShape ? `shape-${config.cardShape}` : ""}`} aria-live="polite">
+      <div className="experience-topline">{showWatermark && !isBrandingHidden ? <span className="experience-brand">Link<span>li</span></span> : <span aria-hidden="true">{config.emoji}</span>}{screen === "question" ? <span dir="ltr">{step + 1} / {config.questions.length}</span> : <span>{config.introLabel}</span>}</div>
 
       {screen === "intro" ? <div className="experience-screen experience-intro">
         {/* Special Wax Seal Envelope for Love Note */}
@@ -312,19 +318,17 @@ export default function PublishedExperience({ slug, config, showWatermark, track
             {/* Live Event Pass & Countdown for RSVP */}
             {config.theme === "elegant" && (
               <>
-                <EventCountdown />
+                <EventCountdown targetDateText={config.eventDate} />
                 <div className="rsvp-ticket-header">
-                  <div className="rsvp-ticket-row"><span>📅 תאריך ושעה:</span><b>{config.highlights[0] || "18.09.2026 · 19:30"}</b></div>
-                  <div className="rsvp-ticket-row"><span>📍 מיקום:</span><b>{config.highlights[1] || "חוות רונית"}</b></div>
-                  <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className="rsvp-waze-link">🧭 ניווט ב-Waze למקום האירוע</a>
+                  <div className="rsvp-ticket-row"><span>📅 תאריך ושעה:</span><b>{config.eventDate || config.highlights[0] || "18.09.2026 · 19:30"}</b></div>
+                  <div className="rsvp-ticket-row"><span>📍 מיקום:</span><b>{config.venueName || config.highlights[1] || "חוות רונית"}</b></div>
+                  <a href={config.wazeUrl || wazeUrl} target="_blank" rel="noopener noreferrer" className="rsvp-waze-link">🧭 ניווט ב-Waze למקום האירוע</a>
                 </div>
               </>
             )}
 
             {/* Photo Slide Carousel for Memories Theme */}
-            {config.theme === "memories" && (
-              <MemoriesSlider />
-            )}
+            {config.theme === "memories" && <MemoriesSlider />}
 
             {config.theme !== "elegant" && config.theme !== "memories" && (
               <div className="experience-meta">{config.highlights.map((highlight) => <span key={highlight}>✦ {highlight}</span>)}</div>
@@ -342,7 +346,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         <h2>{question.prompt}</h2>
         <p className="experience-copy">{question.helper}</p>
 
-        {/* Special Guest Stepper for RSVP Question 2 */}
         {config.theme === "elegant" && step === 1 ? (
           <div className="guest-stepper-box">
             <div className="stepper-controls">
@@ -366,7 +369,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           </div>
         )}
 
-        {/* DJ Song input for RSVP step 3 */}
         {config.theme === "elegant" && step === 2 && (
           <div className="dj-song-input-box">
             <label>🎵 רשמו שיר שאתם חייבים לשמוע ברחבה (רשות):</label>
@@ -389,12 +391,10 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         <span className="score-pill">{config.resultLabel}</span>
         <h2>{config.successTitle}</h2>
 
-        {/* Special Gift Voucher Box */}
         {config.theme === "gift" && (
           <GiftVoucherBox title={config.voucherTitle || config.successTitle} text={config.successText} code={config.voucherCode} terms={config.voucherTerms} />
         )}
 
-        {/* Special Interactive Candle for Birthday */}
         {config.theme === "party" && (
           <BirthdayCandle onExtinguish={() => setCandleExtinguished(true)} />
         )}
@@ -403,12 +403,18 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           <p className="experience-copy">{config.successText}</p>
         )}
 
-        {/* Special Scratch Card for Date Theme */}
         {config.theme === "romance" && (
           <ScratchCanvas secretText={config.successTitle} />
         )}
 
-        {/* Special RSVP Add to Calendar Button */}
+        {config.theme === "memories" && (
+          <MemoriesSlider />
+        )}
+
+        {config.theme === "elegant" && config.venueName && (
+          <VenueWazeBox venueName={config.venueName} wazeUrl={config.wazeUrl} />
+        )}
+
         {config.theme === "elegant" && (
           <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer" className="calendar-add-button">
             <span>📅</span> הוספת האירוע ל-Google Calendar
@@ -417,7 +423,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
 
         <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>
 
-        {/* Multi-Channel Response & Share Bar */}
         <div className="multi-share-section">
           <p className="share-title">שליחת המענה בדרכים נוספות:</p>
           <div className="multi-share-grid">
@@ -438,6 +443,6 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         <button onClick={restart} className="experience-restart">התחלה מחדש</button>
       </div> : null}
     </section>
-    {showWatermark ? <Link href="/" className="watermark">נוצר עם <b>Linkli</b> · גם אני רוצה</Link> : null}
+    {!isBrandingHidden ? <Link href="/" className="watermark">נוצר עם <b>Linkli</b> · גם אני רוצה</Link> : null}
   </main>;
 }

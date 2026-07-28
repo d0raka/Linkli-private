@@ -1,0 +1,282 @@
+- generic [active] [ref=e1]:
+  - link "דילוג לתוכן הראשי" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - main [ref=e3]:
+    - navigation [ref=e4]:
+      - link "Link li" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - text: Link
+        - generic [ref=e6]: li
+      - generic [ref=e7]:
+        - link "תבניות" [ref=e8] [cursor=pointer]:
+          - /url: "#templates"
+        - link "מסלולים" [ref=e9] [cursor=pointer]:
+          - /url: "#pricing"
+        - link "כניסה" [ref=e10] [cursor=pointer]:
+          - /url: /login
+        - link "הרשמה חינם" [ref=e11] [cursor=pointer]:
+          - /url: /register?returnTo=%2Fstudio
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]: בטא פתוחה · העמוד הראשון בחינם
+        - heading "הופכים רגע מיוחד לקישור שאי אפשר להתעלם ממנו." [level=1] [ref=e16]: הופכים רגע מיוחדלקישור שאי אפשר להתעלם ממנו.
+        - paragraph [ref=e17]: יוצרים הזמנה, הפתעה, חידון או ברכה אישית עם שאלות, אנימציות ועמוד סיום מעוצב — ואז שולחים קישור אחד שנראה מצוין בכל מכשיר.
+        - generic [ref=e18]:
+          - link "יצירת עמוד בחינם ←" [ref=e19] [cursor=pointer]:
+            - /url: /register?returnTo=%2Fstudio
+            - text: יצירת עמוד בחינם
+            - generic [ref=e20]: ←
+          - link "לצפייה בתבניות" [ref=e21] [cursor=pointer]:
+            - /url: "#templates"
+        - generic [ref=e22]:
+          - generic [ref=e23]: ✦
+          - generic [ref=e24]: ללא כרטיס אשראי · מוכנים לשיתוף בתוך דקות
+      - generic "תצוגה מקדימה של עמוד Linkli" [ref=e25]:
+        - generic:
+          - generic: 💕
+          - generic: ✨
+          - generic: 🌸
+          - generic: 💗
+        - generic [ref=e26]: ✦
+        - generic [ref=e27]: ✦
+        - generic [ref=e33]:
+          - generic [ref=e34]: 💘
+          - paragraph [ref=e35]: שאלה 2 מתוך 3
+          - heading "מתי הכי כיף לך לצאת?" [level=2] [ref=e40]
+          - paragraph [ref=e41]: כדי שאוכל להתחיל לתכנן
+          - generic [ref=e42]:
+            - text: חמישי בערב
+            - generic [ref=e43]: ✓
+          - generic [ref=e44]:
+            - text: שישי בצהריים
+            - generic [ref=e45]: ○
+          - generic [ref=e46]:
+            - text: עדיף להשאיר כהפתעה
+            - generic [ref=e47]: ○
+          - generic [ref=e48]: לשאלה הבאה ←
+        - generic [ref=e49]:
+          - strong [ref=e50]: "3"
+          - generic [ref=e51]: שאלות קצרות ✍️
+        - generic [ref=e52]:
+          - strong [ref=e53]: "1"
+          - generic [ref=e54]: קישור לשיתוף ⚡
+    - generic [ref=e56]:
+      - generic [ref=e57]: מתאים במיוחד ל־
+      - generic [ref=e58]: ימי הולדת 🎂
+      - generic [ref=e59]: אירועים 🥂
+      - generic [ref=e60]: דייטים 💘
+      - generic [ref=e61]: חברים 🤝
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - text: מתחילים מתבנית
+          - heading "משהו לכל רגע" [level=2] [ref=e65]
+        - paragraph [ref=e66]: בוחרים רגע, פותחים תצוגה חיה, ואז הופכים אותה לעמוד משלכם.
+      - generic [ref=e67]:
+        - article [ref=e68]:
+          - link "תצוגה מקדימה של הזמנה לדייט" [ref=e69] [cursor=pointer]:
+            - /url: /preview/date
+            - generic [ref=e70]: 💘
+            - generic [ref=e71]: רומנטי
+            - generic [ref=e72]: תצוגה חיה
+          - generic [ref=e73]:
+            - heading "הזמנה לדייט" [level=3] [ref=e74]
+            - paragraph [ref=e75]: הזמנה אישית בשלושה שלבים, עם הפתעה בסוף והמשך ישיר ל־WhatsApp.
+            - generic [ref=e76]: 3 שאלות · אנימציות · תוצאה אישית
+            - generic [ref=e77]:
+              - link "תצוגה מקדימה" [ref=e78] [cursor=pointer]:
+                - /url: /preview/date
+              - link "יצירה בחינם ←" [ref=e79] [cursor=pointer]:
+                - /url: /register?returnTo=%2Fstudio%2Fcreate%3Ftemplate%3Ddate
+                - text: יצירה בחינם
+                - generic [ref=e80]: ←
+        - article [ref=e81]:
+          - link "תצוגה מקדימה של הפתעת יום הולדת" [ref=e82] [cursor=pointer]:
+            - /url: /preview/birthday
+            - generic [ref=e83]: 🎂
+            - generic [ref=e84]: חגיגה
+            - generic [ref=e85]: תצוגה חיה
+          - generic [ref=e86]:
+            - heading "הפתעת יום הולדת" [level=3] [ref=e87]
+            - paragraph [ref=e88]: ברכת יום הולדת אינטראקטיבית עם קונפטי, שאלות אישיות ומסך הפתעה.
+            - generic [ref=e89]: 3 שאלות · אנימציות · תוצאה אישית
+            - generic [ref=e90]:
+              - link "תצוגה מקדימה" [ref=e91] [cursor=pointer]:
+                - /url: /preview/birthday
+              - link "יצירה בחינם ←" [ref=e92] [cursor=pointer]:
+                - /url: /register?returnTo=%2Fstudio%2Fcreate%3Ftemplate%3Dbirthday
+                - text: יצירה בחינם
+                - generic [ref=e93]: ←
+        - article [ref=e94]:
+          - link "תצוגה מקדימה של הזמנה לאירוע" [ref=e95] [cursor=pointer]:
+            - /url: /preview/rsvp
+            - generic [ref=e96]: 🥂
+            - generic [ref=e97]: אירועים
+            - generic [ref=e98]: תצוגה חיה
+          - generic [ref=e99]:
+            - heading "הזמנה לאירוע" [level=3] [ref=e100]
+            - paragraph [ref=e101]: הזמנה אלגנטית עם פרטי האירוע, אישור הגעה והעדפות אירוח.
+            - generic [ref=e102]: 3 שאלות · אנימציות · תוצאה אישית
+            - generic [ref=e103]:
+              - link "תצוגה מקדימה" [ref=e104] [cursor=pointer]:
+                - /url: /preview/rsvp
+              - link "יצירה בחינם ←" [ref=e105] [cursor=pointer]:
+                - /url: /register?returnTo=%2Fstudio%2Fcreate%3Ftemplate%3Drsvp
+                - text: יצירה בחינם
+                - generic [ref=e106]: ←
+        - article [ref=e107]:
+          - link "תצוגה מקדימה של מבחן חברות" [ref=e108] [cursor=pointer]:
+            - /url: /preview/friendship
+            - generic [ref=e109]: 🤝
+            - generic [ref=e110]: משחק
+            - generic [ref=e111]: תצוגה חיה
+          - generic [ref=e112]:
+            - heading "מבחן חברות" [level=3] [ref=e113]
+            - paragraph [ref=e114]: חידון חברות בשלושה סיבובים, עם ניקוד ותוצאה שאפשר לשתף.
+            - generic [ref=e115]: 3 שאלות · אנימציות · תוצאה אישית
+            - generic [ref=e116]:
+              - link "תצוגה מקדימה" [ref=e117] [cursor=pointer]:
+                - /url: /preview/friendship
+              - link "יצירה עם Plus ←" [ref=e118] [cursor=pointer]:
+                - /url: /register?returnTo=%2Fstudio%2Fcreate%3Ftemplate%3Dfriendship
+                - text: יצירה עם Plus
+                - generic [ref=e119]: ←
+        - article [ref=e120]:
+          - link "תצוגה מקדימה של מכתב אהבה" [ref=e121] [cursor=pointer]:
+            - /url: /preview/love-note
+            - generic [ref=e122]: 💌
+            - generic [ref=e123]: רומנטי
+            - generic [ref=e124]: תצוגה חיה
+          - generic [ref=e125]:
+            - heading "מכתב אהבה" [level=3] [ref=e126]
+            - paragraph [ref=e127]: מכתב אהבה אינטראקטיבי שנפתח בהדרגה דרך זיכרונות משותפים.
+            - generic [ref=e128]: 3 שאלות · אנימציות · תוצאה אישית
+            - generic [ref=e129]:
+              - link "תצוגה מקדימה" [ref=e130] [cursor=pointer]:
+                - /url: /preview/love-note
+              - link "יצירה עם Plus ←" [ref=e131] [cursor=pointer]:
+                - /url: /register?returnTo=%2Fstudio%2Fcreate%3Ftemplate%3Dlove-note
+                - text: יצירה עם Plus
+                - generic [ref=e132]: ←
+        - article [ref=e133]:
+          - link "תצוגה מקדימה של עמוד מתיחה" [ref=e134] [cursor=pointer]:
+            - /url: /preview/prank
+            - generic [ref=e135]: 😈
+            - generic [ref=e136]: מצחיק
+            - generic [ref=e137]: תצוגה חיה
+          - generic [ref=e138]:
+            - heading "עמוד מתיחה" [level=3] [ref=e139]
+            - paragraph [ref=e140]: מתיחה דיגיטלית בשלושה שלבים שנראים רשמיים — עד לטוויסט בסוף.
+            - generic [ref=e141]: 3 שאלות · אנימציות · תוצאה אישית
+            - generic [ref=e142]:
+              - link "תצוגה מקדימה" [ref=e143] [cursor=pointer]:
+                - /url: /preview/prank
+              - link "יצירה עם Plus ←" [ref=e144] [cursor=pointer]:
+                - /url: /register?returnTo=%2Fstudio%2Fcreate%3Ftemplate%3Dprank
+                - text: יצירה עם Plus
+                - generic [ref=e145]: ←
+    - generic [ref=e147]:
+      - generic [ref=e148]:
+        - text: פשוט. ממש פשוט.
+        - heading "שלושה צעדים ויש לכם עמוד" [level=2] [ref=e149]
+      - generic [ref=e150]:
+        - article [ref=e151]:
+          - generic [ref=e152]: "01"
+          - generic [ref=e153]: 🧩
+          - heading "בוחרים תבנית" [level=3] [ref=e154]
+          - paragraph [ref=e155]: מתחילים מהסגנון שמתאים לרגע שלכם.
+        - article [ref=e156]:
+          - generic [ref=e157]: "02"
+          - generic [ref=e158]: ✍️
+          - heading "הופכים אותה לשלכם" [level=3] [ref=e159]
+          - paragraph [ref=e160]: עורכים שאלות, תשובות, צבעים ואת כפתור השיתוף.
+        - article [ref=e161]:
+          - generic [ref=e162]: "03"
+          - generic [ref=e163]: 🚀
+          - heading "מפרסמים ומשתפים" [level=3] [ref=e164]
+          - paragraph [ref=e165]: מקבלים קישור מוכן לשיתוף ב־WhatsApp וברשתות החברתיות.
+    - generic [ref=e166]:
+      - generic [ref=e167]:
+        - text: פשוט להתחיל
+        - heading "מתחילים בחינם, משדרגים כשצריך" [level=2] [ref=e168]
+        - paragraph [ref=e169]: העמוד הראשון נותן לכם לבדוק את הרעיון באמת. Plus מיועד ליוצרים, זוגות ומארחים שרוצים כמה עמודים וקישור נקי בלי מיתוג.
+      - generic [ref=e170]:
+        - article [ref=e171]:
+          - generic [ref=e172]:
+            - text: חינם
+            - heading "₪0 / ללא הגבלת זמן" [level=3] [ref=e173]
+            - paragraph [ref=e174]: דרך מהירה ליצור עמוד אחד ולבדוק איך הוא עובד אצלכם.
+          - list [ref=e175]:
+            - listitem [ref=e176]: ✓ עמוד אחד
+            - listitem [ref=e177]: ✓ 3 תבניות לבחירה
+            - listitem [ref=e178]: ✓ עריכת טקסטים, שאלות וצבעים
+            - listitem [ref=e179]: ✓ נתוני צפיות ולחיצות
+            - listitem [ref=e180]: ✓ הגנה באמצעות סיסמה
+            - listitem [ref=e181]: כולל מיתוג Linkli
+          - link "מתחילים בחינם" [ref=e182] [cursor=pointer]:
+            - /url: /register?returnTo=%2Fstudio
+        - article [ref=e183]:
+          - generic [ref=e184]: ליוצרים סדרתיים
+          - generic [ref=e185]:
+            - text: Plus
+            - heading "₪9.90 / לחודש" [level=3] [ref=e186]
+            - paragraph [ref=e187]: למי שיוצר כמה רגעים, אירועים או גרסאות ורוצה לשתף בלי הסחות.
+          - list [ref=e188]:
+            - listitem [ref=e189]: ✓ עד 10 עמודים
+            - listitem [ref=e190]: ✓ כל 6 התבניות, כולל תבניות חדשות
+            - listitem [ref=e191]: ✓ עריכת טקסטים, שאלות וצבעים
+            - listitem [ref=e192]: ✓ נתוני צפיות ולחיצות
+            - listitem [ref=e193]: ✓ הגנה באמצעות סיסמה
+            - listitem [ref=e194]: ✓ ללא מיתוג Linkli
+          - link "שדרוג ל־Plus ←" [ref=e195] [cursor=pointer]:
+            - /url: /checkout
+            - text: שדרוג ל־Plus
+            - generic [ref=e196]: ←
+      - generic [ref=e197]:
+        - generic [ref=e198]:
+          - text: Plus למשתמשים הראשונים
+          - heading "רוצים יותר מעמוד אחד כבר בבטא?" [level=3] [ref=e199]
+          - paragraph [ref=e200]: השאירו פרטים. נלמד מה אתם צריכים וניצור קשר כשנוכל לפתוח עבורכם גישת Plus ותשלום מסודר.
+        - generic [ref=e201]:
+          - generic [ref=e202]:
+            - text: שם
+            - textbox "שם" [ref=e203]
+          - generic [ref=e204]:
+            - text: דוא״ל
+            - textbox "דוא״ל" [ref=e205]
+          - generic [ref=e206]:
+            - text: מה תרצו ליצור?
+            - combobox "מה תרצו ליצור?" [ref=e207]:
+              - option "אירועים והזמנות" [selected]
+              - option "ימי הולדת והפתעות"
+              - option "זוגיות ודייטים"
+              - option "תוכן וקהל"
+              - option "שימוש עסקי"
+              - option "משהו אחר"
+          - generic [ref=e208]:
+            - text: חברה
+            - textbox [ref=e209]
+          - generic [ref=e210]:
+            - checkbox "אני מאשר/ת ל־Linkli ליצור איתי קשר בנושא Plus." [ref=e211]
+            - generic [ref=e212]: אני מאשר/ת ל־Linkli ליצור איתי קשר בנושא Plus.
+          - button "בקשת גישה ל־Plus" [ref=e213] [cursor=pointer]
+    - generic [ref=e214]:
+      - generic [ref=e215]: ✦
+      - heading "הרעיון כבר אצלכם. בואו נהפוך אותו לעמוד שאפשר לשתף." [level=2] [ref=e216]: הרעיון כבר אצלכם.בואו נהפוך אותו לעמוד שאפשר לשתף.
+      - paragraph [ref=e217]: העמוד הראשון שלכם יכול להיות מוכן בתוך כמה דקות.
+      - link "יצירת עמוד בחינם ←" [ref=e218] [cursor=pointer]:
+        - /url: /register?returnTo=%2Fstudio
+    - generic [ref=e219]:
+      - link "Link li" [ref=e220] [cursor=pointer]:
+        - /url: /
+        - text: Link
+        - generic [ref=e221]: li
+      - paragraph [ref=e222]: עמודים קטנים לרגעים גדולים.
+      - generic [ref=e223]:
+        - link "תנאים ופרטיות" [ref=e224] [cursor=pointer]:
+          - /url: /legal
+        - link "נגישות" [ref=e225] [cursor=pointer]:
+          - /url: /accessibility
+        - link "יצירת קשר" [ref=e226] [cursor=pointer]:
+          - /url: /contact
+  - button "פתיחת תפריט נגישות" [ref=e228] [cursor=pointer]: ♿

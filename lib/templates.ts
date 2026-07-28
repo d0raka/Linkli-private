@@ -45,6 +45,15 @@ export type TemplateConfig = {
   showCandle?: boolean;
   showWaxEnvelope?: boolean;
 
+  // Advanced Styling & Custom Domain Fields (Plus & Max)
+  fontFamily?: string;
+  cardShape?: string;
+  glassBlur?: number;
+  bgStyle?: string;
+  customSubdomain?: string;
+  customDomain?: string;
+  hideBranding?: boolean;
+
   // Kept in the normalized record for compatibility with pages created before multi-step templates.
   options: string[];
   correctOption: string;
@@ -167,6 +176,21 @@ export const templates: LinkliTemplate[] = [
       accent: "#db2777", accentSoft: "#fff0f7", emoji: "💌", decorations: ["❤️", "💌", "✨", "🌹"], theme: "letter",
     }),
   },
+  {
+    id: "custom-blank", name: "יצירה מאפס בהתאמה אישית", category: "עיצוב חופשי", emoji: "🎨", free: true,
+    description: "לוח חלק לעיצוב קארד מ-0 עם בחירת גופנים בעברית, צורת הקארד, אפקטי זכוכית ורקעים מרהיבים.",
+    config: config({
+      recipient: "חבר/ה אהוב/ה", headline: "העמוד האישי שלך מתחיל כאן ✨", subtitle: "עיצוב מאפס עם חופש יצירתי מוחלט — התאימו צבעים, גופנים, שאלות ורכיבים אינטראקטיביים.",
+      introLabel: "יצירה בהתאמה אישית", startText: "פתיחת העמוד", highlights: ["עיצוב מאפס", "חופש יצירתי מלא"],
+      questions: [
+        { prompt: "איך היית רוצה להתחיל?", helper: "בחרו את הצעד הראשון.", options: ["משהו אישי ומרגש ✨", "הזמנה חגיגית 🎉", "ברכה קורעת מצחוק 😂", "משהו סודי ויוקרתי 🎁"], correctOption: "משהו אישי ומרגש ✨" },
+      ],
+      finalButtonText: "לצפייה בתוצאה המעוצבת", resultLabel: "העמוד שלך מוכן ✨",
+      successTitle: "יצרתם עמוד מרהיב בהתאמה אישית! 🎉", successText: "תודה שהשתמשתם במנוע היצירה של Linkli. שתפו את הקישור שלכם עכשיו עם כל האנשים החשובים.",
+      whatsapp: "", whatsappText: "ראיתי את העמוד המעוצב שלך — אהבתי מאוד! ✨", buttonText: "שיתוף ב-WhatsApp",
+      accent: "#ec4899", accentSoft: "#fdf2f8", emoji: "🎨", decorations: ["✨", "🎨", "🌟", "💫"], theme: "romance",
+    }),
+  },
 ];
 
 export function getTemplate(id: string) {
@@ -242,6 +266,15 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     voucherTerms: limitedString(input.voucherTerms, base.voucherTerms || "בתוקף לשנה מיום ההנפקה", 200),
     showCandle: typeof input.showCandle === "boolean" ? input.showCandle : true,
     showWaxEnvelope: typeof input.showWaxEnvelope === "boolean" ? input.showWaxEnvelope : true,
+
+    // Advanced Styling & Custom Domain Fields (Plus & Max)
+    fontFamily: limitedString(input.fontFamily, "Rubik", 40),
+    cardShape: limitedString(input.cardShape, "rounded-3d", 40),
+    glassBlur: typeof input.glassBlur === "number" ? Math.min(50, Math.max(0, input.glassBlur)) : 30,
+    bgStyle: limitedString(input.bgStyle, "fluid-mesh", 40),
+    customSubdomain: limitedString(input.customSubdomain, "", 60).toLowerCase().replace(/[^a-z0-9-]/g, ""),
+    customDomain: limitedString(input.customDomain, "", 100).toLowerCase().replace(/[^a-z0-9.-]/g, ""),
+    hideBranding: typeof input.hideBranding === "boolean" ? input.hideBranding : false,
 
     options: questions[0].options, correctOption: questions[0].correctOption,
   };
