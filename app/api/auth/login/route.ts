@@ -24,22 +24,9 @@ export async function POST(request: Request) {
     await enforceRateLimit(db, request, "auth-login-account", 8, 900, email, "subject");
     await enforceRateLimit(db, request, "auth-login-ip", 30, 900, undefined, "ip");
     stage = "credential";
-    let credential = await db.prepare(
+    const credential = await db.prepare(
       "SELECT password_hash, password_salt, password_iterations FROM auth_credentials WHERE email = ?",
     ).bind(email).first();
-
-    if (!credential) {
-      // Auto-seed user in development/demo mode for seamless onboarding
-      const { hashPassword } = await import("@/lib/auth");
-      const passwordRecord = await hashPassword(password);
-      await db.prepare("INSERT OR IGNORE INTO users (email, display_name) VALUES (?, ?)").bind(email, email.split("@")[0] || "דור עקא").run();
-      await db.prepare(
-        "INSERT OR IGNORE INTO auth_credentials (email, password_hash, password_salt, password_iterations) VALUES (?, ?, ?, ?)",
-      ).bind(email, passwordRecord.hash, passwordRecord.salt, passwordRecord.iterations).run();
-      await db.prepare("INSERT OR REPLACE INTO email_verifications (user_email, verified_at, updated_at) VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)").bind(email).run();
-      credential = { password_hash: passwordRecord.hash, password_salt: passwordRecord.salt, password_iterations: passwordRecord.iterations };
-    }
-
     stage = "password";
     if (!(await verifyPassword(password, credential))) {
       return NextResponse.json({ error: "שם המשתמש, כתובת הדוא״ל או הסיסמה שגויים" }, { status: 401 });
