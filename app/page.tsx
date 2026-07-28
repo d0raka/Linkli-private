@@ -99,7 +99,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           <article className="price-card featured"><div className="popular">הבחירה של היוצרים והמארחים</div><div className="price-card-header"><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>כל הכלים המתקדמים ליצירת עמודים מרגשים ללא שום מגבלה.</p></div><ul><li>✓ יצירת עד 10 עמודים במקביל</li><li>✓ גישה מלאה לכל התבניות במערכת</li><li>✓ עמודים נקיים לחלוטין ללא מיתוג Linkli</li><li>✓ מענה מרובה ערוצים (WhatsApp, Telegram, DM)</li><li>✓ רכיבים אינטראקטיביים (ספירה לאחור, Waze, שוברי מתנה)</li><li>✓ הגנת סיסמה ושליטה מלאה בפרטיות</li></ul><Link href="/checkout" className="button button-primary">שדרוג ל־Plus <span>←</span></Link></article>
         </div>
         <div className="marketing-pilot" id="marketing-pilot">
-          <div><span className="kicker">Linkli Plus</span><h3>רוצים ליצור יותר מעמוד אחד?</h3><p>שדרגו עכשיו ל-Plus ותיהנו מכל התבניות, מענה מרובה ערוצים ופרסום עמודים ללא מיתוג.</p></div>
+          <div><span className="kicker">Linkli Max</span><h3>צריכים יותר מ-10 עמודים או מיתוג מותאם אישית?</h3><p>פתרון מתקדם לעסקים, מפיקי אירועים וארגונים שצריכים עשרות עמודים במקביל, דומיין אישי וליווי צמוד.</p></div>
           <MarketingWaitlistForm campaign={campaign} compact />
         </div>
       </section>
