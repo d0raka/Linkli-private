@@ -51,14 +51,25 @@ export default function AccessibilityControls() {
 
   return <div className="a11y-widget">
     <div className="a11y-trigger-wrapper">
-      <button className="a11y-dismiss" aria-label="הסתרת תפריט נגישות לסשן זה" title="הסתרת תפריט נגישות" onClick={dismiss}>×</button>
+      <button className="a11y-dismiss" aria-label="הסתרת תפריט נגישות לסשן זה" title="הסתרת תפריט נגישות" onClick={dismiss}>
+        <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M1 1L11 11M11 1L1 11" />
+        </svg>
+      </button>
       <button className="a11y-trigger" aria-label="פתיחת תפריט נגישות" aria-expanded={open} aria-controls="a11y-menu" onClick={() => setOpen((value) => !value)}>
         <span className="a11y-icon">♿</span>
         <span className="a11y-label">נגישות</span>
       </button>
     </div>
     {open && <section className="a11y-menu" id="a11y-menu" aria-label="אפשרויות נגישות">
-      <div className="a11y-menu-head"><strong>התאמות נגישות</strong><button aria-label="סגירת תפריט נגישות" onClick={() => setOpen(false)}>×</button></div>
+      <div className="a11y-menu-head">
+        <strong>התאמות נגישות</strong>
+        <button aria-label="סגירת תפריט נגישות" onClick={() => setOpen(false)}>
+          <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M1 1L11 11M11 1L1 11" />
+          </svg>
+        </button>
+      </div>
       <div className="a11y-font-row"><button onClick={() => update({ ...preferences, font: Math.max(90, preferences.font - 10) })} aria-label="הקטנת טקסט">א−</button><span>{preferences.font}%</span><button onClick={() => update({ ...preferences, font: Math.min(130, preferences.font + 10) })} aria-label="הגדלת טקסט">א+</button></div>
       <button className={preferences.contrast ? "active" : ""} aria-pressed={preferences.contrast} onClick={() => update({ ...preferences, contrast: !preferences.contrast })}>◐ ניגודיות גבוהה</button>
       <button className={preferences.links ? "active" : ""} aria-pressed={preferences.links} onClick={() => update({ ...preferences, links: !preferences.links })}>_ הדגשת קישורים</button>
