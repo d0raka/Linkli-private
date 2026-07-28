@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { CUSTOM_BLOCKS, getTemplateFeatures, templates, type TemplateConfig, type TemplateFeature, type TemplateQuestion } from "@/lib/templates";
+import { CUSTOM_BLOCKS, getTemplateFeatures, templates, type ElementStyleKey, type TemplateConfig, type TemplateElementStyle, type TemplateFeature, type TemplateQuestion } from "@/lib/templates";
 import type { ProjectRecord } from "@/lib/projects";
 import { PROJECT_LIMITS } from "@/lib/plans";
+import { ElementControlCard, ElementStyleEditor } from "./element-customizer";
 
 type Profile = { email: string; displayName: string; plan: "free" | "plus"; emailVerified: boolean };
 type Notice = { text: string; error?: boolean } | null;
@@ -228,19 +229,66 @@ const editorSections: { id: EditorSection; label: string; helper: string }[] = [
 
 type FeatureStage = "opening" | "questions" | "completion";
 
+type ElementDefinition = {
+  key: ElementStyleKey;
+  icon: string;
+  title: string;
+  description: string;
+  visibilityKey?: keyof TemplateConfig;
+  required?: boolean;
+};
+
+const OPENING_ELEMENTS: ElementDefinition[] = [
+  { key: "introLabel", icon: "🏷️", title: "תווית עליונה", description: "הטקסט הקטן שמציג את סוג העמוד", visibilityKey: "showIntroLabel" },
+  { key: "emoji", icon: "😊", title: "סמל ראשי", description: "האימוג׳י שמוביל את החוויה", visibilityKey: "showEmoji" },
+  { key: "greeting", icon: "👋", title: "ברכה אישית", description: "שורת שלום עם שם הנמען", visibilityKey: "showGreeting" },
+  { key: "headline", icon: "T", title: "כותרת ראשית", description: "המסר המרכזי של הפתיחה", required: true },
+  { key: "subtitle", icon: "¶", title: "תיאור פתיחה", description: "הטקסט שמסביר מה מחכה בהמשך", required: true },
+  { key: "highlights", icon: "✦", title: "פרטים חשובים", description: "תאריך, מקום או נקודות קצרות", visibilityKey: "showHighlights" },
+  { key: "primaryButton", icon: "↵", title: "כפתור התחלה", description: "הפעולה שמובילה לשלב הבא", required: true },
+  { key: "decorations", icon: "✨", title: "קישוטי רקע", description: "אימוג׳ים צפים ואווירה מונפשת", visibilityKey: "showFallingEmojis" },
+];
+
+const QUESTION_ELEMENTS: ElementDefinition[] = [
+  { key: "question", icon: "?", title: "כותרת השאלה", description: "השאלה, ההסבר ומספר השלב", required: true },
+  { key: "options", icon: "☷", title: "אפשרויות תשובה", description: "הכרטיסים שהמבקר יכול לבחור", required: true },
+  { key: "primaryButton", icon: "↵", title: "כפתור המשך", description: "מעבר לשאלה הבאה או לסיום", required: true },
+];
+
+const COMPLETION_ELEMENTS: ElementDefinition[] = [
+  { key: "resultLabel", icon: "🏷️", title: "תווית הסיום", description: "הטקסט הקטן מעל הכותרת", required: true },
+  { key: "resultTitle", icon: "T", title: "כותרת הסיום", description: "המסר המרכזי שמופיע בסוף", required: true },
+  { key: "resultText", icon: "¶", title: "הודעת הסיום", description: "ברכה, תודה או הסבר על ההמשך", required: true },
+];
+
+const CORE_FEATURE_KEYS = ["showHighlights", "showEmoji", "showFallingEmojis"] as const;
+
+function featureStyleKey(key: TemplateFeature["key"]): ElementStyleKey {
+  if (key === "showScratchCard") return "scratch";
+  if (key === "showCandle") return "candle";
+  if (key === "showCountdown") return "countdown";
+  if (key === "showVenueCard") return "venue";
+  if (key === "showGuests") return "guestCounter";
+  if (key === "showDjSong") return "djSong";
+  if (["showCalendar", "showAppleCalendar", "showWaze", "showGoogleMaps"].includes(key)) return "calendar";
+  if (key === "showVoucher") return "voucher";
+  if (key === "showMemoriesSlider") return "memories";
+  if (key === "showWaxEnvelope") return "waxEnvelope";
+  if (["showWhatsApp", "showTelegram", "showCopy"].includes(key)) return "shareButtons";
+  if (key === "showAnswerRecap") return "answerRecap";
+  if (key === "showHighlights") return "highlights";
+  if (key === "showEmoji") return "emoji";
+  return "decorations";
+}
+
 function featureBelongsToStage(feature: TemplateFeature, stage: FeatureStage) {
   if (stage === "questions") return ["showGuests", "showDjSong"].includes(feature.key);
   if (stage === "completion") return ["showScratchCard", "showCandle", "showVoucher", "showWhatsApp", "showTelegram", "showCopy", "showAnswerRecap"].includes(feature.key);
   return !["showGuests", "showDjSong", "showScratchCard", "showCandle", "showVoucher", "showWhatsApp", "showTelegram", "showCopy", "showAnswerRecap"].includes(feature.key);
 }
 
-function ToggleField({ label, hint, checked, onChange }: { label: string; hint?: string; checked: boolean; onChange: (value: boolean) => void }) {
-  return <label className="toggle-field"><span><b>{label}</b>{hint ? <small>{hint}</small> : null}</span><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /></label>;
-}
-
 function Editor({ project, profile, saving, onProject, onConfig, onSave, onPublish, onPassword, onDelete }: { project: ProjectRecord; profile: Profile; saving: boolean; onProject: (patch: Partial<ProjectRecord>) => void; onConfig: <K extends keyof TemplateConfig>(key: K, value: TemplateConfig[K]) => void; onSave: () => void; onPublish: () => void; onPassword: (password: string | null) => Promise<boolean>; onDelete: () => void }) {
   const c = project.config;
-  const template = templates.find((item) => item.id === project.templateId) || templates[0];
   const templateFeatures = getTemplateFeatures(project.templateId);
   const isCustomBlank = project.templateId === "custom-blank";
   const hasShareFeature = isCustomBlank ? (c.customBlocks || CUSTOM_BLOCKS.map((item) => item.id)).includes("share") : templateFeatures.some((feature) => feature.key === "showWhatsApp");
@@ -252,7 +300,8 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
   const [mobilePane, setMobilePane] = useState<"edit" | "preview">("edit");
   const [copied, setCopied] = useState(false);
   const [passwordDraft, setPasswordDraft] = useState("");
-  const visibleEditorSections = editorSections.filter((item) => item.id !== "questions" || !isCustomBlank || (c.customBlocks || CUSTOM_BLOCKS.map((block) => block.id)).includes("questions"));
+  const [editingElement, setEditingElement] = useState<ElementStyleKey | null>("headline");
+  const visibleEditorSections = editorSections;
   const shareUrl = typeof window === "undefined" ? `/p/${project.slug}` : `${window.location.origin}/p/${project.slug}`;
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(`${c.headline}\n${shareUrl}`)}`;
   const activeSectionIndex = visibleEditorSections.findIndex((item) => item.id === section);
@@ -325,6 +374,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
 
   function chooseSection(nextSection: EditorSection) {
     setSection(nextSection);
+    if (previewScreen === "all") return;
     if (nextSection === "opening") setPreviewScreen("intro");
     if (nextSection === "questions") {
       setPreviewQuestion(questionIndex);
@@ -344,10 +394,6 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
     chooseSection(visibleEditorSections[nextIndex].id);
   }
 
-  function setPreviewAnswer(answer: string) {
-    setPreviewAnswers((answers) => answers.map((value, index) => index === previewQuestion ? answer : value));
-  }
-
   function advancePreview() {
     if (previewQuestion < c.questions.length - 1) {
       setPreviewQuestion((index) => index + 1);
@@ -360,7 +406,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
   }
 
   function toggleCustomBlock(blockId: string) {
-    const current = c.customBlocks?.length ? c.customBlocks : CUSTOM_BLOCKS.map((block) => block.id);
+    const current = c.customBlocks ?? CUSTOM_BLOCKS.map((block) => block.id);
     onConfig("customBlocks", current.includes(blockId) ? current.filter((item) => item !== blockId) : [...current, blockId]);
   }
 
@@ -372,9 +418,109 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
     return !isCustomBlank || (c.customBlocks || CUSTOM_BLOCKS.map((item) => item.id)).includes(blockId);
   }
 
+  function customBlockForElement(key: ElementStyleKey) {
+    if (key === "emoji") return "emoji";
+    if (key === "highlights") return "highlights";
+    if (key === "question" || key === "options" || key === "guestCounter" || key === "djSong") return "questions";
+    if (key === "venue" || key === "calendar" || key === "countdown") return "location";
+    if (key === "shareButtons") return "share";
+    if (key === "answerRecap") return "answers";
+    if (key === "decorations") return "decorations";
+    return null;
+  }
+
+  function defaultElementStyle(key: ElementStyleKey): TemplateElementStyle {
+    const filled = key === "primaryButton";
+    return {
+      background: filled ? c.accent : "#ffffff",
+      color: filled ? "#ffffff" : "#21182c",
+      accent: c.accent,
+      radius: key === "introLabel" || key === "resultLabel" || key === "shareButtons" ? 999 : 16,
+      size: 100,
+      align: key === "question" || key === "options" || key === "djSong" || key === "answerRecap" ? "right" : "center",
+    };
+  }
+
+  function getElementStyle(key: ElementStyleKey) {
+    return c.elementStyles?.[key] || defaultElementStyle(key);
+  }
+
+  function updateElementStyle(key: ElementStyleKey, patch: Partial<TemplateElementStyle>) {
+    onConfig("elementStyles", {
+      ...(c.elementStyles || {}),
+      [key]: { ...getElementStyle(key), ...patch },
+    });
+  }
+
+  function resetElementStyle(key: ElementStyleKey) {
+    const next = { ...(c.elementStyles || {}) };
+    delete next[key];
+    onConfig("elementStyles", next);
+  }
+
+  function previewElementStyle(key: ElementStyleKey): React.CSSProperties {
+    const style = c.elementStyles?.[key];
+    if (!style) return {};
+    return {
+      "--element-accent": style.accent,
+      "--element-scale": style.size / 100,
+      backgroundColor: style.background,
+      color: style.color,
+      borderColor: style.accent,
+      borderRadius: `${style.radius}px`,
+      textAlign: style.align,
+    } as React.CSSProperties;
+  }
+
+  function previewElementClass(key: ElementStyleKey, base = "") {
+    return `${base} ${c.elementStyles?.[key] ? "preview-element-customized" : ""}`.trim();
+  }
+
+  function elementEnabled(definition: ElementDefinition) {
+    const customBlock = customBlockForElement(definition.key);
+    if (isCustomBlank && customBlock && !previewBlockEnabled(customBlock)) return false;
+    if (!definition.visibilityKey) return true;
+    return (c as unknown as Record<string, unknown>)[definition.visibilityKey] !== false;
+  }
+
+  function toggleElement(definition: ElementDefinition, value: boolean) {
+    const customBlock = customBlockForElement(definition.key);
+    if (isCustomBlank && customBlock && previewBlockEnabled(customBlock) !== value) toggleCustomBlock(customBlock);
+    if (definition.visibilityKey) updateFeature(definition.visibilityKey, value);
+  }
+
+  function renderElementPanel(title: string, helper: string, definitions: ElementDefinition[]) {
+    const activeDefinition = definitions.find((item) => item.key === editingElement);
+    return <section className="editor-elements-panel full">
+      <div className="elements-panel-heading"><div><span>שליטה בזמן אמת</span><h3>{title}</h3><p>{helper}</p></div><strong>{definitions.filter(elementEnabled).length}/{definitions.length}</strong></div>
+      <div className="element-control-grid">{definitions.map((definition) => {
+        const customBlock = customBlockForElement(definition.key);
+        const required = Boolean(definition.required && !(isCustomBlank && definition.key === "question"));
+        return <ElementControlCard
+          key={definition.key}
+          icon={definition.icon}
+          title={definition.title}
+          description={definition.description}
+          enabled={elementEnabled(definition)}
+          required={required}
+          editing={editingElement === definition.key}
+          onToggle={(value) => toggleElement(definition, value)}
+          onEdit={() => setEditingElement((current) => current === definition.key ? null : definition.key)}
+        />;
+      })}</div>
+      {activeDefinition && <ElementStyleEditor
+        elementKey={activeDefinition.key}
+        title={activeDefinition.title}
+        style={getElementStyle(activeDefinition.key)}
+        onChange={(patch) => updateElementStyle(activeDefinition.key, patch)}
+        onReset={() => resetElementStyle(activeDefinition.key)}
+      />}
+    </section>;
+  }
+
   function renderFeaturePanel(stage: FeatureStage) {
     if (isCustomBlank) return null;
-    const features = templateFeatures.filter((feature) => featureBelongsToStage(feature, stage));
+    const features = templateFeatures.filter((feature) => featureBelongsToStage(feature, stage) && !CORE_FEATURE_KEYS.includes(feature.key as typeof CORE_FEATURE_KEYS[number]));
     if (!features.length) return null;
     const stageCopy = stage === "opening"
       ? { eyebrow: "ייחודי לתבנית הזו", title: "בונים את הפתיחה", helper: "הפעילו רק את החוויה שמתאימה לעמוד הזה. את התוכן שלה עורכים כאן, באותו שלב." }
@@ -383,8 +529,57 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
         : { eyebrow: "ייחודי לסיום", title: "מתאימים את הרגע האחרון", helper: "הגדירו מה המבקר יראה ויוכל לעשות כשהוא מסיים את העמוד." };
     return <div className="template-feature-panel contextual-feature-panel">
       <div className="feature-section-heading"><div><span>{stageCopy.eyebrow}</span><h3>{stageCopy.title}</h3><p>{stageCopy.helper}</p></div><strong>{features.filter(featureEnabled).length}/{features.length}</strong></div>
-      <div className="template-feature-grid">{features.map((feature) => <label className={`template-feature-card ${featureEnabled(feature) ? "enabled" : ""}`} key={feature.key}><span className="template-feature-icon">{feature.icon}</span><span className="template-feature-copy"><b>{feature.label}</b><small>{feature.description}</small></span><input type="checkbox" checked={featureEnabled(feature)} onChange={(event) => updateFeature(feature.key, event.target.checked)} /></label>)}</div>
+      <div className="element-control-grid">{features.map((feature) => {
+        const styleKey = featureStyleKey(feature.key);
+        return <ElementControlCard
+          key={feature.key}
+          icon={feature.icon}
+          title={feature.label}
+          description={feature.description}
+          enabled={featureEnabled(feature)}
+          editing={editingElement === styleKey}
+          onToggle={(value) => updateFeature(feature.key, value)}
+          onEdit={() => setEditingElement((current) => current === styleKey ? null : styleKey)}
+        />;
+      })}</div>
+      {editingElement && features.some((feature) => featureStyleKey(feature.key) === editingElement) && <ElementStyleEditor
+        elementKey={editingElement}
+        title={features.find((feature) => featureStyleKey(feature.key) === editingElement)?.label || "האלמנט"}
+        style={getElementStyle(editingElement)}
+        onChange={(patch) => updateElementStyle(editingElement, patch)}
+        onReset={() => resetElementStyle(editingElement)}
+      />}
     </div>;
+  }
+
+  function renderPreviewOpeningSpecials() {
+    return <>
+      {c.showWaxEnvelope === true && <div className={previewElementClass("waxEnvelope", "preview-special-card preview-wax-card")} style={previewElementStyle("waxEnvelope")}><span>💌</span><b>מכתב אישי מהלב</b><small>לחצו לפתיחת חותם השעווה</small></div>}
+      {c.showCountdown && previewBlockEnabled("location") && <div className={previewElementClass("countdown", "preview-special-card preview-countdown-card")} style={previewElementStyle("countdown")}><span>⏱️ סופרים לאירוע</span><div><b>48<small>ימים</small></b><b>14<small>שעות</small></b><b>32<small>דקות</small></b></div></div>}
+      {c.showVenueCard && previewBlockEnabled("location") && <div className={previewElementClass("venue", "preview-special-card preview-venue-card")} style={previewElementStyle("venue")}><span>🎟️ פרטי האירוע</span><p>📅 <b>{c.eventDate || c.highlights[0]}</b></p><p>📍 <b>{c.venueName || c.highlights[1] || "מיקום האירוע"}</b></p></div>}
+      {c.showMemoriesSlider === true && <div className={previewElementClass("memories", "preview-special-card preview-memory-card")} style={previewElementStyle("memories")}><span>📸</span><b>איך הכול התחיל</b><small>הטיול הראשון שלנו והרגעים שלא שוכחים</small><i><em /><em className="active" /><em /></i></div>}
+    </>;
+  }
+
+  function renderPreviewQuestion(question: TemplateQuestion, questionPosition: number) {
+    const guestPosition = Math.min(1, c.questions.length - 1);
+    const songPosition = Math.min(2, c.questions.length - 1);
+    const showGuestCounter = c.showGuests === true && questionPosition === guestPosition;
+    return <div className="preview-flow-question" key={questionPosition}>
+      <div className={previewElementClass("question", "preview-question-copy")} style={previewElementStyle("question")}><span className="preview-step-label">שאלה {questionPosition + 1}</span><h3>{question.prompt}</h3><p>{question.helper}</p></div>
+      {showGuestCounter ? <div className={previewElementClass("guestCounter", "preview-guest-counter")} style={previewElementStyle("guestCounter")}><button type="button">−</button><b>2<small>אורחים</small></b><button type="button">+</button><span>👤 👤</span></div>
+        : <div className={previewElementClass("options", "preview-options")} style={previewElementStyle("options")}>{question.options.map((option, optionPosition) => <button type="button" aria-pressed={previewAnswers[questionPosition] === option} className={previewAnswers[questionPosition] === option ? "selected" : ""} key={option} onClick={() => setPreviewAnswers((answers) => answers.map((value, index) => index === questionPosition ? option : value))}><span>{optionPosition + 1}</span><b>{option}</b><i>✓</i></button>)}</div>}
+      {c.showDjSong === true && questionPosition === songPosition && <div className={previewElementClass("djSong", "preview-dj-field")} style={previewElementStyle("djSong")}><label>🎵 בקשת שיר ל־DJ</label><input type="text" value="" readOnly placeholder="שם השיר והאמן..." /></div>}
+    </div>;
+  }
+
+  function renderPreviewResultSpecials() {
+    return <>
+      {c.showVoucher === true && <div className={previewElementClass("voucher", "preview-special-card preview-voucher-card")} style={previewElementStyle("voucher")}><span>🎟️ שובר מתנה אישי</span><b>{c.voucherTitle || c.successTitle}</b><code>{c.voucherCode || "LINKLI-GIFT-2026"}</code><small>{c.voucherTerms}</small></div>}
+      {c.showCandle === true && <div className={previewElementClass("candle", "preview-special-card preview-candle-card")} style={previewElementStyle("candle")}><span>🔥</span><b>לחצו על הלהבה ובקשו משאלה</b></div>}
+      {c.showScratchCard === true && <div className={previewElementClass("scratch", "preview-special-card preview-scratch-card")} style={previewElementStyle("scratch")}><span>✨ גרדו כאן לחשיפת ההפתעה ✨</span><b>{c.successTitle}</b></div>}
+      {c.showMemoriesSlider === true && <div className={previewElementClass("memories", "preview-special-card preview-memory-card")} style={previewElementStyle("memories")}><span>❤️</span><b>הרגעים הקטנים</b><small>הקפה של הבוקר, הבדיחות והחיוך שבבית</small><i><em /><em /><em className="active" /></i></div>}
+    </>;
   }
 
   async function copyShareUrl() {
@@ -417,6 +612,8 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
         </div>
 
         {section === "opening" && <div className="form-section editor-stage-fields">
+          {renderElementPanel("אלמנטים בפתיחה", "כל כרטיס שולט באלמנט אחד. הפעילו או הסתירו אותו, ואז פתחו את העיצוב העצמאי שלו.", OPENING_ELEMENTS)}
+          <div className="stage-content-heading full"><span>תוכן הפתיחה</span><h3>מה המבקר יקרא?</h3><p>ערכו את הטקסטים והפרטים. התצוגה המלאה נשארת פתוחה ומתעדכנת תוך כדי הקלדה.</p></div>
           <label>שם העמוד <small>לשימוש שלכם בלבד</small><input value={project.title} maxLength={80} placeholder="לדוגמה: אישור הגעה לחתונה" onChange={(event) => onProject({ title: event.target.value })} /></label>
           <label>שם הנמען או הקבוצה<input value={c.recipient} maxLength={80} placeholder="לדוגמה: משפחת לוי" onChange={(event) => onConfig("recipient", event.target.value)} /></label>
           <label>טקסט מעל הכותרת<input value={c.introLabel} maxLength={80} placeholder="לדוגמה: הזמנה אישית" onChange={(event) => onConfig("introLabel", event.target.value)} /></label>
@@ -424,29 +621,58 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
           <label className="full">כותרת ראשית<input value={c.headline} maxLength={120} placeholder="הכותרת שתופיע בראש העמוד" onChange={(event) => onConfig("headline", event.target.value)} /></label>
           <label className="full">תיאור קצר<textarea value={c.subtitle} maxLength={320} placeholder="הסבר קצר שמכין את המבקרים לתהליך" onChange={(event) => onConfig("subtitle", event.target.value)} /></label>
           <fieldset className="highlight-editor full"><legend>פרטים חשובים <small>עד שתי שורות</small></legend><div className="highlight-list">{c.highlights.map((highlight, index) => <div className="highlight-row" key={index}><input value={highlight} maxLength={80} aria-label={`פרט חשוב ${index + 1}`} placeholder={index === 0 ? "לדוגמה: 18.09.2026 · 19:30" : "לדוגמה: חוות רונית, השרון"} onChange={(event) => updateHighlight(index, event.target.value)} /><button type="button" onClick={() => removeHighlight(index)} aria-label={`מחיקת פרט חשוב ${index + 1}`}>×</button></div>)}</div><button type="button" className="highlight-add" disabled={c.highlights.length >= 2} onClick={addHighlight}>+ הוספת שורה</button></fieldset>
-          {isCustomBlank ? <div className="custom-block-builder contextual-builder">
-            <div className="feature-section-heading"><div><span>בונה העמוד</span><h3>מה מתאים לעמוד שלכם?</h3><p>בחרו את החלקים שיופיעו בעמוד. אחרי הבחירה, עורכים כל חלק בשלב שבו הוא מופיע.</p></div><strong>{c.customBlocks?.length || CUSTOM_BLOCKS.length}/{CUSTOM_BLOCKS.length}</strong></div>
-            <div className="custom-block-grid">{CUSTOM_BLOCKS.map((block) => { const enabled = (c.customBlocks || CUSTOM_BLOCKS.map((item) => item.id)).includes(block.id); return <button type="button" key={block.id} className={`custom-block-card ${enabled ? "enabled" : ""}`} aria-pressed={enabled} onClick={() => toggleCustomBlock(block.id)}><span>{block.icon}</span><div><b>{block.label}</b><small>{block.description}</small></div><i>{enabled ? "✓" : "+"}</i></button>; })}</div>
-            <div className="custom-builder-tip">💡 אין תבנית נכונה או לא נכונה — התחילו מהפתיחה, הוסיפו רק מה שצריך, וראו את כל הרצף בתצוגה החיה.</div>
-          </div> : renderFeaturePanel("opening")}
+          {renderFeaturePanel("opening")}
+          {isCustomBlank && <div className="custom-stage-elements full">
+            <div className="elements-panel-heading"><div><span>חוויות פתיחה</span><h3>אלמנטים אינטראקטיביים</h3><p>הוסיפו מעטפה נפתחת או מצגת זיכרונות לעמוד החופשי.</p></div></div>
+            <div className="element-control-grid">
+              <ElementControlCard icon="💌" title="מעטפת שעווה" description="פתיחה חגיגית לפני הצגת התוכן" enabled={c.showWaxEnvelope === true} editing={editingElement === "waxEnvelope"} onToggle={(value) => onConfig("showWaxEnvelope", value)} onEdit={() => setEditingElement((current) => current === "waxEnvelope" ? null : "waxEnvelope")} />
+              <ElementControlCard icon="📸" title="מצגת זיכרונות" description="מעבר בין רגעים וסיפורים קצרים" enabled={c.showMemoriesSlider === true} editing={editingElement === "memories"} onToggle={(value) => onConfig("showMemoriesSlider", value)} onEdit={() => setEditingElement((current) => current === "memories" ? null : "memories")} />
+            </div>
+            {editingElement && ["waxEnvelope", "memories"].includes(editingElement) && <ElementStyleEditor elementKey={editingElement} title={editingElement === "waxEnvelope" ? "מעטפת שעווה" : "מצגת זיכרונות"} style={getElementStyle(editingElement)} onChange={(patch) => updateElementStyle(editingElement, patch)} onReset={() => resetElementStyle(editingElement)} />}
+          </div>}
           {(isCustomBlank || templateFeatures.some((feature) => ["showCountdown", "showVenueCard", "showCalendar", "showAppleCalendar", "showWaze", "showGoogleMaps"].includes(feature.key))) && <div className="feature-detail-panel">
             <div className="field-divider full"><b>📍 תאריך, מקום וניווט</b><span>ממלאים את פרטי האירוע כאן — ורק הפעולות שהופעלו יוצגו בעמוד.</span></div>
             <label>תאריך ושעת האירוע<input value={c.eventDate || "18.09.2026 · 19:30"} maxLength={60} placeholder="לדוגמה: 18.09.2026 · 19:30" onChange={(e) => onConfig("eventDate", e.target.value)} /></label>
             <label>שם המקום / אולם<input value={c.venueName || ""} maxLength={80} placeholder="לדוגמה: חוות רונית, השרון" onChange={(e) => onConfig("venueName", e.target.value)} /></label>
             <label>קישור ל-Waze<input value={c.wazeUrl || ""} maxLength={300} placeholder="https://waze.com/ul?..." onChange={(e) => onConfig("wazeUrl", e.target.value)} /></label>
             <label>קישור ל-Google Maps<input value={c.googleMapsUrl || ""} maxLength={500} placeholder="https://maps.google.com/?q=..." onChange={(e) => onConfig("googleMapsUrl", e.target.value)} /></label>
-            {isCustomBlank && <div className="toggle-grid full">
-              <ToggleField label="ספירה לאחור" checked={c.showCountdown ?? false} onChange={(value) => onConfig("showCountdown", value)} />
-              <ToggleField label="כרטיס מקום" checked={c.showVenueCard ?? false} onChange={(value) => onConfig("showVenueCard", value)} />
-              <ToggleField label="Google Calendar" checked={c.showCalendar ?? false} onChange={(value) => onConfig("showCalendar", value)} />
-              <ToggleField label="Apple Calendar" checked={c.showAppleCalendar ?? false} onChange={(value) => onConfig("showAppleCalendar", value)} />
-              <ToggleField label="ניווט Waze" checked={c.showWaze ?? false} onChange={(value) => onConfig("showWaze", value)} />
-              <ToggleField label="Google Maps" checked={c.showGoogleMaps ?? false} onChange={(value) => onConfig("showGoogleMaps", value)} />
+            {isCustomBlank && <div className="custom-stage-elements full">
+              <div className="element-control-grid">
+                {([
+                  ["showCountdown", "countdown", "⏱️", "ספירה לאחור", "טיימר חי עד מועד האירוע"],
+                  ["showVenueCard", "venue", "🎟️", "כרטיס מקום", "תאריך, מקום ופרטי הגעה"],
+                  ["showCalendar", "calendar", "📅", "Google Calendar", "הוספה מהירה ליומן Google"],
+                  ["showAppleCalendar", "calendar", "", "Apple Calendar", "שמירת האירוע באייפון וב־Mac"],
+                  ["showWaze", "calendar", "🧭", "ניווט Waze", "פתיחת ניווט ישיר למקום"],
+                  ["showGoogleMaps", "calendar", "📍", "Google Maps", "פתיחת המיקום במפות Google"],
+                ] as const).map(([visibilityKey, styleKey, icon, title, description]) => <ElementControlCard
+                  key={visibilityKey}
+                  icon={icon}
+                  title={title}
+                  description={description}
+                  enabled={previewBlockEnabled("location") && c[visibilityKey] !== false && Boolean(c[visibilityKey])}
+                  editing={editingElement === styleKey}
+                  onToggle={(value) => {
+                    if (value && !previewBlockEnabled("location")) toggleCustomBlock("location");
+                    onConfig(visibilityKey, value);
+                  }}
+                  onEdit={() => setEditingElement((current) => current === styleKey ? null : styleKey)}
+                />)}
+              </div>
+              {editingElement && ["countdown", "venue", "calendar"].includes(editingElement) && <ElementStyleEditor
+                elementKey={editingElement}
+                title={editingElement === "countdown" ? "ספירה לאחור" : editingElement === "venue" ? "כרטיס מקום" : "כפתורי יומן וניווט"}
+                style={getElementStyle(editingElement)}
+                onChange={(patch) => updateElementStyle(editingElement, patch)}
+                onReset={() => resetElementStyle(editingElement)}
+              />}
             </div>}
           </div>}
         </div>}
 
         {section === "questions" && activeQuestion && <div className="questions-stage">
+          {renderElementPanel("אלמנטים בשאלות", "עיצוב השאלה, אפשרויות התשובה וכפתור ההמשך נשמר בנפרד משאר העמוד.", QUESTION_ELEMENTS)}
+          <div className="stage-content-heading"><span>תוכן השאלות</span><h3>עורכים שאלה בכל פעם</h3><p>בחרו שאלה, שנו את הניסוח והאפשרויות, ובדקו אותה מיד בתצוגה המלאה.</p></div>
           <div className="question-tabs" role="tablist" aria-label="בחירת שאלה לעריכה">
             {c.questions.map((_, index) => <button type="button" role="tab" aria-selected={questionIndex === index} className={questionIndex === index ? "active" : ""} key={index} onClick={() => chooseQuestion(index)}>שאלה {index + 1}</button>)}
             <button type="button" className="add-question-tab" disabled={c.questions.length >= 10} onClick={addQuestion}>+ הוספת שאלה</button>
@@ -460,20 +686,39 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
             <label>תשובה נכונה <small>לא חובה — רק לחידונים עם ניקוד</small><select value={activeQuestion.correctOption} onChange={(event) => updateQuestion(questionIndex, { correctOption: event.target.value })}><option value="">ללא ניקוד</option>{activeQuestion.options.map((option) => <option value={option} key={option}>{option}</option>)}</select></label>
           </fieldset>
           <div className="question-stage-navigation"><button type="button" className="button button-outline" disabled={questionIndex === 0} onClick={() => chooseQuestion(questionIndex - 1)}>שאלה קודמת</button><span>{questionIndex + 1} / {c.questions.length}</span><button type="button" className="button button-dark" disabled={questionIndex === c.questions.length - 1} onClick={() => chooseQuestion(questionIndex + 1)}>שאלה הבאה</button></div>
+          {isCustomBlank && <div className="custom-stage-elements">
+            <div className="elements-panel-heading"><div><span>אפשרויות מתקדמות</span><h3>איסוף מידע נוסף</h3><p>אפשר להוסיף מונה אורחים או שדה פתוח לבקשת שיר.</p></div></div>
+            <div className="element-control-grid">
+              <ElementControlCard icon="👥" title="מונה אורחים" description="בחירת כמות אורחים בצורה נוחה" enabled={previewBlockEnabled("questions") && c.showGuests === true} editing={editingElement === "guestCounter"} onToggle={(value) => { if (value && !previewBlockEnabled("questions")) toggleCustomBlock("questions"); onConfig("showGuests", value); }} onEdit={() => setEditingElement((current) => current === "guestCounter" ? null : "guestCounter")} />
+              <ElementControlCard icon="🎵" title="בקשת שיר" description="שדה פתוח לשיר שהמבקר רוצה" enabled={previewBlockEnabled("questions") && c.showDjSong === true} editing={editingElement === "djSong"} onToggle={(value) => { if (value && !previewBlockEnabled("questions")) toggleCustomBlock("questions"); onConfig("showDjSong", value); }} onEdit={() => setEditingElement((current) => current === "djSong" ? null : "djSong")} />
+            </div>
+            {editingElement && ["guestCounter", "djSong"].includes(editingElement) && <ElementStyleEditor elementKey={editingElement} title={editingElement === "guestCounter" ? "מונה אורחים" : "בקשת שיר"} style={getElementStyle(editingElement)} onChange={(patch) => updateElementStyle(editingElement, patch)} onReset={() => resetElementStyle(editingElement)} />}
+          </div>}
           {renderFeaturePanel("questions")}
-          {templateFeatures.some((feature) => feature.key === "showGuests") && <div className="feature-detail-panel question-detail-panel">
+          {(isCustomBlank || templateFeatures.some((feature) => feature.key === "showGuests")) && <div className="feature-detail-panel question-detail-panel">
             <div className="field-divider full"><b>👥 פרטי אישור ההגעה</b><span>הגדירו כמה אורחים אפשר לבחור ואילו פרטים ייאספו בדרך.</span></div>
             <label>מקסימום אורחים<input type="number" min={1} max={20} value={c.maxGuests ?? 10} onChange={(event) => onConfig("maxGuests", Math.min(20, Math.max(1, Number(event.target.value) || 1)))} /></label>
           </div>}
         </div>}
 
         {section === "completion" && <div className="form-section editor-stage-fields">
+          {renderElementPanel("אלמנטים בסיום", "הכותרת, ההודעה והתווית מקבלות עיצוב עצמאי; ההפתעה וכפתורי השיתוף מופיעים בהמשך לפי התבנית.", COMPLETION_ELEMENTS)}
+          <div className="stage-content-heading full"><span>תוכן הסיום</span><h3>המסר שנשאר בסוף</h3><p>התאימו את הברכה, הסיכום והפעולה שתרצו שהמבקר יבצע.</p></div>
           <label>טקסט מעל כותרת הסיום<input value={c.resultLabel} maxLength={80} placeholder="לדוגמה: הסיכום מוכן" onChange={(event) => onConfig("resultLabel", event.target.value)} /></label>
           <label>טקסט על כפתור הסיום<input value={c.finalButtonText} maxLength={80} placeholder="לדוגמה: להצגת הסיכום" onChange={(event) => onConfig("finalButtonText", event.target.value)} /></label>
           <label className="full">כותרת הסיום<input value={c.successTitle} maxLength={140} placeholder="הכותרת שתופיע לאחר השאלות" onChange={(event) => onConfig("successTitle", event.target.value)} /></label>
           <label className="full">הודעת הסיום<textarea value={c.successText} maxLength={700} placeholder="הודעת תודה, ברכה או הסבר על השלב הבא" onChange={(event) => onConfig("successText", event.target.value)} /></label>
           {renderFeaturePanel("completion")}
-          {project.templateId === "gift" && <div className="feature-detail-panel">
+          {isCustomBlank && <div className="custom-stage-elements full">
+            <div className="elements-panel-heading"><div><span>רגע הסיום</span><h3>הפתעה אינטראקטיבית</h3><p>בחרו איך לחשוף את המסר האחרון — שובר, נר או כרטיס גירוד.</p></div></div>
+            <div className="element-control-grid">
+              <ElementControlCard icon="🎁" title="שובר מתנה" description="כרטיס עם קוד מימוש ופרטים" enabled={c.showVoucher === true} editing={editingElement === "voucher"} onToggle={(value) => onConfig("showVoucher", value)} onEdit={() => setEditingElement((current) => current === "voucher" ? null : "voucher")} />
+              <ElementControlCard icon="🕯️" title="טקס כיבוי נר" description="לחיצה על הלהבה לפני חשיפת הברכה" enabled={c.showCandle === true} editing={editingElement === "candle"} onToggle={(value) => onConfig("showCandle", value)} onEdit={() => setEditingElement((current) => current === "candle" ? null : "candle")} />
+              <ElementControlCard icon="🪄" title="כרטיס גירוד" description="חשיפת ההפתעה בצורה משחקית" enabled={c.showScratchCard === true} editing={editingElement === "scratch"} onToggle={(value) => onConfig("showScratchCard", value)} onEdit={() => setEditingElement((current) => current === "scratch" ? null : "scratch")} />
+            </div>
+            {editingElement && ["voucher", "candle", "scratch"].includes(editingElement) && <ElementStyleEditor elementKey={editingElement} title={editingElement === "voucher" ? "שובר מתנה" : editingElement === "candle" ? "טקס כיבוי נר" : "כרטיס גירוד"} style={getElementStyle(editingElement)} onChange={(patch) => updateElementStyle(editingElement, patch)} onReset={() => resetElementStyle(editingElement)} />}
+          </div>}
+          {(project.templateId === "gift" || (isCustomBlank && c.showVoucher === true)) && <div className="feature-detail-panel">
             <div className="field-divider full"><b>🎟️ תוכן השובר</b><span>הפרטים שיופיעו אחרי פתיחת קופסת המתנה.</span></div>
             <label>כותרת השובר<input value={c.voucherTitle || "סופשבוע מפנק בסוויטה"} maxLength={100} placeholder="לדוגמה: שובר ספא זוגי" onChange={(e) => onConfig("voucherTitle", e.target.value)} /></label>
             <label>קוד מימוש אישי<input value={c.voucherCode || "LINKLI-GIFT-2026"} maxLength={40} placeholder="LINKLI-GIFT-2026" onChange={(e) => onConfig("voucherCode", e.target.value)} /></label>
@@ -481,11 +726,29 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
           </div>}
           {isCustomBlank && <div className="feature-detail-panel">
             <div className="field-divider full"><b>📲 פעולות בסיום</b><span>הפעילו רק את כפתורי הפעולה שתרצו להציג למבקרים.</span></div>
-            <div className="toggle-grid full">
-              <ToggleField label="WhatsApp" checked={c.showWhatsApp ?? true} onChange={(value) => onConfig("showWhatsApp", value)} />
-              <ToggleField label="Telegram" checked={c.showTelegram ?? true} onChange={(value) => onConfig("showTelegram", value)} />
-              <ToggleField label="העתקת מענה" checked={c.showCopy ?? true} onChange={(value) => onConfig("showCopy", value)} />
-              <ToggleField label="סיכום תשובות" checked={c.showAnswerRecap ?? true} onChange={(value) => onConfig("showAnswerRecap", value)} />
+            <div className="custom-stage-elements full">
+              <div className="element-control-grid">
+                {([
+                  ["showWhatsApp", "shareButtons", "🟢", "WhatsApp", "שליחת התשובה ישירות ב־WhatsApp"],
+                  ["showTelegram", "shareButtons", "✈️", "Telegram", "שיתוף מהיר דרך Telegram"],
+                  ["showCopy", "shareButtons", "📋", "העתקת מענה", "העתקת כל התשובות ללוח"],
+                  ["showAnswerRecap", "answerRecap", "✓", "סיכום תשובות", "הצגת הבחירות במסך הסיום"],
+                ] as const).map(([visibilityKey, styleKey, icon, title, description]) => <ElementControlCard
+                  key={visibilityKey}
+                  icon={icon}
+                  title={title}
+                  description={description}
+                  enabled={previewBlockEnabled(styleKey === "answerRecap" ? "answers" : "share") && c[visibilityKey] !== false}
+                  editing={editingElement === styleKey}
+                  onToggle={(value) => {
+                    const block = styleKey === "answerRecap" ? "answers" : "share";
+                    if (value && !previewBlockEnabled(block)) toggleCustomBlock(block);
+                    onConfig(visibilityKey, value);
+                  }}
+                  onEdit={() => setEditingElement((current) => current === styleKey ? null : styleKey)}
+                />)}
+              </div>
+              {editingElement && ["answerRecap", "shareButtons"].includes(editingElement) && <ElementStyleEditor elementKey={editingElement} title={editingElement === "answerRecap" ? "סיכום תשובות" : "כפתורי שיתוף"} style={getElementStyle(editingElement)} onChange={(patch) => updateElementStyle(editingElement, patch)} onReset={() => resetElementStyle(editingElement)} />}
             </div>
           </div>}
           {hasShareFeature && <><div className="field-divider full"><b>📲 פעולות שיתוף</b><span>התאימו את ההודעה והכפתור שיופיעו בסיום העמוד.</span></div>
@@ -622,7 +885,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
         </div>
 
         <div className={`preview-frame preview-frame-live preview-${c.theme}`} style={{ "--preview-soft": c.accentSoft, "--preview-accent": c.accent, "--preview-card-bg": c.cardBackground || "#ffffff", "--preview-card-border": c.cardBorderColor || "#ffffff", "--preview-card-radius": `${c.cardRadius ?? 34}px`, "--preview-emoji-bg": c.emojiBackground || c.accentSoft, "--preview-emoji-size": `${c.emojiSize ?? 55}px`, "--preview-decoration-opacity": c.decorationOpacity ?? 0.5 } as React.CSSProperties}>
-          {c.showFallingEmojis !== false && previewBlockEnabled("decorations") && <div className="preview-falling" aria-hidden="true">{c.decorations.slice(0, 5).map((item, index) => <span key={index} style={{ left: `${8 + index * 21}%`, animationDelay: `-${index * 1.1}s` }}>{item}</span>)}</div>}
+          {c.showFallingEmojis !== false && previewBlockEnabled("decorations") && <div className="preview-falling" aria-hidden="true">{c.decorations.slice(0, 5).map((item, index) => <span className={previewElementClass("decorations")} key={index} style={{ left: `${8 + index * 21}%`, animationDelay: `-${index * 1.1}s`, ...previewElementStyle("decorations") }}>{item}</span>)}</div>}
           <div className="preview-site-card">
             <div className="preview-site-topline"><span className="preview-site-brand">Link<span>li</span></span><span>{previewScreen === "all" ? "כל האתר" : previewScreen === "intro" ? "פתיחה" : previewScreen === "result" ? "סיום" : `${previewQuestion + 1} / ${c.questions.length}`}</span></div>
 
@@ -630,44 +893,61 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
               <div className="preview-flow-heading"><div><span className="preview-flow-kicker">תצוגת העמוד המלא</span><h2>{c.headline}</h2><p>כאן רואים את כל השלבים ברצף אחד — הפתיחה, השאלות והסיום.</p></div><button type="button" onClick={() => setSection("opening")}>עריכת פתיחה</button></div>
               <section className="preview-flow-section preview-flow-intro">
                 <div className="preview-flow-section-heading"><span>01</span><b>פתיחה</b><button type="button" onClick={() => setSection("opening")}>עריכה</button></div>
-                {c.showIntroLabel !== false && <span className="preview-mini-label">{c.introLabel}</span>}{c.showEmoji !== false && previewBlockEnabled("emoji") && <div className="big-emoji">{c.emoji}</div>}{c.showGreeting !== false && <p className="preview-greeting">שלום {c.recipient},</p>}<h3>{c.headline}</h3><p>{c.subtitle}</p>
-                {c.showHighlights !== false && previewBlockEnabled("highlights") && <div className="preview-highlights">{c.highlights.filter(Boolean).map((highlight, index) => <span key={index}>✓ {highlight}</span>)}</div>}
-                {previewBlockEnabled("location") && (c.showCalendar || c.showAppleCalendar || c.showWaze || c.showGoogleMaps) && <div className="preview-utility-actions">{c.showCalendar && <button type="button">📅 Google</button>}{c.showAppleCalendar && <button type="button"> Apple</button>}{c.showWaze && <button type="button">🧭 Waze</button>}{c.showGoogleMaps && <button type="button">📍 Maps</button>}</div>}
-                <button type="button" className="preview-action" onClick={() => { setPreviewQuestion(0); setPreviewScreen(previewBlockEnabled("questions") ? "question" : "result"); }}>{c.startText}<span>←</span></button>
+                {c.showIntroLabel !== false && <span className={previewElementClass("introLabel", "preview-mini-label")} style={previewElementStyle("introLabel")}>{c.introLabel}</span>}
+                {c.showEmoji !== false && previewBlockEnabled("emoji") && <div className={previewElementClass("emoji", "big-emoji")} style={previewElementStyle("emoji")}>{c.emoji}</div>}
+                {c.showGreeting !== false && <p className={previewElementClass("greeting", "preview-greeting")} style={previewElementStyle("greeting")}>שלום {c.recipient},</p>}
+                <h3 className={previewElementClass("headline")} style={previewElementStyle("headline")}>{c.headline}</h3>
+                <p className={previewElementClass("subtitle")} style={previewElementStyle("subtitle")}>{c.subtitle}</p>
+                {renderPreviewOpeningSpecials()}
+                {c.showHighlights !== false && previewBlockEnabled("highlights") && <div className={previewElementClass("highlights", "preview-highlights")} style={previewElementStyle("highlights")}>{c.highlights.filter(Boolean).map((highlight, index) => <span key={index}>✓ {highlight}</span>)}</div>}
+                {previewBlockEnabled("location") && (c.showCalendar || c.showAppleCalendar || c.showWaze || c.showGoogleMaps) && <div className={previewElementClass("calendar", "preview-utility-actions")} style={previewElementStyle("calendar")}>{c.showCalendar && <button type="button">📅 Google</button>}{c.showAppleCalendar && <button type="button"> Apple</button>}{c.showWaze && <button type="button">🧭 Waze</button>}{c.showGoogleMaps && <button type="button">📍 Maps</button>}</div>}
+                <button type="button" className={previewElementClass("primaryButton", "preview-action")} style={previewElementStyle("primaryButton")} onClick={() => { setPreviewQuestion(0); setPreviewScreen(previewBlockEnabled("questions") ? "question" : "result"); }}>{c.startText}<span>←</span></button>
               </section>
 
               {previewBlockEnabled("questions") && <section className="preview-flow-section preview-flow-questions">
                 <div className="preview-flow-section-heading"><span>02</span><b>שאלות</b><button type="button" onClick={() => setSection("questions")}>עריכה</button></div>
-                {c.questions.map((question, questionPosition) => <div className="preview-flow-question" key={questionPosition}><span className="preview-step-label">שאלה {questionPosition + 1}</span><h3>{question.prompt}</h3><p>{question.helper}</p><div className="preview-options">{question.options.map((option, optionPosition) => <button type="button" aria-pressed={previewAnswers[questionPosition] === option} className={previewAnswers[questionPosition] === option ? "selected" : ""} key={option} onClick={() => setPreviewAnswers((answers) => answers.map((value, index) => index === questionPosition ? option : value))}><span>{optionPosition + 1}</span><b>{option}</b><i>✓</i></button>)}</div></div>)}
+                {c.questions.map(renderPreviewQuestion)}
               </section>}
 
               <section className="preview-flow-section preview-flow-result">
                 <div className="preview-flow-section-heading"><span>{previewBlockEnabled("questions") ? "03" : "02"}</span><b>סיום</b><button type="button" onClick={() => setSection("completion")}>עריכה</button></div>
-                {c.showEmoji !== false && previewBlockEnabled("emoji") && <div className="preview-result-emoji">{c.emoji}<i>✨</i></div>}<span className="preview-mini-label">{c.resultLabel}</span><h3>{c.successTitle}</h3><p>{c.successText}</p>
-                {c.showAnswerRecap !== false && previewBlockEnabled("answers") && <div className="preview-answer-recap">{c.questions.map((question, index) => <div key={index}><span>{index + 1}</span><p><small>{question.prompt}</small><b>{previewAnswers[index] || "עדיין לא נבחרה תשובה"}</b></p></div>)}</div>}
-                {previewBlockEnabled("share") && <div className="preview-share-actions">{c.showWhatsApp !== false && <button type="button" className="preview-action preview-whatsapp">{c.buttonText}</button>}{c.showTelegram !== false && <button type="button" className="preview-share-button">✈️ Telegram</button>}{c.showCopy !== false && <button type="button" className="preview-share-button">📋 העתקה</button>}</div>}
+                {c.showEmoji !== false && previewBlockEnabled("emoji") && <div className={previewElementClass("emoji", "preview-result-emoji")} style={previewElementStyle("emoji")}>{c.emoji}<i>✨</i></div>}
+                <span className={previewElementClass("resultLabel", "preview-mini-label")} style={previewElementStyle("resultLabel")}>{c.resultLabel}</span>
+                <h3 className={previewElementClass("resultTitle")} style={previewElementStyle("resultTitle")}>{c.successTitle}</h3>
+                {renderPreviewResultSpecials()}
+                <p className={previewElementClass("resultText")} style={previewElementStyle("resultText")}>{c.successText}</p>
+                {c.showAnswerRecap !== false && previewBlockEnabled("answers") && <div className={previewElementClass("answerRecap", "preview-answer-recap")} style={previewElementStyle("answerRecap")}>{c.questions.map((question, index) => <div key={index}><span>{index + 1}</span><p><small>{question.prompt}</small><b>{previewAnswers[index] || "עדיין לא נבחרה תשובה"}</b></p></div>)}</div>}
+                {previewBlockEnabled("share") && <div className={previewElementClass("shareButtons", "preview-share-actions")} style={previewElementStyle("shareButtons")}>{c.showWhatsApp !== false && <button type="button" className="preview-action preview-whatsapp">{c.buttonText}</button>}{c.showTelegram !== false && <button type="button" className="preview-share-button">✈️ Telegram</button>}{c.showCopy !== false && <button type="button" className="preview-share-button">📋 העתקה</button>}</div>}
               </section>
             </div>}
 
             {previewScreen === "intro" && <div className="preview-site-screen preview-site-intro">
-              {c.showIntroLabel !== false && <span className="preview-mini-label">{c.introLabel}</span>}{c.showEmoji !== false && previewBlockEnabled("emoji") && <div className="big-emoji">{c.emoji}</div>}{c.showGreeting !== false && <p className="preview-greeting">שלום {c.recipient},</p>}<h2>{c.headline}</h2><p>{c.subtitle}</p>
-              {c.showHighlights !== false && previewBlockEnabled("highlights") && <div className="preview-highlights">{c.highlights.filter(Boolean).map((highlight, index) => <span key={index}>✓ {highlight}</span>)}</div>}
-              {previewBlockEnabled("location") && (c.showCalendar || c.showAppleCalendar || c.showWaze || c.showGoogleMaps) && <div className="preview-utility-actions">{c.showCalendar && <button type="button">📅 Google</button>}{c.showAppleCalendar && <button type="button"> Apple</button>}{c.showWaze && <button type="button">🧭 Waze</button>}{c.showGoogleMaps && <button type="button">📍 Maps</button>}</div>}
-              <button type="button" className="preview-action" onClick={() => { setPreviewQuestion(0); setPreviewScreen(previewBlockEnabled("questions") ? "question" : "result"); }}>{c.startText}<span>←</span></button>
+              {c.showIntroLabel !== false && <span className={previewElementClass("introLabel", "preview-mini-label")} style={previewElementStyle("introLabel")}>{c.introLabel}</span>}
+              {c.showEmoji !== false && previewBlockEnabled("emoji") && <div className={previewElementClass("emoji", "big-emoji")} style={previewElementStyle("emoji")}>{c.emoji}</div>}
+              {c.showGreeting !== false && <p className={previewElementClass("greeting", "preview-greeting")} style={previewElementStyle("greeting")}>שלום {c.recipient},</p>}
+              <h2 className={previewElementClass("headline")} style={previewElementStyle("headline")}>{c.headline}</h2>
+              <p className={previewElementClass("subtitle")} style={previewElementStyle("subtitle")}>{c.subtitle}</p>
+              {renderPreviewOpeningSpecials()}
+              {c.showHighlights !== false && previewBlockEnabled("highlights") && <div className={previewElementClass("highlights", "preview-highlights")} style={previewElementStyle("highlights")}>{c.highlights.filter(Boolean).map((highlight, index) => <span key={index}>✓ {highlight}</span>)}</div>}
+              {previewBlockEnabled("location") && (c.showCalendar || c.showAppleCalendar || c.showWaze || c.showGoogleMaps) && <div className={previewElementClass("calendar", "preview-utility-actions")} style={previewElementStyle("calendar")}>{c.showCalendar && <button type="button">📅 Google</button>}{c.showAppleCalendar && <button type="button"> Apple</button>}{c.showWaze && <button type="button">🧭 Waze</button>}{c.showGoogleMaps && <button type="button">📍 Maps</button>}</div>}
+              <button type="button" className={previewElementClass("primaryButton", "preview-action")} style={previewElementStyle("primaryButton")} onClick={() => { setPreviewQuestion(0); setPreviewScreen(previewBlockEnabled("questions") ? "question" : "result"); }}>{c.startText}<span>←</span></button>
               {c.showStartHint !== false && <small className="preview-start-hint">זה לוקח בערך דקה</small>}
             </div>}
 
             {previewScreen === "question" && previewBlockEnabled("questions") && previewQuestionData && <div className="preview-site-screen preview-site-question">
               <div className="preview-progress" style={{ gridTemplateColumns: `repeat(${c.questions.length}, minmax(0, 1fr))` }}>{c.questions.map((_, index) => <i className={index <= previewQuestion ? "active" : ""} key={index} />)}</div>
-              <span className="preview-step-label">שאלה {previewQuestion + 1} מתוך {c.questions.length}</span><h2>{previewQuestionData.prompt}</h2><p>{previewQuestionData.helper}</p>
-              <div className="preview-options">{previewQuestionData.options.map((option, index) => <button type="button" aria-pressed={previewAnswers[previewQuestion] === option} className={previewAnswers[previewQuestion] === option ? "selected" : ""} key={option} onClick={() => setPreviewAnswer(option)}><span>{index + 1}</span><b>{option}</b><i>✓</i></button>)}</div>
-              <div className="preview-navigation"><button type="button" className="preview-back" disabled={previewQuestion === 0} onClick={() => setPreviewQuestion((index) => Math.max(0, index - 1))}>חזרה</button><button type="button" className="preview-action" onClick={advancePreview}>{previewQuestion === c.questions.length - 1 ? c.finalButtonText : "לשאלה הבאה"}<span>←</span></button></div>
+              {renderPreviewQuestion(previewQuestionData, previewQuestion)}
+              <div className="preview-navigation"><button type="button" className="preview-back" disabled={previewQuestion === 0} onClick={() => setPreviewQuestion((index) => Math.max(0, index - 1))}>חזרה</button><button type="button" className={previewElementClass("primaryButton", "preview-action")} style={previewElementStyle("primaryButton")} onClick={advancePreview}>{previewQuestion === c.questions.length - 1 ? c.finalButtonText : "לשאלה הבאה"}<span>←</span></button></div>
             </div>}
 
             {previewScreen === "result" && <div className="preview-site-screen preview-site-result">
-              {c.showEmoji !== false && previewBlockEnabled("emoji") && <div className="preview-result-emoji">{c.emoji}<i>✨</i></div>}<span className="preview-mini-label">{c.resultLabel}</span><h2>{c.successTitle}</h2><p>{c.successText}</p>
-              {c.showAnswerRecap !== false && previewBlockEnabled("answers") && <div className="preview-answer-recap">{c.questions.map((question, index) => <div key={index}><span>{index + 1}</span><p><small>{question.prompt}</small><b>{previewAnswers[index] || "עדיין לא נבחרה תשובה"}</b></p></div>)}</div>}
-              {previewBlockEnabled("share") && <div className="preview-share-actions">{c.showWhatsApp !== false && <button type="button" className="preview-action preview-whatsapp">{c.buttonText}</button>}{c.showTelegram !== false && <button type="button" className="preview-share-button">✈️ Telegram</button>}{c.showCopy !== false && <button type="button" className="preview-share-button">📋 העתקה</button>}</div>}<button type="button" className="preview-restart" onClick={() => setPreviewScreen("intro")}>התחלה מחדש</button>
+              {c.showEmoji !== false && previewBlockEnabled("emoji") && <div className={previewElementClass("emoji", "preview-result-emoji")} style={previewElementStyle("emoji")}>{c.emoji}<i>✨</i></div>}
+              <span className={previewElementClass("resultLabel", "preview-mini-label")} style={previewElementStyle("resultLabel")}>{c.resultLabel}</span>
+              <h2 className={previewElementClass("resultTitle")} style={previewElementStyle("resultTitle")}>{c.successTitle}</h2>
+              {renderPreviewResultSpecials()}
+              <p className={previewElementClass("resultText")} style={previewElementStyle("resultText")}>{c.successText}</p>
+              {c.showAnswerRecap !== false && previewBlockEnabled("answers") && <div className={previewElementClass("answerRecap", "preview-answer-recap")} style={previewElementStyle("answerRecap")}>{c.questions.map((question, index) => <div key={index}><span>{index + 1}</span><p><small>{question.prompt}</small><b>{previewAnswers[index] || "עדיין לא נבחרה תשובה"}</b></p></div>)}</div>}
+              {previewBlockEnabled("share") && <div className={previewElementClass("shareButtons", "preview-share-actions")} style={previewElementStyle("shareButtons")}>{c.showWhatsApp !== false && <button type="button" className="preview-action preview-whatsapp">{c.buttonText}</button>}{c.showTelegram !== false && <button type="button" className="preview-share-button">✈️ Telegram</button>}{c.showCopy !== false && <button type="button" className="preview-share-button">📋 העתקה</button>}</div>}<button type="button" className="preview-restart" onClick={() => setPreviewScreen("intro")}>התחלה מחדש</button>
             </div>}
             {profile.plan === "free" && <div className="preview-watermark">נוצר עם <b>Linkli</b></div>}
           </div>

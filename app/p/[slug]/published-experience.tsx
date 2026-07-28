@@ -2,9 +2,32 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, useRef } from "react";
-import { CUSTOM_BLOCKS, type TemplateConfig } from "@/lib/templates";
+import type { CSSProperties, ReactNode } from "react";
+import { CUSTOM_BLOCKS, type ElementStyleKey, type TemplateConfig } from "@/lib/templates";
 
 type Screen = "intro" | "question" | "result";
+
+function elementStyle(config: TemplateConfig, key: ElementStyleKey): CSSProperties {
+  const style = config.elementStyles?.[key];
+  if (!style) return {};
+  return {
+    "--element-accent": style.accent,
+    "--element-scale": style.size / 100,
+    backgroundColor: style.background,
+    color: style.color,
+    borderColor: style.accent,
+    borderRadius: `${style.radius}px`,
+    textAlign: style.align,
+  } as CSSProperties;
+}
+
+function elementClass(config: TemplateConfig, key: ElementStyleKey, base = "") {
+  return `${base} ${config.elementStyles?.[key] ? "published-element-customized" : ""}`.trim();
+}
+
+function ElementSurface({ config, element, className = "", children }: { config: TemplateConfig; element: ElementStyleKey; className?: string; children: ReactNode }) {
+  return <div className={elementClass(config, element, className)} style={elementStyle(config, element)}>{children}</div>;
+}
 
 function whatsappSafeText(value: string) {
   return value.normalize("NFC")
@@ -53,7 +76,7 @@ function CardUtilityActions({ config, googleCalendarUrl, onAppleCalendar }: { co
   const wazeUrl = config.wazeUrl || `https://waze.com/ul?q=${encodeURIComponent(venue || "חוות רונית")}&navigate=yes`;
   const googleMapsUrl = config.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue || config.headline)}`;
   if (!showCalendar && !showAppleCalendar && !showWaze && !showGoogleMaps) return null;
-  return <div className="card-utility-actions" aria-label="פעולות מהירות">
+  return <div className={elementClass(config, "calendar", "card-utility-actions")} style={elementStyle(config, "calendar")} aria-label="פעולות מהירות">
     {showCalendar && <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer">📅 Google Calendar</a>}
     {showAppleCalendar && <a href="#apple-calendar" onClick={(event) => { event.preventDefault(); onAppleCalendar(); }}> Apple Calendar</a>}
     {showWaze && <a href={wazeUrl} target="_blank" rel="noopener noreferrer">🧭 ניווט ב-Waze</a>}
@@ -219,7 +242,7 @@ export default function PublishedExperience({ slug, templateId, config, showWate
   const [customSong, setCustomSong] = useState("");
   const [copiedToast, setCopiedToast] = useState(false);
   const isCustomBlank = templateId === "custom-blank";
-  const customBlocks = config.customBlocks?.length ? config.customBlocks : CUSTOM_BLOCKS.map((block) => block.id);
+  const customBlocks = config.customBlocks ?? CUSTOM_BLOCKS.map((block) => block.id);
   const customBlockEnabled = (blockId: string, fallback = true) => !isCustomBlank ? fallback : customBlocks.includes(blockId);
   const hasQuestions = customBlockEnabled("questions") && config.questions.length > 0;
 
@@ -348,31 +371,31 @@ export default function PublishedExperience({ slug, templateId, config, showWate
     {previewMode ? <div className="template-preview-bar"><Link href="/#templates" className="template-preview-back">חזרה לכל התבניות</Link><Link href={previewCtaHref} data-marketing-event="preview_create" className="button button-primary button-small">יצירת התבנית בחינם</Link></div> : null}
     <div className="experience-aurora experience-aurora-one" aria-hidden="true" />
     <div className="experience-aurora experience-aurora-two" aria-hidden="true" />
-    {config.showFallingEmojis !== false && customBlockEnabled("decorations") && <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size, opacity: config.decorationOpacity ?? 0.5 }}>{item.value}</span>)}</div>}
+    {config.showFallingEmojis !== false && customBlockEnabled("decorations") && <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span className={elementClass(config, "decorations")} key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size, opacity: config.decorationOpacity ?? 0.5, ...elementStyle(config, "decorations") }}>{item.value}</span>)}</div>}
     
     <section className={`${cardClass} ${config.cardShape ? `shape-${config.cardShape}` : ""}`} aria-live="polite">
-      <div className="experience-topline">{showWatermark && !isBrandingHidden ? <span className="experience-brand">Link<span>li</span></span> : <span aria-hidden="true">{config.emoji}</span>}{screen === "question" ? <span dir="ltr">{step + 1} / {config.questions.length}</span> : config.showIntroLabel !== false ? <span>{config.introLabel}</span> : <span aria-hidden="true" />}</div>
+      <div className="experience-topline">{showWatermark && !isBrandingHidden ? <span className="experience-brand">Link<span>li</span></span> : <span aria-hidden="true">{config.emoji}</span>}{screen === "question" ? <span dir="ltr">{step + 1} / {config.questions.length}</span> : config.showIntroLabel !== false ? <span className={elementClass(config, "introLabel")} style={elementStyle(config, "introLabel")}>{config.introLabel}</span> : <span aria-hidden="true" />}</div>
 
       {screen === "intro" ? <div className="experience-screen experience-intro">
         {/* Special Wax Seal Envelope for Love Note */}
-        {config.theme === "letter" && config.showWaxEnvelope !== false && !waxOpened ? (
-          <div className="wax-envelope-card" onClick={() => setWaxOpened(true)}>
+        {config.showWaxEnvelope === true && !waxOpened ? (
+          <div className={elementClass(config, "waxEnvelope", "wax-envelope-card")} style={elementStyle(config, "waxEnvelope")} onClick={() => setWaxOpened(true)}>
             <div className="wax-seal">💌</div>
             <h3>מכתב אישי מהלב</h3>
             <p>לחצו לפתיחת חותם השעווה ✉️</p>
           </div>
         ) : (
           <>
-            {config.showEmoji !== false && customBlockEnabled("emoji") && <div className="experience-emoji-wrap"><span>{config.emoji}</span><i aria-hidden="true">✦</i></div>}
-            {config.showGreeting !== false && <p className="experience-greeting">שלום {config.recipient},</p>}
-            <h1>{config.headline}</h1>
-            <p className="experience-copy">{config.subtitle}</p>
+            {config.showEmoji !== false && customBlockEnabled("emoji") && <div className={elementClass(config, "emoji", "experience-emoji-wrap")} style={elementStyle(config, "emoji")}><span>{config.emoji}</span><i aria-hidden="true">✦</i></div>}
+            {config.showGreeting !== false && <p className={elementClass(config, "greeting", "experience-greeting")} style={elementStyle(config, "greeting")}>שלום {config.recipient},</p>}
+            <h1 className={elementClass(config, "headline")} style={elementStyle(config, "headline")}>{config.headline}</h1>
+            <p className={elementClass(config, "subtitle", "experience-copy")} style={elementStyle(config, "subtitle")}>{config.subtitle}</p>
 
             {/* Live Event Pass & Countdown for RSVP */}
-            {config.showCountdown && <EventCountdown targetDateText={config.eventDate} />}
+            {config.showCountdown && customBlockEnabled("location") && <ElementSurface config={config} element="countdown"><EventCountdown targetDateText={config.eventDate} /></ElementSurface>}
             {config.theme === "elegant" && (
               <>
-                {config.showVenueCard !== false && <div className="rsvp-ticket-header">
+                {config.showVenueCard !== false && <div className={elementClass(config, "venue", "rsvp-ticket-header")} style={elementStyle(config, "venue")}>
                   <div className="rsvp-ticket-row"><span>📅 תאריך ושעה:</span><b>{config.eventDate || config.highlights[0] || "18.09.2026 · 19:30"}</b></div>
                   <div className="rsvp-ticket-row"><span>📍 מיקום:</span><b>{config.venueName || config.highlights[1] || "חוות רונית"}</b></div>
                   {config.showWaze !== false && <a href={config.wazeUrl || wazeUrl} target="_blank" rel="noopener noreferrer" className="rsvp-waze-link">🧭 ניווט ב-Waze למקום האירוע</a>}
@@ -381,17 +404,17 @@ export default function PublishedExperience({ slug, templateId, config, showWate
             )}
 
             {/* Photo Slide Carousel for Memories Theme */}
-            {config.theme === "memories" && config.showMemoriesSlider !== false && <MemoriesSlider />}
+            {config.showMemoriesSlider === true && <ElementSurface config={config} element="memories"><MemoriesSlider /></ElementSurface>}
 
             {config.showHighlights !== false && customBlockEnabled("highlights") && config.theme !== "elegant" && config.theme !== "memories" && (
-              <div className="experience-meta">{config.highlights.map((highlight) => <span key={highlight}>✦ {highlight}</span>)}</div>
+              <div className={elementClass(config, "highlights", "experience-meta")} style={elementStyle(config, "highlights")}>{config.highlights.map((highlight) => <span key={highlight}>✦ {highlight}</span>)}</div>
             )}
 
-            {config.showVenueCard && customBlockEnabled("location") && config.theme !== "elegant" && (config.venueName || config.eventDate) && <div className="card-venue-summary"><span>📍 {config.venueName || "מיקום האירוע"}</span>{config.eventDate ? <b>📅 {config.eventDate}</b> : null}</div>}
+            {config.showVenueCard && customBlockEnabled("location") && config.theme !== "elegant" && (config.venueName || config.eventDate) && <div className={elementClass(config, "venue", "card-venue-summary")} style={elementStyle(config, "venue")}><span>📍 {config.venueName || "מיקום האירוע"}</span>{config.eventDate ? <b>📅 {config.eventDate}</b> : null}</div>}
 
             {customBlockEnabled("location") && <CardUtilityActions config={config} googleCalendarUrl={googleCalendarUrl} onAppleCalendar={downloadAppleCalendar} />}
 
-            <button className="experience-primary" onClick={start}>{config.startText}<span aria-hidden="true">←</span></button>
+            <button className={elementClass(config, "primaryButton", "experience-primary")} style={elementStyle(config, "primaryButton")} onClick={start}>{config.startText}<span aria-hidden="true">←</span></button>
             {config.showStartHint !== false && <p className="experience-hint">זה לוקח בערך דקה</p>}
           </>
         )}
@@ -399,12 +422,14 @@ export default function PublishedExperience({ slug, templateId, config, showWate
 
       {screen === "question" && hasQuestions && question ? <div className="experience-screen experience-question" key={step}>
         <div className="experience-progress" style={{ gridTemplateColumns: `repeat(${config.questions.length}, minmax(0, 1fr))` }} aria-label={`שלב ${step + 1} מתוך ${config.questions.length}`}>{config.questions.map((_, index) => <i className={index <= step ? "active" : ""} key={index} />)}</div>
-        <span className="experience-step">שלב {step + 1}</span>
-        <h2>{question.prompt}</h2>
-        <p className="experience-copy">{question.helper}</p>
+        <div className={elementClass(config, "question", "experience-question-copy")} style={elementStyle(config, "question")}>
+          <span className="experience-step">שלב {step + 1}</span>
+          <h2>{question.prompt}</h2>
+          <p className="experience-copy">{question.helper}</p>
+        </div>
 
-        {config.theme === "elegant" && step === 1 && config.showGuests !== false ? (
-          <div className="guest-stepper-box">
+        {(config.theme === "elegant" || templateId === "custom-blank") && step === Math.min(1, config.questions.length - 1) && config.showGuests === true ? (
+          <div className={elementClass(config, "guestCounter", "guest-stepper-box")} style={elementStyle(config, "guestCounter")}>
             <div className="stepper-controls">
               <button type="button" onClick={() => { const val = Math.max(1, guestCount - 1); setGuestCount(val); choose(`${val} אורחים`); }}>−</button>
               <span className="guest-num">{guestCount}</span>
@@ -415,7 +440,7 @@ export default function PublishedExperience({ slug, templateId, config, showWate
             </div>
           </div>
         ) : (
-          <div className="experience-options">
+          <div className={elementClass(config, "options", "experience-options")} style={elementStyle(config, "options")}>
             {question.options.map((option, index) => (
               <button className={answers[step] === option ? "selected" : ""} onClick={() => choose(option)} key={`${option}-${index}`}>
                 <span>{String.fromCharCode(1488 + index)}</span>
@@ -426,8 +451,8 @@ export default function PublishedExperience({ slug, templateId, config, showWate
           </div>
         )}
 
-        {config.theme === "elegant" && step === 2 && config.showDjSong !== false && (
-          <div className="dj-song-input-box">
+        {(config.theme === "elegant" || templateId === "custom-blank") && step === Math.min(2, config.questions.length - 1) && config.showDjSong === true && (
+          <div className={elementClass(config, "djSong", "dj-song-input-box")} style={elementStyle(config, "djSong")}>
             <label>🎵 רשמו שיר שאתם חייבים לשמוע ברחבה (רשות):</label>
             <input
               type="text"
@@ -440,39 +465,39 @@ export default function PublishedExperience({ slug, templateId, config, showWate
         )}
 
         {error ? <p className="experience-error" role="alert">בחרו תשובה כדי להמשיך 😊</p> : null}
-        <div className="experience-navigation"><button className="experience-back" onClick={back}>חזרה</button><button className="experience-primary" onClick={next}>{step === config.questions.length - 1 ? config.finalButtonText : "לשלב הבא"}<span aria-hidden="true">←</span></button></div>
+        <div className="experience-navigation"><button className="experience-back" onClick={back}>חזרה</button><button className={elementClass(config, "primaryButton", "experience-primary")} style={elementStyle(config, "primaryButton")} onClick={next}>{step === config.questions.length - 1 ? config.finalButtonText : "לשלב הבא"}<span aria-hidden="true">←</span></button></div>
       </div> : null}
 
       {screen === "result" ? <div className="experience-screen experience-result">
         <div className="success-burst" aria-hidden="true"><i>✦</i><i>★</i><i>✦</i><span>🎉</span></div>
-        <span className="score-pill">{config.resultLabel}</span>
-        <h2>{config.successTitle}</h2>
+        <span className={elementClass(config, "resultLabel", "score-pill")} style={elementStyle(config, "resultLabel")}>{config.resultLabel}</span>
+        <h2 className={elementClass(config, "resultTitle")} style={elementStyle(config, "resultTitle")}>{config.successTitle}</h2>
 
-        {config.theme === "gift" && config.showVoucher !== false && (
-          <GiftVoucherBox title={config.voucherTitle || config.successTitle} text={config.successText} code={config.voucherCode} terms={config.voucherTerms} />
+        {config.showVoucher === true && (
+          <ElementSurface config={config} element="voucher"><GiftVoucherBox title={config.voucherTitle || config.successTitle} text={config.successText} code={config.voucherCode} terms={config.voucherTerms} /></ElementSurface>
         )}
 
-        {config.theme === "party" && config.showCandle !== false && (
-          <BirthdayCandle onExtinguish={() => setCandleExtinguished(true)} />
+        {config.showCandle === true && (
+          <ElementSurface config={config} element="candle"><BirthdayCandle onExtinguish={() => setCandleExtinguished(true)} /></ElementSurface>
         )}
 
-        {config.theme === "party" && !candleExtinguished ? null : (
-          <p className="experience-copy">{config.successText}</p>
+        {config.showCandle === true && !candleExtinguished ? null : (
+          <p className={elementClass(config, "resultText", "experience-copy")} style={elementStyle(config, "resultText")}>{config.successText}</p>
         )}
 
-        {(templateId === "date" || config.showScratchCard === true) && (
-          <ScratchCanvas secretText={config.successTitle} />
+        {config.showScratchCard === true && (
+          <ElementSurface config={config} element="scratch"><ScratchCanvas secretText={config.successTitle} /></ElementSurface>
         )}
 
-        {(templateId === "memories" || config.showMemoriesSlider === true) && (
-          <MemoriesSlider />
+        {config.showMemoriesSlider === true && (
+          <ElementSurface config={config} element="memories"><MemoriesSlider /></ElementSurface>
         )}
 
         {customBlockEnabled("location") && <CardUtilityActions config={config} googleCalendarUrl={googleCalendarUrl} onAppleCalendar={downloadAppleCalendar} />}
 
-        {config.showAnswerRecap !== false && customBlockEnabled("answers") && <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>}
+        {config.showAnswerRecap !== false && customBlockEnabled("answers") && <div className={elementClass(config, "answerRecap", "answer-recap")} style={elementStyle(config, "answerRecap")}>{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>}
 
-        {customBlockEnabled("share") && <div className="multi-share-section">
+        {customBlockEnabled("share") && <div className={elementClass(config, "shareButtons", "multi-share-section")} style={elementStyle(config, "shareButtons")}>
           <p className="share-title">שליחת המענה בדרכים נוספות:</p>
           <div className="multi-share-grid">
             {config.showWhatsApp !== false && (config.whatsapp || previewMode) ? (

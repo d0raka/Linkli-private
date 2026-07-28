@@ -9,6 +9,45 @@ export type TemplateQuestion = {
 
 export type TemplateTheme = "romance" | "party" | "elegant" | "playful" | "letter" | "mischief" | "gift" | "memories";
 
+export const ELEMENT_STYLE_KEYS = [
+  "introLabel",
+  "emoji",
+  "greeting",
+  "headline",
+  "subtitle",
+  "highlights",
+  "primaryButton",
+  "decorations",
+  "countdown",
+  "venue",
+  "calendar",
+  "memories",
+  "waxEnvelope",
+  "question",
+  "options",
+  "guestCounter",
+  "djSong",
+  "resultLabel",
+  "resultTitle",
+  "resultText",
+  "voucher",
+  "candle",
+  "scratch",
+  "answerRecap",
+  "shareButtons",
+] as const;
+
+export type ElementStyleKey = typeof ELEMENT_STYLE_KEYS[number];
+
+export type TemplateElementStyle = {
+  background: string;
+  color: string;
+  accent: string;
+  radius: number;
+  size: number;
+  align: "right" | "center" | "left";
+};
+
 export type TemplateFeatureKey =
   | "showScratchCard"
   | "showCandle"
@@ -186,6 +225,7 @@ export type TemplateConfig = {
   customSubdomain?: string;
   customDomain?: string;
   hideBranding?: boolean;
+  elementStyles?: Partial<Record<ElementStyleKey, TemplateElementStyle>>;
 
   // Kept in the normalized record for compatibility with pages created before multi-step templates.
   options: string[];
@@ -376,6 +416,22 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
   const customBlocks = Array.isArray(input.customBlocks)
     ? input.customBlocks.map((item) => plainText(item, 32, true)).filter((item) => ["emoji", "highlights", "questions", "location", "share", "answers", "decorations"].includes(item)).slice(0, 7)
     : base.customBlocks || ["emoji", "highlights", "questions", "location", "share", "answers", "decorations"];
+  const elementStyles = Object.fromEntries(ELEMENT_STYLE_KEYS.flatMap((key) => {
+    const raw = input.elementStyles && typeof input.elementStyles === "object"
+      ? (input.elementStyles as Record<string, unknown>)[key]
+      : undefined;
+    if (!raw || typeof raw !== "object") return [];
+    const style = raw as Record<string, unknown>;
+    const align = style.align === "right" || style.align === "left" || style.align === "center" ? style.align : "center";
+    return [[key, {
+      background: colorValue(style.background, "#ffffff"),
+      color: colorValue(style.color, "#21182c"),
+      accent: colorValue(style.accent, base.accent),
+      radius: typeof style.radius === "number" ? Math.min(40, Math.max(0, style.radius)) : 16,
+      size: typeof style.size === "number" ? Math.min(130, Math.max(80, style.size)) : 100,
+      align,
+    }]];
+  })) as Partial<Record<ElementStyleKey, TemplateElementStyle>>;
   return {
     recipient: limitedString(input.recipient, base.recipient, 80),
     headline: limitedString(input.headline, base.headline, 120),
@@ -423,8 +479,8 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     voucherTitle: limitedString(input.voucherTitle, base.voucherTitle || "שובר מתנה מפנק", 100),
     voucherCode: limitedString(input.voucherCode, base.voucherCode || "LINKLI-GIFT-2026", 40),
     voucherTerms: limitedString(input.voucherTerms, base.voucherTerms || "בתוקף לשנה מיום ההנפקה", 200),
-    showCandle: typeof input.showCandle === "boolean" ? input.showCandle : true,
-    showWaxEnvelope: typeof input.showWaxEnvelope === "boolean" ? input.showWaxEnvelope : true,
+    showCandle: typeof input.showCandle === "boolean" ? input.showCandle : templateId === "birthday",
+    showWaxEnvelope: typeof input.showWaxEnvelope === "boolean" ? input.showWaxEnvelope : templateId === "love-note",
     showScratchCard: typeof input.showScratchCard === "boolean" ? input.showScratchCard : templateId === "date",
     showVoucher: typeof input.showVoucher === "boolean" ? input.showVoucher : templateId === "gift",
     showMemoriesSlider: typeof input.showMemoriesSlider === "boolean" ? input.showMemoriesSlider : templateId === "memories",
@@ -447,6 +503,7 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     customSubdomain: limitedString(input.customSubdomain, "", 60).toLowerCase().replace(/[^a-z0-9-]/g, ""),
     customDomain: limitedString(input.customDomain, "", 100).toLowerCase().replace(/[^a-z0-9.-]/g, ""),
     hideBranding: typeof input.hideBranding === "boolean" ? input.hideBranding : false,
+    elementStyles,
 
     options: questions[0].options, correctOption: questions[0].correctOption,
   };
