@@ -52,7 +52,10 @@ export default function AccessibilityControls() {
   return <div className="a11y-widget">
     <div className="a11y-trigger-wrapper">
       <button className="a11y-dismiss" aria-label="הסתרת תפריט נגישות לסשן זה" title="הסתרת תפריט נגישות" onClick={dismiss}>×</button>
-      <button className="a11y-trigger" aria-label="פתיחת תפריט נגישות" aria-expanded={open} aria-controls="a11y-menu" onClick={() => setOpen((value) => !value)}>♿</button>
+      <button className="a11y-trigger" aria-label="פתיחת תפריט נגישות" aria-expanded={open} aria-controls="a11y-menu" onClick={() => setOpen((value) => !value)}>
+        <span className="a11y-icon">♿</span>
+        <span className="a11y-label">נגישות</span>
+      </button>
     </div>
     {open && <section className="a11y-menu" id="a11y-menu" aria-label="אפשרויות נגישות">
       <div className="a11y-menu-head"><strong>התאמות נגישות</strong><button aria-label="סגירת תפריט נגישות" onClick={() => setOpen(false)}>×</button></div>
