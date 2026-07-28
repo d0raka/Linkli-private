@@ -17,8 +17,9 @@ function whatsappSafeText(value: string) {
 }
 
 /* Live Countdown Component for Event RSVP */
-function EventCountdown() {
+function EventCountdown({ targetDateText }: { targetDateText?: string }) {
   const [timeLeft, setTimeLeft] = useState({ days: 48, hours: 14, minutes: 32, seconds: 45 });
+  const countdownLabel = targetDateText ? ` עד ${targetDateText}` : "";
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -32,7 +33,7 @@ function EventCountdown() {
 
   return (
     <div className="event-countdown-box">
-      <span className="countdown-title">⏱️ סופרים את הימים לאירוע:</span>
+      <span className="countdown-title">⏱️ סופרים את הימים לאירוע{countdownLabel}:</span>
       <div className="countdown-grid">
         <div className="countdown-unit"><b>{timeLeft.days}</b><small>ימים</small></div>
         <div className="countdown-unit"><b>{timeLeft.hours}</b><small>שעות</small></div>
@@ -41,6 +42,23 @@ function EventCountdown() {
       </div>
     </div>
   );
+}
+
+function CardUtilityActions({ config, googleCalendarUrl, onAppleCalendar }: { config: TemplateConfig; googleCalendarUrl: string; onAppleCalendar: () => void }) {
+  const showCalendar = config.showCalendar ?? config.theme === "elegant";
+  const showAppleCalendar = config.showAppleCalendar ?? false;
+  const showWaze = config.showWaze ?? config.theme === "elegant";
+  const showGoogleMaps = config.showGoogleMaps ?? false;
+  const venue = config.venueName || config.highlights[1] || "";
+  const wazeUrl = config.wazeUrl || `https://waze.com/ul?q=${encodeURIComponent(venue || "חוות רונית")}&navigate=yes`;
+  const googleMapsUrl = config.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue || config.headline)}`;
+  if (!showCalendar && !showAppleCalendar && !showWaze && !showGoogleMaps) return null;
+  return <div className="card-utility-actions" aria-label="פעולות מהירות">
+    {showCalendar && <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer">📅 Google Calendar</a>}
+    {showAppleCalendar && <a href="#apple-calendar" onClick={(event) => { event.preventDefault(); onAppleCalendar(); }}> Apple Calendar</a>}
+    {showWaze && <a href={wazeUrl} target="_blank" rel="noopener noreferrer">🧭 ניווט ב-Waze</a>}
+    {showGoogleMaps && <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">📍 Google Maps</a>}
+  </div>;
 }
 
 /* Interactive Memories Story Slide Component */
@@ -279,10 +297,33 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   }
 
   // Google calendar link helper for RSVP
-  const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(config.headline)}&details=${encodeURIComponent(config.subtitle)}&location=${encodeURIComponent(config.highlights[1] || "")}`;
+  const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(config.headline)}&details=${encodeURIComponent(config.subtitle)}&location=${encodeURIComponent(config.venueName || config.highlights[1] || "")}`;
   const wazeUrl = `https://waze.com/ul?q=${encodeURIComponent(config.highlights[1] || "חוות רונית")}&navigate=yes`;
 
-  const themeClass = `experience-shell experience-${config.theme}`;
+  function downloadAppleCalendar() {
+    const dateMatch = (config.eventDate || "").match(/(\d{1,2})[./](\d{1,2})[./](\d{4})/);
+    const timeMatch = (config.eventDate || "").match(/(\d{1,2}):(\d{2})/);
+    const now = new Date();
+    const year = dateMatch?.[3] || String(now.getFullYear());
+    const month = dateMatch?.[2]?.padStart(2, "0") || String(now.getMonth() + 1).padStart(2, "0");
+    const day = dateMatch?.[1]?.padStart(2, "0") || String(now.getDate()).padStart(2, "0");
+    const hour = timeMatch?.[1]?.padStart(2, "0") || "19";
+    const minute = timeMatch?.[2] || "30";
+    const start = `${year}${month}${day}T${hour}${minute}00`;
+    const endDate = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute) + 120);
+    const end = `${endDate.getFullYear()}${String(endDate.getMonth() + 1).padStart(2, "0")}${String(endDate.getDate()).padStart(2, "0")}T${String(endDate.getHours()).padStart(2, "0")}${String(endDate.getMinutes()).padStart(2, "0")}00`;
+    const escapeIcs = (value: string) => value.replace(/[\\,;]/g, "\\$&").replace(/\n/g, "\\n");
+    const content = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Linkli//Personal Card//EN", "BEGIN:VEVENT", `DTSTART:${start}`, `DTEND:${end}`, `SUMMARY:${escapeIcs(config.headline)}`, `DESCRIPTION:${escapeIcs(config.subtitle)}`, `LOCATION:${escapeIcs(config.venueName || config.highlights[1] || "")}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+    const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "linkli-event.ics";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const themeClass = `experience-shell experience-${config.theme} bg-${config.bgStyle || "fluid-mesh"}`;
   const cardClass = `experience-card experience-card-${config.theme}`;
   const isBrandingHidden = config.hideBranding || !showWatermark;
 
@@ -291,18 +332,26 @@ export default function PublishedExperience({ slug, config, showWatermark, track
     "--page-soft": config.accentSoft,
     "--page-accent": config.accent,
     "--card-blur": `${config.glassBlur ?? 30}px`,
+    "--page-card-bg": config.cardBackground || "rgba(255,255,255,.91)",
+    "--page-card-border": config.cardBorderColor || "rgba(255,255,255,.9)",
+    "--page-card-radius": `${config.cardRadius ?? 34}px`,
+    "--page-emoji-bg": config.emojiBackground || config.accentSoft,
+    "--page-emoji-size": `${config.emojiSize ?? 55}px`,
+    "--page-emoji-radius": config.emojiShape === "circle" ? "50%" : config.emojiShape === "square" ? "12px" : config.emojiShape === "pill" ? "999px" : "31px",
+    "--page-button-bg": config.buttonStyle === "solid" ? config.accent : config.buttonStyle === "soft" ? config.accentSoft : config.buttonStyle === "outline" ? "transparent" : undefined,
+    "--page-button-border": config.buttonStyle === "outline" ? `2px solid ${config.accent}` : undefined,
   } as React.CSSProperties}>
     {previewMode ? <div className="template-preview-bar"><Link href="/#templates" className="template-preview-back">חזרה לכל התבניות</Link><Link href={previewCtaHref} data-marketing-event="preview_create" className="button button-primary button-small">יצירת התבנית בחינם</Link></div> : null}
     <div className="experience-aurora experience-aurora-one" aria-hidden="true" />
     <div className="experience-aurora experience-aurora-two" aria-hidden="true" />
-    <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size }}>{item.value}</span>)}</div>
+    {config.showFallingEmojis !== false && <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size, opacity: config.decorationOpacity ?? 0.5 }}>{item.value}</span>)}</div>}
     
     <section className={`${cardClass} ${config.cardShape ? `shape-${config.cardShape}` : ""}`} aria-live="polite">
-      <div className="experience-topline">{showWatermark && !isBrandingHidden ? <span className="experience-brand">Link<span>li</span></span> : <span aria-hidden="true">{config.emoji}</span>}{screen === "question" ? <span dir="ltr">{step + 1} / {config.questions.length}</span> : <span>{config.introLabel}</span>}</div>
+      <div className="experience-topline">{showWatermark && !isBrandingHidden ? <span className="experience-brand">Link<span>li</span></span> : <span aria-hidden="true">{config.emoji}</span>}{screen === "question" ? <span dir="ltr">{step + 1} / {config.questions.length}</span> : config.showIntroLabel !== false ? <span>{config.introLabel}</span> : <span aria-hidden="true" />}</div>
 
       {screen === "intro" ? <div className="experience-screen experience-intro">
         {/* Special Wax Seal Envelope for Love Note */}
-        {config.theme === "letter" && !waxOpened ? (
+        {config.theme === "letter" && config.showWaxEnvelope !== false && !waxOpened ? (
           <div className="wax-envelope-card" onClick={() => setWaxOpened(true)}>
             <div className="wax-seal">💌</div>
             <h3>מכתב אישי מהלב</h3>
@@ -310,32 +359,36 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           </div>
         ) : (
           <>
-            <div className="experience-emoji-wrap"><span>{config.emoji}</span><i aria-hidden="true">✦</i></div>
-            <p className="experience-greeting">שלום {config.recipient},</p>
+            {config.showEmoji !== false && <div className="experience-emoji-wrap"><span>{config.emoji}</span><i aria-hidden="true">✦</i></div>}
+            {config.showGreeting !== false && <p className="experience-greeting">שלום {config.recipient},</p>}
             <h1>{config.headline}</h1>
             <p className="experience-copy">{config.subtitle}</p>
 
             {/* Live Event Pass & Countdown for RSVP */}
+            {config.showCountdown && <EventCountdown targetDateText={config.eventDate} />}
             {config.theme === "elegant" && (
               <>
-                <EventCountdown targetDateText={config.eventDate} />
-                <div className="rsvp-ticket-header">
+                {config.showVenueCard !== false && <div className="rsvp-ticket-header">
                   <div className="rsvp-ticket-row"><span>📅 תאריך ושעה:</span><b>{config.eventDate || config.highlights[0] || "18.09.2026 · 19:30"}</b></div>
                   <div className="rsvp-ticket-row"><span>📍 מיקום:</span><b>{config.venueName || config.highlights[1] || "חוות רונית"}</b></div>
-                  <a href={config.wazeUrl || wazeUrl} target="_blank" rel="noopener noreferrer" className="rsvp-waze-link">🧭 ניווט ב-Waze למקום האירוע</a>
-                </div>
+                  {config.showWaze !== false && <a href={config.wazeUrl || wazeUrl} target="_blank" rel="noopener noreferrer" className="rsvp-waze-link">🧭 ניווט ב-Waze למקום האירוע</a>}
+                </div>}
               </>
             )}
 
             {/* Photo Slide Carousel for Memories Theme */}
             {config.theme === "memories" && <MemoriesSlider />}
 
-            {config.theme !== "elegant" && config.theme !== "memories" && (
+            {config.showHighlights !== false && config.theme !== "elegant" && config.theme !== "memories" && (
               <div className="experience-meta">{config.highlights.map((highlight) => <span key={highlight}>✦ {highlight}</span>)}</div>
             )}
 
+            {config.showVenueCard && config.theme !== "elegant" && (config.venueName || config.eventDate) && <div className="card-venue-summary"><span>📍 {config.venueName || "מיקום האירוע"}</span>{config.eventDate ? <b>📅 {config.eventDate}</b> : null}</div>}
+
+            <CardUtilityActions config={config} googleCalendarUrl={googleCalendarUrl} onAppleCalendar={downloadAppleCalendar} />
+
             <button className="experience-primary" onClick={start}>{config.startText}<span aria-hidden="true">←</span></button>
-            <p className="experience-hint">זה לוקח בערך דקה</p>
+            {config.showStartHint !== false && <p className="experience-hint">זה לוקח בערך דקה</p>}
           </>
         )}
       </div> : null}
@@ -346,7 +399,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         <h2>{question.prompt}</h2>
         <p className="experience-copy">{question.helper}</p>
 
-        {config.theme === "elegant" && step === 1 ? (
+        {config.theme === "elegant" && step === 1 && config.showGuests !== false ? (
           <div className="guest-stepper-box">
             <div className="stepper-controls">
               <button type="button" onClick={() => { const val = Math.max(1, guestCount - 1); setGuestCount(val); choose(`${val} אורחים`); }}>−</button>
@@ -369,7 +422,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           </div>
         )}
 
-        {config.theme === "elegant" && step === 2 && (
+        {config.theme === "elegant" && step === 2 && config.showDjSong !== false && (
           <div className="dj-song-input-box">
             <label>🎵 רשמו שיר שאתם חייבים לשמוע ברחבה (רשות):</label>
             <input
@@ -395,7 +448,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           <GiftVoucherBox title={config.voucherTitle || config.successTitle} text={config.successText} code={config.voucherCode} terms={config.voucherTerms} />
         )}
 
-        {config.theme === "party" && (
+        {config.theme === "party" && config.showCandle !== false && (
           <BirthdayCandle onExtinguish={() => setCandleExtinguished(true)} />
         )}
 
@@ -411,32 +464,24 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           <MemoriesSlider />
         )}
 
-        {config.theme === "elegant" && config.venueName && (
-          <VenueWazeBox venueName={config.venueName} wazeUrl={config.wazeUrl} />
-        )}
+        <CardUtilityActions config={config} googleCalendarUrl={googleCalendarUrl} onAppleCalendar={downloadAppleCalendar} />
 
-        {config.theme === "elegant" && (
-          <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer" className="calendar-add-button">
-            <span>📅</span> הוספת האירוע ל-Google Calendar
-          </a>
-        )}
-
-        <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>
+        {config.showAnswerRecap !== false && <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>}
 
         <div className="multi-share-section">
           <p className="share-title">שליחת המענה בדרכים נוספות:</p>
           <div className="multi-share-grid">
-            {config.whatsapp || previewMode ? (
+            {config.showWhatsApp !== false && (config.whatsapp || previewMode) ? (
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="share-pill share-pill-wa" onClick={trackClick}>
                 <span>🟢</span> WhatsApp
               </a>
             ) : null}
-            <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="share-pill share-pill-tg" onClick={trackClick}>
+            {config.showTelegram !== false && <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="share-pill share-pill-tg" onClick={trackClick}>
               <span>✈️</span> Telegram
-            </a>
-            <button type="button" onClick={copySummaryToClipboard} className="share-pill share-pill-copy">
+            </a>}
+            {config.showCopy !== false && <button type="button" onClick={copySummaryToClipboard} className="share-pill share-pill-copy">
               <span>📋</span> {copiedToast ? "הועתק בהצלחה! ✨" : "העתקת מענה"}
-            </button>
+            </button>}
           </div>
         </div>
 

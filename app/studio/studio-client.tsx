@@ -168,7 +168,7 @@ export default function StudioClient({ initialName, initialMode = "dashboard" }:
 
       {!profile.emailVerified && <div className="verification-banner"><div><b>כתובת הדוא״ל עדיין לא אומתה</b><span>אימות הכתובת שומר על החשבון ומאפשר שחזור גישה.</span></div><a className="button button-outline" href="/verify-email">אימות עכשיו</a></div>}
 
-      {profile.plan === "free" && mode !== "editor" && <div className="upgrade-banner"><div><h3>צריכים יותר מעמוד אחד?</h3><p>Plus כולל עד {PROJECT_LIMITS.plus} עמודים, את כל התבניות ועמודים ללא מיתוג Linkli — ב־₪9.90 לחודש.</p></div><button className="button" onClick={upgrade}>שדרוג ל־Plus</button></div>}
+      {profile.plan === "free" && mode !== "editor" && <div className="upgrade-banner"><div><h3>העמוד הראשון שלכם יכול להיות אישי לגמרי</h3><p>כל כלי ההתאמה פתוחים גם במסלול החינמי לעמוד הראשון. Plus מוסיף עד {PROJECT_LIMITS.plus} עמודים, את כל התבניות ועמודים ללא מיתוג Linkli — ב־₪9.90 לחודש.</p></div><button className="button" onClick={upgrade}>שדרוג ל־Plus</button></div>}
 
       {mode === "dashboard" && launchProgress < 3 ? <section className="launch-checklist" aria-labelledby="launch-checklist-title">
         <div className="launch-checklist-heading">
@@ -216,15 +216,20 @@ export default function StudioClient({ initialName, initialMode = "dashboard" }:
   );
 }
 
-type EditorSection = "opening" | "questions" | "completion" | "design";
+type EditorSection = "opening" | "questions" | "interactive" | "completion" | "design";
 type PreviewScreen = "intro" | "question" | "result";
 
 const editorSections: { id: EditorSection; label: string; helper: string }[] = [
   { id: "opening", label: "פתיחה", helper: "מה רואים כשנכנסים לעמוד" },
   { id: "questions", label: "שאלות", helper: "השאלות ואפשרויות התשובה" },
+  { id: "interactive", label: "רכיבים", helper: "כפתורים, יומן וניווט" },
   { id: "completion", label: "סיום", helper: "מה רואים בסוף" },
   { id: "design", label: "עיצוב ושיתוף", helper: "צבעים, הגנה ושיתוף" },
 ];
+
+function ToggleField({ label, hint, checked, onChange }: { label: string; hint?: string; checked: boolean; onChange: (value: boolean) => void }) {
+  return <label className="toggle-field"><span><b>{label}</b>{hint ? <small>{hint}</small> : null}</span><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /></label>;
+}
 
 function Editor({ project, profile, saving, onProject, onConfig, onSave, onPublish, onPassword, onDelete }: { project: ProjectRecord; profile: Profile; saving: boolean; onProject: (patch: Partial<ProjectRecord>) => void; onConfig: <K extends keyof TemplateConfig>(key: K, value: TemplateConfig[K]) => void; onSave: () => void; onPublish: () => void; onPassword: (password: string | null) => Promise<boolean>; onDelete: () => void }) {
   const c = project.config;
@@ -394,12 +399,39 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
         </div>}
 
         {section === "interactive" && <div className="form-section editor-stage-fields">
-          <div className="field-divider full"><b>⏱️ רכיב ספירה לאחור</b><span>מציג טיימר חי שסופר ימים, שעות ודקות לאירוע.</span></div>
+          <div className="field-divider full"><b>⏱️ תאריך, יומן ומיקום</b><span>הרכיבים האלה זמינים בכל תבנית — אפשר להפעיל רק את מה שמתאים לכרטיס.</span></div>
           <label className="full">תאריך ושעת האירוע<input value={c.eventDate || "18.09.2026 · 19:30"} maxLength={60} placeholder="לדוגמה: 18.09.2026 · 19:30" onChange={(e) => onConfig("eventDate", e.target.value)} /></label>
-
-          <div className="field-divider full"><b>🧭 מיקום וניווט Waze</b><span>מאפשר לאורחים ללחוץ ולנווט ישירות לאירוע.</span></div>
           <label>שם המקום / אולם<input value={c.venueName || "חוות רונית, השרון"} maxLength={80} placeholder="לדוגמה: חוות רונית" onChange={(e) => onConfig("venueName", e.target.value)} /></label>
-          <label>קישור לניווט ב-Waze<input value={c.wazeUrl || "https://waze.com/ul?q=חוות%20רונית"} maxLength={300} placeholder="https://waze.com/ul?..." onChange={(e) => onConfig("wazeUrl", e.target.value)} /></label>
+          <label>קישור ל-Waze<input value={c.wazeUrl || ""} maxLength={300} placeholder="https://waze.com/ul?..." onChange={(e) => onConfig("wazeUrl", e.target.value)} /></label>
+          <label className="full">קישור ל-Google Maps<input value={c.googleMapsUrl || ""} maxLength={500} placeholder="https://maps.google.com/?q=..." onChange={(e) => onConfig("googleMapsUrl", e.target.value)} /></label>
+          <div className="toggle-grid full">
+            <ToggleField label="ספירה לאחור" hint="טיימר חי לפני האירוע" checked={c.showCountdown ?? false} onChange={(value) => onConfig("showCountdown", value)} />
+            <ToggleField label="כרטיס מקום" hint="מציג תאריך, מקום וקישורי ניווט" checked={c.showVenueCard ?? false} onChange={(value) => onConfig("showVenueCard", value)} />
+            <ToggleField label="Google Calendar" hint="הוספה ליומן של Google" checked={c.showCalendar ?? false} onChange={(value) => onConfig("showCalendar", value)} />
+            <ToggleField label="Apple Calendar" hint="הורדת קובץ לאייפון ול-Mac" checked={c.showAppleCalendar ?? false} onChange={(value) => onConfig("showAppleCalendar", value)} />
+            <ToggleField label="ניווט Waze" checked={c.showWaze ?? false} onChange={(value) => onConfig("showWaze", value)} />
+            <ToggleField label="ניווט Google Maps" checked={c.showGoogleMaps ?? false} onChange={(value) => onConfig("showGoogleMaps", value)} />
+          </div>
+
+          <div className="field-divider full"><b>🧩 מה מופיע בתוך הכרטיס?</b><span>כיבוי של רכיב פשוט מסיר אותו מכל המסכים, בלי לפגוע בתוכן.</span></div>
+          <div className="toggle-grid full">
+            <ToggleField label="פרטי פתיחה" checked={c.showHighlights ?? true} onChange={(value) => onConfig("showHighlights", value)} />
+            <ToggleField label="התגית העליונה" checked={c.showIntroLabel ?? true} onChange={(value) => onConfig("showIntroLabel", value)} />
+            <ToggleField label="ברכת שלום" checked={c.showGreeting ?? true} onChange={(value) => onConfig("showGreeting", value)} />
+            <ToggleField label="הערת משך" checked={c.showStartHint ?? true} onChange={(value) => onConfig("showStartHint", value)} />
+            <ToggleField label="אימוג׳י ראשי" checked={c.showEmoji ?? true} onChange={(value) => onConfig("showEmoji", value)} />
+            <ToggleField label="אימוג׳ים צפים ברקע" checked={c.showFallingEmojis ?? true} onChange={(value) => onConfig("showFallingEmojis", value)} />
+            <ToggleField label="סיכום תשובות" checked={c.showAnswerRecap ?? true} onChange={(value) => onConfig("showAnswerRecap", value)} />
+            <ToggleField label="מעטפת שעווה" hint="לתבניות מכתב אהבה" checked={c.showWaxEnvelope ?? true} onChange={(value) => onConfig("showWaxEnvelope", value)} />
+            <ToggleField label="טקס כיבוי נר" hint="לתבניות יום הולדת" checked={c.showCandle ?? true} onChange={(value) => onConfig("showCandle", value)} />
+          </div>
+
+          <div className="field-divider full"><b>📲 כפתורי שיתוף</b><span>אפשר לבחור בדיוק אילו פעולות יופיעו בסוף הכרטיס.</span></div>
+          <div className="toggle-grid full">
+            <ToggleField label="WhatsApp" checked={c.showWhatsApp ?? true} onChange={(value) => onConfig("showWhatsApp", value)} />
+            <ToggleField label="Telegram" checked={c.showTelegram ?? true} onChange={(value) => onConfig("showTelegram", value)} />
+            <ToggleField label="העתקת מענה" checked={c.showCopy ?? true} onChange={(value) => onConfig("showCopy", value)} />
+          </div>
 
           <div className="field-divider full"><b>🎟️ שובר מתנה & קוד קופון</b><span>להתאמה אישית של כרטיסי מתנה והפתעות.</span></div>
           <label>כותרת השובר<input value={c.voucherTitle || "סופשבוע מפנק בסוויטה"} maxLength={100} placeholder="לדוגמה: שובר ספא זוגי" onChange={(e) => onConfig("voucherTitle", e.target.value)} /></label>
@@ -439,7 +471,7 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
           </div>
 
           <div className="form-section editor-stage-fields" style={{ marginTop: "20px" }}>
-            <div className="field-divider full"><b>✨ טיפוגרפיה וצורניות הקארד</b><span>בחירת גופן עברי, צורת הקארד ורמת הטשטוש.</span></div>
+            <div className="field-divider full"><b>✨ טיפוגרפיה וצורניות הקארד</b><span>בחירת גופן עברי, צורת הקארד, רקע, מסגרת ורמת הטשטוש.</span></div>
             <label>גופן עברי ראשי
               <select value={c.fontFamily || "Rubik"} onChange={(e) => onConfig("fontFamily", e.target.value)}>
                 <option value="Rubik">Rubik (מודרני ודינמי)</option>
@@ -457,6 +489,41 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
                 <option value="square-minimal">Minimal Clean (פינות מעוגלות קלות)</option>
               </select>
             </label>
+
+            <label>סגנון רקע
+              <select value={c.bgStyle || "fluid-mesh"} onChange={(e) => onConfig("bgStyle", e.target.value)}>
+                <option value="fluid-mesh">רשת צבעונית נעה</option>
+                <option value="soft">רך ונקי</option>
+                <option value="solid">צבע מלא</option>
+                <option value="dots">נקודות עדינות</option>
+              </select>
+            </label>
+
+            <label>סגנון כפתורים
+              <select value={c.buttonStyle || "gradient"} onChange={(e) => onConfig("buttonStyle", e.target.value)}>
+                <option value="gradient">Gradient</option>
+                <option value="solid">צבע מלא</option>
+                <option value="outline">קו מתאר</option>
+                <option value="soft">רך ובהיר</option>
+              </select>
+            </label>
+
+            <label className="color-field"><span><b>רקע הקארד</b><small>הצבע של הכרטיס עצמו</small></span><input type="color" value={c.cardBackground || "#ffffff"} aria-label="רקע הקארד" onChange={(event) => onConfig("cardBackground", event.target.value)} /><code>{c.cardBackground || "#ffffff"}</code></label>
+            <label className="color-field"><span><b>צבע המסגרת</b><small>הקו שמקיף את הכרטיס</small></span><input type="color" value={c.cardBorderColor || "#ffffff"} aria-label="צבע המסגרת" onChange={(event) => onConfig("cardBorderColor", event.target.value)} /><code>{c.cardBorderColor || "#ffffff"}</code></label>
+
+            <label className="full">עיגול פינות הקארד — <span>{c.cardRadius ?? 34}px</span><input type="range" min={0} max={48} value={c.cardRadius ?? 34} onChange={(e) => onConfig("cardRadius", Number(e.target.value))} /></label>
+
+            <div className="field-divider full"><b>😊 האימוג׳י והאווירה</b><span>אפשר להחליף את הסמל, הרקע שלו, הצורה והגודל.</span></div>
+            <label>אימוג׳י ראשי<input value={c.emoji} maxLength={16} placeholder="✨" onChange={(e) => onConfig("emoji", e.target.value)} /></label>
+            <label>צורת רקע לאימוג׳י
+              <select value={c.emojiShape || "rounded"} onChange={(e) => onConfig("emojiShape", e.target.value)}>
+                <option value="rounded">מעוגל</option><option value="circle">עיגול</option><option value="square">מרובע</option><option value="pill">גלולה</option>
+              </select>
+            </label>
+            <label className="color-field"><span><b>צבע רקע לאימוג׳י</b><small>הכתם מאחורי הסמל</small></span><input type="color" value={c.emojiBackground || c.accentSoft} aria-label="צבע רקע לאימוג׳י" onChange={(event) => onConfig("emojiBackground", event.target.value)} /><code>{c.emojiBackground || c.accentSoft}</code></label>
+            <label>גודל האימוג׳י — <span>{c.emojiSize ?? 55}px</span><input type="range" min={28} max={96} value={c.emojiSize ?? 55} onChange={(e) => onConfig("emojiSize", Number(e.target.value))} /></label>
+            <label className="full">אימוג׳ים לאווירה <small>הפרידו בפסיקים — למשל: ✨, 💕, 🌸</small><input value={c.decorations.join(", ")} maxLength={140} onChange={(e) => onConfig("decorations", e.target.value.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 8))} /></label>
+            <label className="full">שקיפות אימוג׳י רקע — <span>{Math.round((c.decorationOpacity ?? 0.5) * 100)}%</span><input type="range" min={0} max={1} step={0.05} value={c.decorationOpacity ?? 0.5} onChange={(e) => onConfig("decorationOpacity", Number(e.target.value))} /></label>
 
             <label className="full">רמת טשטוש הזכוכית (Glassmorphism Blur) — <span>{c.glassBlur ?? 30}px</span>
               <input type="range" min={0} max={50} value={c.glassBlur ?? 30} onChange={(e) => onConfig("glassBlur", Number(e.target.value))} />
@@ -509,15 +576,17 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
           <button type="button" role="tab" aria-selected={previewScreen === "result"} className={previewScreen === "result" ? "active" : ""} onClick={() => setPreviewScreen("result")}>סיום</button>
         </div>
 
-        <div className={`preview-frame preview-frame-live preview-${c.theme}`} style={{ "--preview-soft": c.accentSoft, "--preview-accent": c.accent } as React.CSSProperties}>
-          <div className="preview-falling" aria-hidden="true">{c.decorations.slice(0, 5).map((item, index) => <span key={index} style={{ left: `${8 + index * 21}%`, animationDelay: `-${index * 1.1}s` }}>{item}</span>)}</div>
+        <div className={`preview-frame preview-frame-live preview-${c.theme}`} style={{ "--preview-soft": c.accentSoft, "--preview-accent": c.accent, "--preview-card-bg": c.cardBackground || "#ffffff", "--preview-card-border": c.cardBorderColor || "#ffffff", "--preview-card-radius": `${c.cardRadius ?? 34}px`, "--preview-emoji-bg": c.emojiBackground || c.accentSoft, "--preview-emoji-size": `${c.emojiSize ?? 55}px`, "--preview-decoration-opacity": c.decorationOpacity ?? 0.5 } as React.CSSProperties}>
+          {c.showFallingEmojis !== false && <div className="preview-falling" aria-hidden="true">{c.decorations.slice(0, 5).map((item, index) => <span key={index} style={{ left: `${8 + index * 21}%`, animationDelay: `-${index * 1.1}s` }}>{item}</span>)}</div>}
           <div className="preview-site-card">
             <div className="preview-site-topline"><span className="preview-site-brand">Link<span>li</span></span><span>{previewScreen === "intro" ? "פתיחה" : previewScreen === "result" ? "סיום" : `${previewQuestion + 1} / ${c.questions.length}`}</span></div>
 
             {previewScreen === "intro" && <div className="preview-site-screen preview-site-intro">
-              <span className="preview-mini-label">{c.introLabel}</span><div className="big-emoji">{c.emoji}</div><p className="preview-greeting">שלום {c.recipient},</p><h2>{c.headline}</h2><p>{c.subtitle}</p>
-              <div className="preview-highlights">{c.highlights.filter(Boolean).map((highlight, index) => <span key={index}>✓ {highlight}</span>)}</div>
+              {c.showIntroLabel !== false && <span className="preview-mini-label">{c.introLabel}</span>}{c.showEmoji !== false && <div className="big-emoji">{c.emoji}</div>}{c.showGreeting !== false && <p className="preview-greeting">שלום {c.recipient},</p>}<h2>{c.headline}</h2><p>{c.subtitle}</p>
+              {c.showHighlights !== false && <div className="preview-highlights">{c.highlights.filter(Boolean).map((highlight, index) => <span key={index}>✓ {highlight}</span>)}</div>}
+              {(c.showCalendar || c.showAppleCalendar || c.showWaze || c.showGoogleMaps) && <div className="preview-utility-actions">{c.showCalendar && <button type="button">📅 Google</button>}{c.showAppleCalendar && <button type="button"> Apple</button>}{c.showWaze && <button type="button">🧭 Waze</button>}{c.showGoogleMaps && <button type="button">📍 Maps</button>}</div>}
               <button type="button" className="preview-action" onClick={() => { setPreviewQuestion(0); setPreviewScreen("question"); }}>{c.startText}<span>←</span></button>
+              {c.showStartHint !== false && <small className="preview-start-hint">זה לוקח בערך דקה</small>}
             </div>}
 
             {previewScreen === "question" && previewQuestionData && <div className="preview-site-screen preview-site-question">
@@ -528,9 +597,9 @@ function Editor({ project, profile, saving, onProject, onConfig, onSave, onPubli
             </div>}
 
             {previewScreen === "result" && <div className="preview-site-screen preview-site-result">
-              <div className="preview-result-emoji">{c.emoji}<i>✨</i></div><span className="preview-mini-label">{c.resultLabel}</span><h2>{c.successTitle}</h2><p>{c.successText}</p>
-              <div className="preview-answer-recap">{c.questions.map((question, index) => <div key={index}><span>{index + 1}</span><p><small>{question.prompt}</small><b>{previewAnswers[index] || "עדיין לא נבחרה תשובה"}</b></p></div>)}</div>
-              <button type="button" className="preview-action preview-whatsapp">{c.buttonText}</button><button type="button" className="preview-restart" onClick={() => setPreviewScreen("intro")}>התחלה מחדש</button>
+              {c.showEmoji !== false && <div className="preview-result-emoji">{c.emoji}<i>✨</i></div>}<span className="preview-mini-label">{c.resultLabel}</span><h2>{c.successTitle}</h2><p>{c.successText}</p>
+              {c.showAnswerRecap !== false && <div className="preview-answer-recap">{c.questions.map((question, index) => <div key={index}><span>{index + 1}</span><p><small>{question.prompt}</small><b>{previewAnswers[index] || "עדיין לא נבחרה תשובה"}</b></p></div>)}</div>}
+              <div className="preview-share-actions">{c.showWhatsApp !== false && <button type="button" className="preview-action preview-whatsapp">{c.buttonText}</button>}{c.showTelegram !== false && <button type="button" className="preview-share-button">✈️ Telegram</button>}{c.showCopy !== false && <button type="button" className="preview-share-button">📋 העתקה</button>}</div><button type="button" className="preview-restart" onClick={() => setPreviewScreen("intro")}>התחלה מחדש</button>
             </div>}
             {profile.plan === "free" && <div className="preview-watermark">נוצר עם <b>Linkli</b></div>}
           </div>

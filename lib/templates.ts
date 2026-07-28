@@ -34,11 +34,26 @@ export type TemplateConfig = {
   showCountdown?: boolean;
   eventDate?: string;
   wazeUrl?: string;
+  googleMapsUrl?: string;
   venueName?: string;
   showGuests?: boolean;
   maxGuests?: number;
   showDjSong?: boolean;
   showCalendar?: boolean;
+  showAppleCalendar?: boolean;
+  showWaze?: boolean;
+  showGoogleMaps?: boolean;
+  showWhatsApp?: boolean;
+  showTelegram?: boolean;
+  showCopy?: boolean;
+  showVenueCard?: boolean;
+  showAnswerRecap?: boolean;
+  showHighlights?: boolean;
+  showIntroLabel?: boolean;
+  showGreeting?: boolean;
+  showStartHint?: boolean;
+  showFallingEmojis?: boolean;
+  showEmoji?: boolean;
   voucherTitle?: string;
   voucherCode?: string;
   voucherTerms?: string;
@@ -50,6 +65,15 @@ export type TemplateConfig = {
   cardShape?: string;
   glassBlur?: number;
   bgStyle?: string;
+  cardBackground?: string;
+  cardBorderColor?: string;
+  cardRadius?: number;
+  emojiBackground?: string;
+  emojiShape?: string;
+  emojiSize?: number;
+  decorationOpacity?: number;
+  buttonStyle?: string;
+  decorationSet?: string;
   customSubdomain?: string;
   customDomain?: string;
   hideBranding?: boolean;
@@ -232,6 +256,13 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     const candidate = typeof input[key] === "string" ? input[key]!.trim() : "";
     return /^#[0-9a-f]{6}$/i.test(candidate) ? candidate.toLowerCase() : base[key];
   };
+  const colorValue = (candidate: unknown, fallback: string) => {
+    const normalized = typeof candidate === "string" ? candidate.trim() : "";
+    return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized.toLowerCase() : fallback;
+  };
+  const decorations = Array.isArray(input.decorations)
+    ? input.decorations.map((item) => plainText(item, 16, true)).filter(Boolean).slice(0, 8)
+    : base.decorations;
   return {
     recipient: limitedString(input.recipient, base.recipient, 80),
     headline: limitedString(input.headline, base.headline, 120),
@@ -250,17 +281,32 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     whatsappText: limitedString(input.whatsappText, base.whatsappText, 500),
     buttonText: limitedString(input.buttonText, base.buttonText, 80),
     accent: color("accent"), accentSoft: color("accentSoft"),
-    emoji: limitedString(input.emoji, base.emoji, 16), decorations: base.decorations, theme: base.theme,
+    emoji: limitedString(input.emoji, base.emoji, 16), decorations: decorations.length ? decorations : base.decorations, theme: base.theme,
 
     // Interactive Customization Controls
-    showCountdown: typeof input.showCountdown === "boolean" ? input.showCountdown : true,
+    showCountdown: typeof input.showCountdown === "boolean" ? input.showCountdown : base.showCountdown ?? base.theme === "elegant",
     eventDate: limitedString(input.eventDate, base.eventDate || "18.09.2026 · 19:30", 60),
     wazeUrl: typeof input.wazeUrl === "string" ? input.wazeUrl.trim() : base.wazeUrl,
+    googleMapsUrl: typeof input.googleMapsUrl === "string" ? input.googleMapsUrl.trim() : base.googleMapsUrl,
     venueName: limitedString(input.venueName, base.venueName || "חוות רונית", 80),
-    showGuests: typeof input.showGuests === "boolean" ? input.showGuests : true,
+    showGuests: typeof input.showGuests === "boolean" ? input.showGuests : base.showGuests ?? base.theme === "elegant",
     maxGuests: typeof input.maxGuests === "number" ? Math.min(20, Math.max(1, input.maxGuests)) : 10,
-    showDjSong: typeof input.showDjSong === "boolean" ? input.showDjSong : true,
-    showCalendar: typeof input.showCalendar === "boolean" ? input.showCalendar : true,
+    showDjSong: typeof input.showDjSong === "boolean" ? input.showDjSong : base.showDjSong ?? base.theme === "elegant",
+    showCalendar: typeof input.showCalendar === "boolean" ? input.showCalendar : base.showCalendar ?? base.theme === "elegant",
+    showAppleCalendar: typeof input.showAppleCalendar === "boolean" ? input.showAppleCalendar : base.showAppleCalendar ?? false,
+    showWaze: typeof input.showWaze === "boolean" ? input.showWaze : base.showWaze ?? base.theme === "elegant",
+    showGoogleMaps: typeof input.showGoogleMaps === "boolean" ? input.showGoogleMaps : base.showGoogleMaps ?? false,
+    showWhatsApp: typeof input.showWhatsApp === "boolean" ? input.showWhatsApp : base.showWhatsApp ?? true,
+    showTelegram: typeof input.showTelegram === "boolean" ? input.showTelegram : base.showTelegram ?? true,
+    showCopy: typeof input.showCopy === "boolean" ? input.showCopy : base.showCopy ?? true,
+    showVenueCard: typeof input.showVenueCard === "boolean" ? input.showVenueCard : base.showVenueCard ?? base.theme === "elegant",
+    showAnswerRecap: typeof input.showAnswerRecap === "boolean" ? input.showAnswerRecap : base.showAnswerRecap ?? true,
+    showHighlights: typeof input.showHighlights === "boolean" ? input.showHighlights : base.showHighlights ?? true,
+    showIntroLabel: typeof input.showIntroLabel === "boolean" ? input.showIntroLabel : base.showIntroLabel ?? true,
+    showGreeting: typeof input.showGreeting === "boolean" ? input.showGreeting : base.showGreeting ?? true,
+    showStartHint: typeof input.showStartHint === "boolean" ? input.showStartHint : base.showStartHint ?? true,
+    showFallingEmojis: typeof input.showFallingEmojis === "boolean" ? input.showFallingEmojis : base.showFallingEmojis ?? true,
+    showEmoji: typeof input.showEmoji === "boolean" ? input.showEmoji : base.showEmoji ?? true,
     voucherTitle: limitedString(input.voucherTitle, base.voucherTitle || "שובר מתנה מפנק", 100),
     voucherCode: limitedString(input.voucherCode, base.voucherCode || "LINKLI-GIFT-2026", 40),
     voucherTerms: limitedString(input.voucherTerms, base.voucherTerms || "בתוקף לשנה מיום ההנפקה", 200),
@@ -272,6 +318,15 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     cardShape: limitedString(input.cardShape, "rounded-3d", 40),
     glassBlur: typeof input.glassBlur === "number" ? Math.min(50, Math.max(0, input.glassBlur)) : 30,
     bgStyle: limitedString(input.bgStyle, "fluid-mesh", 40),
+    cardBackground: colorValue(input.cardBackground, "#ffffff"),
+    cardBorderColor: colorValue(input.cardBorderColor, "#ffffff"),
+    cardRadius: typeof input.cardRadius === "number" ? Math.min(48, Math.max(0, input.cardRadius)) : 34,
+    emojiBackground: colorValue(input.emojiBackground, base.accentSoft),
+    emojiShape: limitedString(input.emojiShape, "rounded", 24),
+    emojiSize: typeof input.emojiSize === "number" ? Math.min(96, Math.max(28, input.emojiSize)) : 55,
+    decorationOpacity: typeof input.decorationOpacity === "number" ? Math.min(1, Math.max(0, input.decorationOpacity)) : 0.5,
+    buttonStyle: limitedString(input.buttonStyle, "gradient", 24),
+    decorationSet: limitedString(input.decorationSet, "template", 24),
     customSubdomain: limitedString(input.customSubdomain, "", 60).toLowerCase().replace(/[^a-z0-9-]/g, ""),
     customDomain: limitedString(input.customDomain, "", 100).toLowerCase().replace(/[^a-z0-9.-]/g, ""),
     hideBranding: typeof input.hideBranding === "boolean" ? input.hideBranding : false,
