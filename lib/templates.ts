@@ -7,7 +7,112 @@ export type TemplateQuestion = {
   correctOption: string;
 };
 
-export type TemplateTheme = "romance" | "party" | "elegant" | "playful" | "letter" | "mischief";
+export type TemplateTheme = "romance" | "party" | "elegant" | "playful" | "letter" | "mischief" | "gift" | "memories";
+
+export type TemplateFeatureKey =
+  | "showScratchCard"
+  | "showCandle"
+  | "showCountdown"
+  | "showVenueCard"
+  | "showGuests"
+  | "showDjSong"
+  | "showCalendar"
+  | "showAppleCalendar"
+  | "showWaze"
+  | "showGoogleMaps"
+  | "showVoucher"
+  | "showMemoriesSlider"
+  | "showWaxEnvelope"
+  | "showWhatsApp"
+  | "showTelegram"
+  | "showCopy"
+  | "showAnswerRecap"
+  | "showHighlights"
+  | "showEmoji"
+  | "showFallingEmojis"
+  | "customBlocks";
+
+export type TemplateFeature = {
+  key: TemplateFeatureKey;
+  label: string;
+  description: string;
+  icon: string;
+};
+
+export const CUSTOM_BLOCKS = [
+  { id: "emoji", label: "סמל ואימוג׳י", description: "הסמל הראשי שמוביל את העמוד", icon: "😊" },
+  { id: "highlights", label: "פרטים חשובים", description: "שורות קצרות של תאריך, מקום או מידע", icon: "✦" },
+  { id: "questions", label: "שאלות ואינטראקציה", description: "שלב בחירה שהמבקר עובר לפני הסיום", icon: "☷" },
+  { id: "location", label: "מקום וניווט", description: "תאריך, מקום, Google Calendar, Waze ו-Maps", icon: "📍" },
+  { id: "share", label: "כפתורי שיתוף", description: "WhatsApp, Telegram והעתקת מענה", icon: "📲" },
+  { id: "answers", label: "סיכום תשובות", description: "הצגת הבחירות של המבקר בסיום", icon: "✓" },
+  { id: "decorations", label: "אווירה וקישוטים", description: "אימוג׳ים צפים ואפקטי רקע", icon: "✨" },
+] as const;
+
+export const TEMPLATE_FEATURES: Record<string, TemplateFeature[]> = {
+  date: [
+    { key: "showScratchCard", label: "כרטיס גירוד להפתעה", description: "חשיפת ההפתעה האישית במסך הסיום", icon: "🪄" },
+    { key: "showHighlights", label: "פרטי הערב", description: "עד שתי שורות קצרות מתחת לטקסט", icon: "✦" },
+    { key: "showWhatsApp", label: "כפתור WhatsApp", description: "קבלת תשובה ישירה אחרי ההפתעה", icon: "🟢" },
+    { key: "showTelegram", label: "כפתור Telegram", description: "שיתוף מהיר של המענה", icon: "✈️" },
+    { key: "showCopy", label: "העתקת מענה", description: "העתקת התשובות ללוח", icon: "📋" },
+    { key: "showEmoji", label: "סמל רומנטי", description: "הסמל הגדול בראש הכרטיס", icon: "💘" },
+    { key: "showFallingEmojis", label: "אימוג׳ים צפים", description: "אווירה מונפשת ברקע", icon: "💕" },
+  ],
+  birthday: [
+    { key: "showCandle", label: "טקס כיבוי נר", description: "לחיצה על הלהבה פותחת את הברכה", icon: "🕯️" },
+    { key: "showAnswerRecap", label: "סיכום התחנות", description: "מציג את הבחירות במסך הברכה", icon: "✓" },
+    { key: "showWhatsApp", label: "כפתור WhatsApp", description: "שליחת תודה אחרי הברכה", icon: "🟢" },
+    { key: "showTelegram", label: "כפתור Telegram", description: "שיתוף מהיר של הברכה", icon: "✈️" },
+    { key: "showCopy", label: "העתקת מענה", description: "העתקת התשובות ללוח", icon: "📋" },
+    { key: "showEmoji", label: "סמל יום הולדת", description: "הסמל הגדול בראש הכרטיס", icon: "🎂" },
+    { key: "showFallingEmojis", label: "קונפטי ואימוג׳ים", description: "אווירה מונפשת ברקע", icon: "🎉" },
+  ],
+  rsvp: [
+    { key: "showCountdown", label: "ספירה לאחור", description: "טיימר עד האירוע", icon: "⏱️" },
+    { key: "showVenueCard", label: "כרטיס אירוע", description: "תאריך, מקום ופרטי הגעה", icon: "🎟️" },
+    { key: "showGuests", label: "מונה אורחים", description: "בחירת כמות האורחים באישור ההגעה", icon: "👥" },
+    { key: "showDjSong", label: "בקשת שיר ל-DJ", description: "שדה פתוח לבקשת שיר", icon: "🎵" },
+    { key: "showCalendar", label: "Google Calendar", description: "הוספת האירוע ליומן Google", icon: "📅" },
+    { key: "showAppleCalendar", label: "Apple Calendar", description: "הורדת אירוע לאייפון ול-Mac", icon: "" },
+    { key: "showWaze", label: "ניווט Waze", description: "פתיחת ניווט ישיר למקום", icon: "🧭" },
+    { key: "showGoogleMaps", label: "Google Maps", description: "פתיחת המיקום במפות Google", icon: "📍" },
+    { key: "showWhatsApp", label: "שליחה ב-WhatsApp", description: "שליחת אישור ההגעה", icon: "🟢" },
+    { key: "showTelegram", label: "כפתור Telegram", description: "שיתוף אישור ההגעה", icon: "✈️" },
+    { key: "showCopy", label: "העתקת מענה", description: "העתקת פרטי האישור", icon: "📋" },
+  ],
+  gift: [
+    { key: "showVoucher", label: "שובר מתנה נפתח", description: "קופסה אינטראקטיבית עם קוד מימוש", icon: "🎁" },
+    { key: "showWhatsApp", label: "מימוש ב-WhatsApp", description: "שליחת בקשה למימוש השובר", icon: "🟢" },
+    { key: "showTelegram", label: "כפתור Telegram", description: "שיתוף פרטי השובר", icon: "✈️" },
+    { key: "showCopy", label: "העתקת מענה", description: "העתקת קוד המימוש", icon: "📋" },
+    { key: "showAnswerRecap", label: "סיכום אישי", description: "מציג את התחנות שעברו בדרך לשובר", icon: "✓" },
+    { key: "showEmoji", label: "סמל מתנה", description: "הסמל הגדול בראש הכרטיס", icon: "🎁" },
+  ],
+  memories: [
+    { key: "showMemoriesSlider", label: "מצגת זיכרונות", description: "מעבר בין רגעים מיוחדים", icon: "📸" },
+    { key: "showAnswerRecap", label: "ציר התשובות", description: "סיכום התחנות במסך הסיום", icon: "✓" },
+    { key: "showWhatsApp", label: "שליחת תודה", description: "שיתוף האלבום ב-WhatsApp", icon: "🟢" },
+    { key: "showTelegram", label: "כפתור Telegram", description: "שיתוף האלבום", icon: "✈️" },
+    { key: "showCopy", label: "העתקת מענה", description: "העתקת סיכום האלבום", icon: "📋" },
+    { key: "showFallingEmojis", label: "אווירת זיכרונות", description: "אימוג׳ים צפים ברקע", icon: "💫" },
+  ],
+  "love-note": [
+    { key: "showWaxEnvelope", label: "מעטפת שעווה", description: "פתיחה חגיגית של המכתב", icon: "💌" },
+    { key: "showAnswerRecap", label: "תחנות המכתב", description: "סיכום הרגעים במסך הסיום", icon: "✓" },
+    { key: "showWhatsApp", label: "שליחת נשיקה", description: "שליחת תגובה ב-WhatsApp", icon: "🟢" },
+    { key: "showTelegram", label: "כפתור Telegram", description: "שיתוף המכתב", icon: "✈️" },
+    { key: "showCopy", label: "העתקת מענה", description: "העתקת סיכום המכתב", icon: "📋" },
+    { key: "showEmoji", label: "סמל המכתב", description: "הסמל הגדול בראש הכרטיס", icon: "💌" },
+  ],
+  "custom-blank": [
+    { key: "customBlocks", label: "בניית רכיבי העמוד", description: "בחירת הבלוקים שמהם העמוד יורכב", icon: "🧩" },
+  ],
+};
+
+export function getTemplateFeatures(templateId: string): TemplateFeature[] {
+  return TEMPLATE_FEATURES[templateId] || [];
+}
 
 export type TemplateConfig = {
   recipient: string;
@@ -59,6 +164,10 @@ export type TemplateConfig = {
   voucherTerms?: string;
   showCandle?: boolean;
   showWaxEnvelope?: boolean;
+  showScratchCard?: boolean;
+  showVoucher?: boolean;
+  showMemoriesSlider?: boolean;
+  customBlocks?: string[];
 
   // Advanced Styling & Custom Domain Fields (Plus & Max)
   fontFamily?: string;
@@ -212,6 +321,7 @@ export const templates: LinkliTemplate[] = [
       finalButtonText: "לצפייה בתוצאה המעוצבת", resultLabel: "העמוד שלך מוכן ✨",
       successTitle: "יצרתם עמוד מרהיב בהתאמה אישית! 🎉", successText: "תודה שהשתמשתם במנוע היצירה של Linkli. שתפו את הקישור שלכם עכשיו עם כל האנשים החשובים.",
       whatsapp: "", whatsappText: "ראיתי את העמוד המעוצב שלך — אהבתי מאוד! ✨", buttonText: "שיתוף ב-WhatsApp",
+      customBlocks: ["emoji", "highlights", "questions", "location", "share", "answers", "decorations"],
       accent: "#ec4899", accentSoft: "#fdf2f8", emoji: "🎨", decorations: ["✨", "🎨", "🌟", "💫"], theme: "romance",
     }),
   },
@@ -263,6 +373,9 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
   const decorations = Array.isArray(input.decorations)
     ? input.decorations.map((item) => plainText(item, 16, true)).filter(Boolean).slice(0, 8)
     : base.decorations;
+  const customBlocks = Array.isArray(input.customBlocks)
+    ? input.customBlocks.map((item) => plainText(item, 32, true)).filter((item) => ["emoji", "highlights", "questions", "location", "share", "answers", "decorations"].includes(item)).slice(0, 7)
+    : base.customBlocks || ["emoji", "highlights", "questions", "location", "share", "answers", "decorations"];
   return {
     recipient: limitedString(input.recipient, base.recipient, 80),
     headline: limitedString(input.headline, base.headline, 120),
@@ -312,6 +425,10 @@ export function safeConfig(value: unknown, templateId: string): TemplateConfig {
     voucherTerms: limitedString(input.voucherTerms, base.voucherTerms || "בתוקף לשנה מיום ההנפקה", 200),
     showCandle: typeof input.showCandle === "boolean" ? input.showCandle : true,
     showWaxEnvelope: typeof input.showWaxEnvelope === "boolean" ? input.showWaxEnvelope : true,
+    showScratchCard: typeof input.showScratchCard === "boolean" ? input.showScratchCard : templateId === "date",
+    showVoucher: typeof input.showVoucher === "boolean" ? input.showVoucher : templateId === "gift",
+    showMemoriesSlider: typeof input.showMemoriesSlider === "boolean" ? input.showMemoriesSlider : templateId === "memories",
+    customBlocks,
 
     // Advanced Styling & Custom Domain Fields (Plus & Max)
     fontFamily: limitedString(input.fontFamily, "Rubik", 40),

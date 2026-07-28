@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, useRef } from "react";
-import type { TemplateConfig } from "@/lib/templates";
+import { CUSTOM_BLOCKS, type TemplateConfig } from "@/lib/templates";
 
 type Screen = "intro" | "question" | "result";
 
@@ -206,7 +206,7 @@ function BirthdayCandle({ onExtinguish }: { onExtinguish: () => void }) {
   );
 }
 
-export default function PublishedExperience({ slug, config, showWatermark, trackAnalytics = true, previewMode = false, previewCtaHref = "/register" }: { slug: string; config: TemplateConfig; showWatermark: boolean; trackAnalytics?: boolean; previewMode?: boolean; previewCtaHref?: string }) {
+export default function PublishedExperience({ slug, templateId, config, showWatermark, trackAnalytics = true, previewMode = false, previewCtaHref = "/register" }: { slug: string; templateId?: string; config: TemplateConfig; showWatermark: boolean; trackAnalytics?: boolean; previewMode?: boolean; previewCtaHref?: string }) {
   const [screen, setScreen] = useState<Screen>("intro");
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>(() => config.questions.map(() => ""));
@@ -218,6 +218,10 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   const [guestCount, setGuestCount] = useState(1);
   const [customSong, setCustomSong] = useState("");
   const [copiedToast, setCopiedToast] = useState(false);
+  const isCustomBlank = templateId === "custom-blank";
+  const customBlocks = config.customBlocks?.length ? config.customBlocks : CUSTOM_BLOCKS.map((block) => block.id);
+  const customBlockEnabled = (blockId: string, fallback = true) => !isCustomBlank ? fallback : customBlocks.includes(blockId);
+  const hasQuestions = customBlockEnabled("questions") && config.questions.length > 0;
 
   useEffect(() => {
     if (!trackAnalytics) return;
@@ -252,7 +256,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
   const question = config.questions[step];
 
   function start() {
-    setScreen("question");
+    setScreen(hasQuestions ? "question" : "result");
     setStep(0);
   }
 
@@ -344,7 +348,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
     {previewMode ? <div className="template-preview-bar"><Link href="/#templates" className="template-preview-back">חזרה לכל התבניות</Link><Link href={previewCtaHref} data-marketing-event="preview_create" className="button button-primary button-small">יצירת התבנית בחינם</Link></div> : null}
     <div className="experience-aurora experience-aurora-one" aria-hidden="true" />
     <div className="experience-aurora experience-aurora-two" aria-hidden="true" />
-    {config.showFallingEmojis !== false && <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size, opacity: config.decorationOpacity ?? 0.5 }}>{item.value}</span>)}</div>}
+    {config.showFallingEmojis !== false && customBlockEnabled("decorations") && <div className="falling-emojis" aria-hidden="true">{fallingItems.map((item, index) => <span key={index} style={{ left: item.left, animationDelay: item.delay, animationDuration: item.duration, fontSize: item.size, opacity: config.decorationOpacity ?? 0.5 }}>{item.value}</span>)}</div>}
     
     <section className={`${cardClass} ${config.cardShape ? `shape-${config.cardShape}` : ""}`} aria-live="polite">
       <div className="experience-topline">{showWatermark && !isBrandingHidden ? <span className="experience-brand">Link<span>li</span></span> : <span aria-hidden="true">{config.emoji}</span>}{screen === "question" ? <span dir="ltr">{step + 1} / {config.questions.length}</span> : config.showIntroLabel !== false ? <span>{config.introLabel}</span> : <span aria-hidden="true" />}</div>
@@ -359,7 +363,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           </div>
         ) : (
           <>
-            {config.showEmoji !== false && <div className="experience-emoji-wrap"><span>{config.emoji}</span><i aria-hidden="true">✦</i></div>}
+            {config.showEmoji !== false && customBlockEnabled("emoji") && <div className="experience-emoji-wrap"><span>{config.emoji}</span><i aria-hidden="true">✦</i></div>}
             {config.showGreeting !== false && <p className="experience-greeting">שלום {config.recipient},</p>}
             <h1>{config.headline}</h1>
             <p className="experience-copy">{config.subtitle}</p>
@@ -377,15 +381,15 @@ export default function PublishedExperience({ slug, config, showWatermark, track
             )}
 
             {/* Photo Slide Carousel for Memories Theme */}
-            {config.theme === "memories" && <MemoriesSlider />}
+            {config.theme === "memories" && config.showMemoriesSlider !== false && <MemoriesSlider />}
 
-            {config.showHighlights !== false && config.theme !== "elegant" && config.theme !== "memories" && (
+            {config.showHighlights !== false && customBlockEnabled("highlights") && config.theme !== "elegant" && config.theme !== "memories" && (
               <div className="experience-meta">{config.highlights.map((highlight) => <span key={highlight}>✦ {highlight}</span>)}</div>
             )}
 
-            {config.showVenueCard && config.theme !== "elegant" && (config.venueName || config.eventDate) && <div className="card-venue-summary"><span>📍 {config.venueName || "מיקום האירוע"}</span>{config.eventDate ? <b>📅 {config.eventDate}</b> : null}</div>}
+            {config.showVenueCard && customBlockEnabled("location") && config.theme !== "elegant" && (config.venueName || config.eventDate) && <div className="card-venue-summary"><span>📍 {config.venueName || "מיקום האירוע"}</span>{config.eventDate ? <b>📅 {config.eventDate}</b> : null}</div>}
 
-            <CardUtilityActions config={config} googleCalendarUrl={googleCalendarUrl} onAppleCalendar={downloadAppleCalendar} />
+            {customBlockEnabled("location") && <CardUtilityActions config={config} googleCalendarUrl={googleCalendarUrl} onAppleCalendar={downloadAppleCalendar} />}
 
             <button className="experience-primary" onClick={start}>{config.startText}<span aria-hidden="true">←</span></button>
             {config.showStartHint !== false && <p className="experience-hint">זה לוקח בערך דקה</p>}
@@ -393,7 +397,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         )}
       </div> : null}
 
-      {screen === "question" && question ? <div className="experience-screen experience-question" key={step}>
+      {screen === "question" && hasQuestions && question ? <div className="experience-screen experience-question" key={step}>
         <div className="experience-progress" style={{ gridTemplateColumns: `repeat(${config.questions.length}, minmax(0, 1fr))` }} aria-label={`שלב ${step + 1} מתוך ${config.questions.length}`}>{config.questions.map((_, index) => <i className={index <= step ? "active" : ""} key={index} />)}</div>
         <span className="experience-step">שלב {step + 1}</span>
         <h2>{question.prompt}</h2>
@@ -444,7 +448,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
         <span className="score-pill">{config.resultLabel}</span>
         <h2>{config.successTitle}</h2>
 
-        {config.theme === "gift" && (
+        {config.theme === "gift" && config.showVoucher !== false && (
           <GiftVoucherBox title={config.voucherTitle || config.successTitle} text={config.successText} code={config.voucherCode} terms={config.voucherTerms} />
         )}
 
@@ -456,19 +460,19 @@ export default function PublishedExperience({ slug, config, showWatermark, track
           <p className="experience-copy">{config.successText}</p>
         )}
 
-        {config.theme === "romance" && (
+        {(templateId === "date" || config.showScratchCard === true) && (
           <ScratchCanvas secretText={config.successTitle} />
         )}
 
-        {config.theme === "memories" && (
+        {(templateId === "memories" || config.showMemoriesSlider === true) && (
           <MemoriesSlider />
         )}
 
-        <CardUtilityActions config={config} googleCalendarUrl={googleCalendarUrl} onAppleCalendar={downloadAppleCalendar} />
+        {customBlockEnabled("location") && <CardUtilityActions config={config} googleCalendarUrl={googleCalendarUrl} onAppleCalendar={downloadAppleCalendar} />}
 
-        {config.showAnswerRecap !== false && <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>}
+        {config.showAnswerRecap !== false && customBlockEnabled("answers") && <div className="answer-recap">{config.questions.map((item, index) => <div key={index}><span>{index + 1}</span><p><small>{item.prompt}</small><b>{formattedAnswers[index]}</b></p></div>)}</div>}
 
-        <div className="multi-share-section">
+        {customBlockEnabled("share") && <div className="multi-share-section">
           <p className="share-title">שליחת המענה בדרכים נוספות:</p>
           <div className="multi-share-grid">
             {config.showWhatsApp !== false && (config.whatsapp || previewMode) ? (
@@ -483,7 +487,7 @@ export default function PublishedExperience({ slug, config, showWatermark, track
               <span>📋</span> {copiedToast ? "הועתק בהצלחה! ✨" : "העתקת מענה"}
             </button>}
           </div>
-        </div>
+        </div>}
 
         <button onClick={restart} className="experience-restart">התחלה מחדש</button>
       </div> : null}

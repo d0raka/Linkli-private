@@ -45,5 +45,5 @@ export default async function TemplatePreviewPage({ params, searchParams }: Prop
   const campaign = campaignFromObject(flatParams);
   const createHref = withCampaign(`/register?returnTo=${encodeURIComponent(`/studio/create?template=${template.id}`)}`, campaign);
 
-  return <><MarketingTracker campaign={campaign} templateId={template.id} /><PublishedExperience slug={`preview-${template.id}`} config={template.config} showWatermark trackAnalytics={false} previewMode previewCtaHref={createHref} /></>;
+  return <><MarketingTracker campaign={campaign} templateId={template.id} /><PublishedExperience slug={`preview-${template.id}`} templateId={template.id} config={template.config} showWatermark trackAnalytics={false} previewMode previewCtaHref={createHref} /></>;
 }
