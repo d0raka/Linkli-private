@@ -50,7 +50,6 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
 
       <section className="hero wrap">
         <div className="hero-copy">
-          <span className="eyebrow"><i className="live-dot" /> בטא פתוחה · העמוד הראשון בחינם</span>
           <h1>{campaignTemplate ? <>יוצרים {campaignTemplate.name}<br />ש<span className="marker">כולם ירצו לפתוח.</span></> : <>הופכים רגע מיוחד<br />לקישור ש<span className="marker">אי אפשר להתעלם ממנו.</span></>}</h1>
           <p>{campaignTemplate ? `${campaignTemplate.description} מתחילים מתבנית מוכנה, מתאימים את התוכן ומשתפים קישור אחד שנראה מצוין בכל מכשיר.` : "יוצרים הזמנה, הפתעה, חידון או ברכה אישית עם שאלות, אנימציות ועמוד סיום מעוצב — ואז שולחים קישור אחד שנראה מצוין בכל מכשיר."}</p>
           <div className="hero-actions">
@@ -97,10 +96,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <div className="center-heading"><span className="kicker">פשוט להתחיל</span><h2>מתחילים בחינם, משדרגים כשצריך</h2><p>העמוד הראשון נותן לכם לבדוק את הרעיון באמת. Plus מיועד ליוצרים, זוגות ומארחים שרוצים כמה עמודים וקישור נקי בלי מיתוג.</p></div>
         <div className="pricing-grid">
           <article className="price-card"><div><span className="plan-label">חינם</span><h3>₪0 <small>/ ללא הגבלת זמן</small></h3><p>דרך מהירה ליצור עמוד אחד ולבדוק איך הוא עובד אצלכם.</p></div><ul><li>✓ עמוד אחד</li><li>✓ {freeTemplateCount} תבניות לבחירה</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li className="muted">כולל מיתוג Linkli</li></ul><Link href={startHref} className="button button-outline">{user ? "לעמודים שלי" : "מתחילים בחינם"}</Link></article>
-          <article className="price-card featured"><div className="popular">ליוצרים סדרתיים</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>למי שיוצר כמה רגעים, אירועים או גרסאות ורוצה לשתף בלי הסחות.</p></div><ul><li>✓ עד {PROJECT_LIMITS.plus} עמודים</li><li>✓ כל {totalTemplateCount} התבניות, כולל תבניות חדשות</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li>✓ ללא מיתוג Linkli</li></ul><a href="#marketing-pilot" className="button button-primary">בקשת גישת Plus <span>←</span></a></article>
+          <article className="price-card featured"><div className="popular">ליוצרים סדרתיים</div><div><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>למי שיוצר כמה רגעים, אירועים או גרסאות ורוצה לשתף בלי הסחות.</p></div><ul><li>✓ עד {PROJECT_LIMITS.plus} עמודים</li><li>✓ כל {totalTemplateCount} התבניות, כולל תבניות חדשות</li><li>✓ עריכת טקסטים, שאלות וצבעים</li><li>✓ נתוני צפיות ולחיצות</li><li>✓ הגנה באמצעות סיסמה</li><li>✓ ללא מיתוג Linkli</li></ul><Link href="/checkout" className="button button-primary">שדרוג ל־Plus <span>←</span></Link></article>
         </div>
         <div className="marketing-pilot" id="marketing-pilot">
-          <div><span className="kicker">Plus למשתמשים הראשונים</span><h3>רוצים יותר מעמוד אחד כבר בבטא?</h3><p>השאירו פרטים. נלמד מה אתם צריכים וניצור קשר כשנוכל לפתוח עבורכם גישת Plus ותשלום מסודר.</p></div>
+          <div><span className="kicker">Linkli Plus</span><h3>רוצים ליצור יותר מעמוד אחד?</h3><p>שדרגו עכשיו ל-Plus ותיהנו מכל התבניות, מענה מרובה ערוצים ופרסום עמודים ללא מיתוג.</p></div>
           <MarketingWaitlistForm campaign={campaign} compact />
         </div>
       </section>
