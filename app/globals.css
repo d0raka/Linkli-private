@@ -392,14 +392,21 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
   color: white;
   border: 1.5px solid white;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  margin: 0;
+  display: grid !important;
+  place-items: center !important;
+  place-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  direction: ltr !important;
+  line-height: 0 !important;
   opacity: 0.9;
   transition: opacity 0.2s, transform 0.2s;
   z-index: 2;
+}
+.a11y-dismiss svg {
+  display: block !important;
+  margin: 0 auto !important;
 }
 .a11y-trigger-wrapper:hover .a11y-dismiss { opacity: 1; transform: scale(1.15); }
 .a11y-menu {

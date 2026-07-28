@@ -52,8 +52,8 @@ export default function AccessibilityControls() {
   return <div className="a11y-widget">
     <div className="a11y-trigger-wrapper">
       <button className="a11y-dismiss" aria-label="הסתרת תפריט נגישות לסשן זה" title="הסתרת תפריט נגישות" onClick={dismiss}>
-        <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M1 1L11 11M11 1L1 11" />
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M2 2L10 10M10 2L2 10" />
         </svg>
       </button>
       <button className="a11y-trigger" aria-label="פתיחת תפריט נגישות" aria-expanded={open} aria-controls="a11y-menu" onClick={() => setOpen((value) => !value)}>
