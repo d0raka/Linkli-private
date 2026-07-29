@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProductUser } from "@/lib/auth";
 import { ensureDatabase, runtimeValue } from "@/db";
-import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, safeHostedCheckoutUrl } from "@/lib/security";
+import { enforceRateLimit, errorResponse, readJsonObject, RequestError, requireSameOrigin, safeHostedCheckoutUrl } from "@/lib/security";
 import { recordMarketingEventSafely } from "@/lib/marketing";
 
 export async function POST(request: Request) {
@@ -26,9 +26,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: url.toString() });
     }
 
-    // Instant interactive upgrade mode for development and testing
-    await db.prepare("UPDATE users SET plan = 'plus', updated_at = CURRENT_TIMESTAMP WHERE email = ?").bind(user.email).run();
-    return NextResponse.json({ url: "/payment/success?upgraded=1" });
+    if (process.env.NODE_ENV !== "development") {
+      throw new RequestError(503, "אמצעי התשלום הזה עדיין אינו זמין. נסו אמצעי אחר או פנו אלינו לעזרה.");
+    }
+
+    // Local-only interactive upgrade mode for development and testing.
+    await db.prepare("UPDATE users SET plan = 'plus', updated_at = CURRENT_TIMESTAMP WHERE email = ?")
+      .bind(user.email).run();
+    return NextResponse.json({ url: "/payment/success?demo=1" });
   } catch (error) {
     return errorResponse(error);
   }

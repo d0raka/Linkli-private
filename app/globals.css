@@ -249,13 +249,72 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
 .page-lock-shell{min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 12%,rgba(255,255,255,.9),transparent 28%),linear-gradient(145deg,var(--page-soft),#fff 55%,color-mix(in srgb,var(--page-accent) 13%,#fff));position:relative;overflow:hidden}.page-lock-shell::before,.page-lock-shell::after{content:"";position:absolute;border-radius:50%;background:var(--page-accent);opacity:.1}.page-lock-shell::before{width:340px;height:340px;right:-130px;top:-130px}.page-lock-shell::after{width:280px;height:280px;left:-120px;bottom:-130px}.page-lock-card{position:relative;z-index:2;width:min(450px,100%);background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.9);border-radius:28px;padding:34px;text-align:center;box-shadow:0 28px 70px color-mix(in srgb,var(--page-accent) 16%,rgba(40,22,50,.12));backdrop-filter:blur(16px)}.page-lock-icon{width:88px;height:88px;border-radius:27px;background:var(--page-soft);margin:0 auto 15px;display:grid;place-items:center;position:relative}.page-lock-icon>span{font-size:48px}.page-lock-icon>i{position:absolute;left:-7px;bottom:-5px;width:30px;height:30px;border-radius:10px;background:#fff;box-shadow:0 6px 16px rgba(38,25,47,.15);display:grid;place-items:center;font-size:15px;font-style:normal}.page-lock-card h1{font:900 31px/1.15 "Rubik";letter-spacing:-1px;margin:12px 0 8px}.page-lock-card>p{color:var(--muted);font-size:13px;line-height:1.65;margin:0 auto 22px}.page-lock-card form{text-align:right}.page-lock-card form label{display:block;color:#625969;font-size:11px;font-weight:800}.page-lock-card form input{width:100%;min-height:48px;margin:6px 0 11px;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;background:#fff;outline:none}.page-lock-card form input:focus{border-color:var(--page-accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--page-accent) 12%,transparent)}.page-lock-card form .button{width:100%;margin-top:3px}.page-lock-card>small{display:block;color:#968e9b;font-size:9px;margin-top:17px}
 
 /* Account settings */
-.account-main { width:min(1040px,calc(100% - 36px)); margin:0 auto; padding:42px 0 80px; }
-.account-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-.account-card { background:white; border:1px solid var(--line); border-radius:20px; padding:25px; box-shadow:0 10px 30px rgba(45,33,65,.04); }
-.account-card-wide { grid-column:1/-1; }.account-card-heading>span { color:var(--pink-dark); font-size:10px; font-weight:900; letter-spacing:.5px; }.account-card-heading h2 { font:800 21px "Rubik"; margin:5px 0; }.account-card-heading p { color:var(--muted); font-size:12px; line-height:1.55; margin:0 0 20px; }
-.account-form { display:flex; flex-direction:column; gap:14px; }.account-form label { color:var(--muted); font-size:12px; font-weight:800; }.account-form input { width:100%; margin-top:5px; border:1.5px solid var(--line); border-radius:11px; padding:11px 12px; background:white; outline:0; }.account-form input:focus { border-color:var(--pink); box-shadow:0 0 0 3px rgba(241,83,111,.1); }.account-form input[readonly] { background:#f7f5f8; color:#716978; }.account-form>small { color:var(--muted); font-size:10px; margin-top:-9px; }.account-form .status-message { margin:0; }.account-form .button { align-self:flex-start; }
-.password-change-grid { display:grid; grid-template-columns:repeat(3,1fr); align-items:end; }.password-change-grid .password-help,.password-change-grid .status-message,.password-change-grid .button { grid-column:1/-1; }.password-change-grid .password-help { margin:0; }
-.verification-status { display:flex; flex-direction:column; gap:4px; padding:14px; border-radius:13px; margin-bottom:15px; }.verification-status b { font-size:13px; }.verification-status span { color:var(--muted); font-size:11px; }.verification-status.verified { background:#eaf8f1; color:#18764d; }.verification-status.pending { background:#fff7df; color:#8a6310; }
+.account-shell { min-height:100dvh; background:linear-gradient(180deg,#fff 0,#f8f6fa 230px); }
+.account-header { box-shadow:0 6px 24px rgba(37,24,54,.035); }
+.account-header-person { max-width:220px; }
+.plan-pill.free { background:#f1eef3; color:#716878; }
+.plan-pill.plus { background:#eee8ff; color:#6841d8; }
+.account-main { width:min(1120px,calc(100% - 40px)); margin:0 auto; padding:48px 0 88px; }
+.account-hero { display:flex; align-items:center; gap:18px; margin-bottom:28px; }
+.account-hero-avatar { width:68px; height:68px; flex:0 0 68px; display:grid; place-items:center; border-radius:22px; background:linear-gradient(145deg,var(--pink),#bd3155); color:white; font:900 28px "Rubik"; box-shadow:0 14px 28px rgba(219,49,81,.22); }
+.account-hero .kicker { display:block; margin-bottom:4px; font-size:11px; }
+.account-hero h1 { margin:0; font:900 clamp(30px,4vw,42px)/1.15 "Rubik"; letter-spacing:-1.4px; }
+.account-hero p { margin:7px 0 0; color:var(--muted); font-size:14px; }
+.settings-tabs { display:flex; align-items:center; gap:7px; padding:6px; margin-bottom:22px; border:1px solid var(--line); border-radius:16px; background:#fff; box-shadow:0 8px 22px rgba(44,29,65,.04); }
+.settings-tabs a { min-height:42px; padding:9px 16px; border-radius:11px; color:#766d7e; display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:800; }
+.settings-tabs a span { width:20px; height:20px; display:grid; place-items:center; border-radius:7px; background:#f1edf4; color:#8b8092; font-size:10px; }
+.settings-tabs a:hover { background:#faf8fb; color:var(--ink); }
+.settings-tabs a.active { background:var(--ink); color:white; box-shadow:0 8px 18px rgba(32,26,45,.16); }
+.settings-tabs a.active span { background:rgba(255,255,255,.14); color:white; }
+.account-grid { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr); gap:18px; align-items:start; }
+.account-card { background:white; border:1px solid var(--line); border-radius:22px; padding:26px; box-shadow:0 12px 32px rgba(45,33,65,.045); }
+.account-profile-card { min-height:100%; }
+.account-card-wide { grid-column:1/-1; }
+.account-card-heading>span,.account-status-card>div>span { color:var(--pink-dark); font-size:10px; font-weight:900; letter-spacing:.4px; }
+.account-card-heading h2,.account-status-card h2 { font:850 22px "Rubik"; margin:5px 0 6px; }
+.account-card-heading p,.account-status-card p { color:var(--muted); font-size:12px; line-height:1.6; margin:0 0 22px; }
+.account-form { display:flex; flex-direction:column; gap:15px; }
+.account-form label { color:#5f5668; font-size:12px; font-weight:800; }
+.account-form input { width:100%; min-height:46px; margin-top:6px; border:1.5px solid #e5dfe9; border-radius:12px; padding:11px 13px; background:white; outline:0; transition:.16s ease; }
+.account-form input:hover { border-color:#cfc5d5; }
+.account-form input:focus { border-color:var(--pink); box-shadow:0 0 0 4px rgba(241,83,111,.09); }
+.account-form input[readonly] { padding-left:83px; background:#f8f6f9; color:#716978; }
+.account-form>small { color:#918998; font-size:10px; margin-top:-10px; }
+.account-form .status-message { margin:0; }
+.account-email-field { position:relative; }
+.account-email-field span { position:absolute; left:10px; top:17px; border-radius:999px; padding:4px 8px; background:#e7f7ef; color:#17734b; font-size:9px; font-weight:900; }
+.account-form-actions { min-height:46px; display:flex; align-items:center; gap:14px; margin-top:2px; }
+.account-form-actions>span { color:#8a6310; font-size:10px; font-weight:700; }
+.account-form-actions .button { min-width:145px; }
+.account-form-actions .button:disabled { cursor:not-allowed; opacity:.45; transform:none; box-shadow:none; }
+.account-side-stack { display:flex; flex-direction:column; gap:18px; }
+.account-status-card { position:relative; overflow:hidden; }
+.account-status-card::after { content:""; position:absolute; width:120px; height:120px; border-radius:50%; left:-50px; top:-50px; background:#eee8ff; opacity:.75; }
+.account-status-card.plus { background:linear-gradient(145deg,#fff 35%,#f3efff); border-color:#ded4fb; }
+.account-status-card.free { background:linear-gradient(145deg,#fff 35%,#faf7fc); }
+.account-status-card p { margin-bottom:17px; }
+.account-card-icon { width:38px; height:38px; display:grid; place-items:center; margin-bottom:15px; border-radius:12px; background:#f1ebff; color:#6741d3; font:900 15px "Rubik"; }
+.account-card-icon.dark { margin:0; flex:0 0 42px; width:42px; height:42px; background:var(--ink); color:white; letter-spacing:1px; }
+.account-status-card .button { position:relative; z-index:1; width:100%; border-color:#cfc5d5; }
+.account-trust-card { padding-bottom:22px; }
+.account-trust-card .account-card-heading p { margin-bottom:14px; }
+.account-check-list { list-style:none; padding:0; margin:13px 0 4px; }
+.account-check-list li { display:grid; grid-template-columns:32px 1fr; gap:10px; align-items:center; padding:11px 0; border-top:1px solid #eee9f1; }
+.account-check-list li:first-child { border-top:0; }
+.account-check-list li>span { width:29px; height:29px; display:grid; place-items:center; border-radius:9px; background:#fff2d8; color:#8a6310; font-size:11px; font-weight:900; }
+.account-check-list li.complete>span { background:#e7f7ef; color:#17734b; }
+.account-check-list b,.account-check-list small { display:block; }
+.account-check-list b { font-size:11px; }
+.account-check-list small { margin-top:2px; color:#8a8290; font-size:9px; }
+.account-password-card { display:grid; grid-template-columns:260px 1fr; gap:30px; }
+.account-password-intro { display:flex; align-items:flex-start; gap:13px; }
+.account-password-intro .account-card-heading p { margin-bottom:0; }
+.password-change-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:end; }
+.password-change-grid label:first-child { grid-column:1/-1; }
+.password-change-grid .password-help,.password-change-grid .status-message,.password-change-grid .button { grid-column:1/-1; }
+.password-change-grid .password-help { display:flex; align-items:center; gap:8px; margin:0; color:#756d7d; font-size:10px; line-height:1.5; }
+.password-change-grid .password-help span { width:20px; height:20px; flex:0 0 20px; display:grid; place-items:center; border-radius:50%; background:#f0ecf3; font-family:serif; font-weight:900; }
+.password-change-grid .button { justify-self:start; }
 
 /* Owner dashboard */
 .admin-shell { min-height:100dvh; background:#f5f3f8; }
@@ -481,7 +540,75 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
 .legal-section{scroll-margin-top:24px}.legal-section+.legal-section{border-top:1px solid var(--line);margin-top:42px;padding-top:10px}
 .legal-note { background:#fff7e4; border-right:4px solid #d89200; border-radius:10px; padding:13px 15px; font-size:13px; margin:22px 0; }
 .contact-form { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:25px; }.contact-form label { color:var(--muted); font-size:13px; font-weight:700; }.contact-form label.full { grid-column:1/-1; }.contact-form input,.contact-form select,.contact-form textarea { width:100%; border:1.5px solid var(--line); border-radius:11px; padding:11px 12px; margin-top:5px; background:white; }.contact-form textarea { min-height:150px; resize:vertical; }
-.checkout-shell { min-height:100vh; background:radial-gradient(circle at 85% 10%,#ffe3e9,transparent 32%),#f7f5fa; }.checkout-main { width:min(980px,calc(100% - 32px)); margin:0 auto; padding:52px 0 90px; }.checkout-heading { text-align:center; margin-bottom:35px; }.checkout-heading h1 { font:900 clamp(35px,6vw,53px) "Rubik"; margin:5px 0 10px; letter-spacing:-2px; }.checkout-heading p { color:var(--muted); }.checkout-grid { display:grid; grid-template-columns:1fr 1.15fr; gap:25px; align-items:start; }.order-card,.payment-card { background:white; border:1px solid var(--line); border-radius:24px; padding:28px; box-shadow:0 18px 45px rgba(43,29,66,.08); }.order-card h2,.payment-card h2 { font:800 21px "Rubik"; margin:0 0 20px; }.plan-summary { background:#fff4f6; border:1px solid #ffd1da; border-radius:16px; padding:18px; }.plan-summary div { display:flex; justify-content:space-between; align-items:center; }.plan-summary b { color:var(--pink-dark); }.plan-summary strong { font:900 28px "Rubik"; }.plan-summary small { color:var(--muted); }.order-list { list-style:none; padding:18px 0; margin:0; }.order-list li { margin:11px 0; font-size:14px; }.order-total { border-top:1px solid var(--line); padding-top:16px; display:flex; justify-content:space-between; font-weight:800; }.payment-methods { display:flex; flex-direction:column; gap:12px; }.payment-method { width:100%; display:grid; grid-template-columns:48px 1fr auto; align-items:center; gap:13px; border:1.5px solid var(--line); border-radius:15px; padding:14px; background:white; text-align:right; cursor:pointer; }.payment-method:hover { border-color:var(--pink); transform:translateY(-1px); }.payment-method:disabled { cursor:not-allowed; opacity:.65; }.payment-icon { width:45px;height:38px;display:grid;place-items:center;border-radius:10px;background:#f3eff7;font-size:21px;font-weight:900;direction:ltr; }.payment-method b { display:block;font-size:15px; }.payment-method span:not(.payment-icon):not(.payment-arrow) { color:var(--muted);font-size:11px; }.payment-arrow { font-size:19px; }.checkout-security { color:var(--muted);font-size:11px;line-height:1.5;margin:18px 0 0; }.checkout-consent { font-size:11px;color:var(--muted);margin-top:18px;line-height:1.6 }.checkout-consent a { color:#0c5bb7;text-decoration:underline }.checkout-error { background:#fff0ee;color:#b42318;border-radius:10px;padding:11px;font-size:12px;font-weight:700;margin-bottom:13px; }
+.checkout-shell { min-height:100dvh; background:linear-gradient(180deg,#fff 0,#f8f6fa 230px); }
+.checkout-main { width:min(1120px,calc(100% - 40px)); margin:0 auto; padding:48px 0 92px; }
+.subscription-avatar { background:linear-gradient(145deg,#7956e8,#5531c8); box-shadow:0 14px 28px rgba(103,65,211,.22); }
+.subscription-plan-banner { position:relative; overflow:hidden; min-height:180px; display:flex; align-items:center; justify-content:space-between; gap:35px; margin-bottom:20px; padding:34px 38px; border-radius:25px; background:linear-gradient(120deg,#241a35,#3a2654 62%,#623b78); color:white; box-shadow:0 20px 44px rgba(39,25,58,.18); }
+.subscription-plan-banner::before,.subscription-plan-banner::after { content:""; position:absolute; border-radius:50%; background:var(--pink); opacity:.12; }
+.subscription-plan-banner::before { width:220px; height:220px; left:-80px; top:-120px; }
+.subscription-plan-banner::after { width:110px; height:110px; right:42%; bottom:-80px; }
+.subscription-plan-banner>div { position:relative; z-index:1; }
+.subscription-plan-label { display:inline-flex; padding:5px 9px; border:1px solid rgba(255,255,255,.22); border-radius:999px; background:rgba(255,255,255,.08); color:#ffd2dc; font-size:9px; font-weight:900; letter-spacing:1.1px; }
+.subscription-plan-banner h2 { margin:10px 0 7px; font:900 clamp(24px,3.5vw,34px) "Rubik"; letter-spacing:-1px; }
+.subscription-plan-banner p { max-width:590px; margin:0; color:#d8d0df; font-size:13px; line-height:1.65; }
+.subscription-plan-price { flex:0 0 185px; text-align:center; padding:20px; border:1px solid rgba(255,255,255,.15); border-radius:19px; background:rgba(255,255,255,.08); backdrop-filter:blur(8px); }
+.subscription-plan-price strong,.subscription-plan-price span { display:block; }
+.subscription-plan-price strong { font:900 34px "Rubik"; letter-spacing:-1px; }
+.subscription-plan-price span { margin-top:4px; color:#d8d0df; font-size:10px; }
+.checkout-grid { display:grid; grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr); gap:20px; align-items:start; }
+.order-card,.payment-card { background:white; border:1px solid var(--line); border-radius:23px; padding:28px; box-shadow:0 14px 36px rgba(43,29,66,.055); }
+.checkout-section-label { display:block; margin-bottom:4px; color:var(--pink-dark); font-size:9px; font-weight:900; letter-spacing:.45px; }
+.order-card h2,.payment-card h2 { font:850 22px "Rubik"; margin:4px 0 18px; }
+.subscription-feature-list { list-style:none; padding:0; margin:0; }
+.subscription-feature-list li { display:grid; grid-template-columns:38px 1fr; gap:11px; align-items:center; padding:13px 0; border-top:1px solid #eee9f1; }
+.subscription-feature-list li:first-child { border-top:0; }
+.subscription-feature-list li>span { width:36px; height:36px; display:grid; place-items:center; border-radius:11px; background:#f1ebff; color:#6741d3; font:900 11px "Rubik"; }
+.subscription-feature-list b,.subscription-feature-list small { display:block; }
+.subscription-feature-list b { font-size:12px; }
+.subscription-feature-list small { margin-top:3px; color:#8b8291; font-size:10px; line-height:1.4; }
+.order-list { padding:1px 0 8px; }
+.order-total { margin-top:7px; border-top:1px solid var(--line); padding-top:18px; display:flex; justify-content:space-between; align-items:center; font-weight:800; }
+.order-total strong { font:900 21px "Rubik"; }
+.order-reassurance { margin:11px 0 0; color:#8a8290; font-size:9px; line-height:1.5; }
+.payment-card-intro { margin:-10px 0 19px; color:var(--muted); font-size:11px; line-height:1.55; }
+.payment-methods { display:flex; flex-direction:column; gap:9px; }
+.payment-method { width:100%; min-height:67px; display:grid; grid-template-columns:48px 1fr 24px; align-items:center; gap:13px; border:1.5px solid #e6e0e9; border-radius:14px; padding:11px 13px; background:white; text-align:right; cursor:pointer; transition:.16s ease; }
+.payment-method:hover { border-color:#bfb3c8; background:#fdfcfd; }
+.payment-method.selected { border-color:var(--pink); background:#fff9fa; box-shadow:0 0 0 3px rgba(241,83,111,.08); }
+.payment-method:disabled { cursor:not-allowed; opacity:.65; }
+.payment-icon { width:44px; height:39px; display:grid; place-items:center; border-radius:10px; background:#f1edf4; color:#51465a; font-size:19px; font-weight:900; direction:ltr; }
+.payment-method.selected .payment-icon { background:#ffe9ee; color:var(--pink-dark); }
+.payment-method b { display:block; font-size:13px; }
+.payment-method span:not(.payment-icon):not(.payment-radio) { color:var(--muted); font-size:10px; line-height:1.4; }
+.payment-radio { width:20px; height:20px; display:grid; place-items:center; border:1.5px solid #d2c9d8; border-radius:50%; color:white; font-size:10px; font-weight:900; }
+.payment-method.selected .payment-radio { border-color:var(--pink); background:var(--pink); }
+.checkout-submit { width:100%; margin-top:16px; min-height:50px; }
+.checkout-submit:disabled { opacity:.65; cursor:wait; transform:none; }
+.checkout-security { display:flex; align-items:center; gap:10px; padding:12px; margin:13px 0 0; border-radius:12px; background:#f7f5f8; color:var(--muted); font-size:10px; line-height:1.45; }
+.checkout-security>span { width:28px; height:28px; flex:0 0 28px; display:grid; place-items:center; border-radius:9px; background:#e8f7ef; color:#19724c; font-size:15px; }
+.checkout-security p { margin:0; }
+.checkout-security b { display:block; color:#4f4658; font-size:10px; }
+.checkout-consent { font-size:9px; color:#8d8594; margin:13px 0 0; line-height:1.65; }
+.checkout-consent a { color:#0c5bb7; text-decoration:underline; text-underline-offset:2px; }
+.checkout-error { background:#fff0ee; color:#b42318; border:1px solid #ffd4cf; border-radius:11px; padding:11px; font-size:11px; font-weight:700; margin-bottom:13px; }
+.subscription-active { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr); gap:20px; }
+.subscription-active-main,.subscription-included-card { background:#fff; border:1px solid var(--line); border-radius:24px; padding:30px; box-shadow:0 14px 36px rgba(43,29,66,.055); }
+.subscription-active-main { overflow:hidden; background:linear-gradient(145deg,#fff 55%,#f5f1ff); border-color:#ded4fb; }
+.subscription-active-topline { display:flex; align-items:center; justify-content:space-between; gap:15px; padding-bottom:20px; border-bottom:1px solid #ece6f0; color:#796f80; font-size:11px; font-weight:800; }
+.subscription-status { display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border-radius:999px; background:#e6f7ef; color:#18734c; font-size:10px; }
+.subscription-status i { width:7px; height:7px; border-radius:50%; background:#27a56d; box-shadow:0 0 0 4px rgba(39,165,109,.12); }
+.subscription-active-copy { min-height:210px; display:flex; align-items:center; justify-content:space-between; gap:30px; }
+.subscription-active-copy>div>span { color:#866c91; font-size:10px; font-weight:900; }
+.subscription-active-copy h2 { margin:6px 0 7px; font:900 clamp(30px,4vw,42px) "Rubik"; letter-spacing:-1.5px; }
+.subscription-active-copy p { max-width:480px; margin:0; color:var(--muted); font-size:12px; line-height:1.65; }
+.subscription-price { flex:0 0 120px; text-align:center; }
+.subscription-price strong,.subscription-price span { display:block; }
+.subscription-price strong { font:900 30px "Rubik"; }
+.subscription-price span { color:#8a8291; font-size:10px; }
+.subscription-active-actions { display:flex; align-items:center; gap:10px; }
+.subscription-active-actions form { display:flex; }
+.subscription-included-card>span { color:var(--pink-dark); font-size:9px; font-weight:900; }
+.subscription-included-card h2 { margin:5px 0 15px; font:850 20px/1.3 "Rubik"; }
 .checkout-beta-note { display:flex; flex-direction:column; gap:9px; background:#fff8e8; color:#74500b; border:1px solid #f3d58b; border-radius:13px; padding:13px; font-size:12px; line-height:1.5; margin-bottom:13px; }.checkout-beta-note span { color:#856e3f; }.checkout-beta-note .button { align-self:flex-start; border-color:#74500b; color:#74500b; }
 .marketing-pilot { margin-top:26px; padding:28px; border:1px solid #e4d8ee; border-radius:24px; background:linear-gradient(135deg,#fff 25%,#f7f0ff); display:grid; grid-template-columns:.9fr 1.25fr; gap:28px; align-items:center; }
 .marketing-pilot h3 { margin:6px 0 8px; font:900 25px "Rubik"; }.marketing-pilot p { margin:0; color:var(--muted); line-height:1.65; font-size:13px; }
@@ -493,12 +620,12 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
 .marketing-waitlist-form .status-message { margin:0; }.marketing-waitlist-form .button { width:100%; }
 
 @media (max-width: 900px) {
-  .account-grid{grid-template-columns:1fr}.account-card-wide{grid-column:auto}.password-change-grid{grid-template-columns:1fr}
+  .account-grid{grid-template-columns:1fr}.account-card-wide{grid-column:auto}.account-password-card{grid-template-columns:1fr}.subscription-active{grid-template-columns:1fr}
   .marketing-pilot{grid-template-columns:1fr}
   .hero { grid-template-columns:1fr; text-align:center;padding-top:45px }.hero-copy { padding:0 }.hero-copy>p{margin-inline:auto}.hero-actions,.trust-row{justify-content:center}.hero-stage{height:520px}.template-grid{grid-template-columns:repeat(2,1fr)}.studio-layout{grid-template-columns:1fr}.project-sidebar{order:2}.editor-grid{grid-template-columns:1fr}.preview-frame{position:static}.studio-title-row{align-items:start;gap:15px}.studio-title-row .button{white-space:nowrap}.checkout-grid{grid-template-columns:1fr}.order-card{order:2}.auth-layout{grid-template-columns:1fr;gap:35px}.auth-message{text-align:center}.auth-message>p{margin-inline:auto}.auth-points{align-items:center}.auth-card{width:min(470px,100%);margin-inline:auto}.admin-metric-grid{grid-template-columns:repeat(2,1fr)}.support-list{grid-template-columns:1fr}
 }
 @media (max-width: 620px) {
-  .account-main{width:calc(100% - 24px);padding-top:25px}.studio-user .account-link{display:none}.upgrade-banner,.verification-banner{align-items:flex-start;gap:12px}
+  .account-main,.checkout-main{width:calc(100% - 24px);padding-top:27px}.account-hero{gap:13px;margin-bottom:22px}.account-hero-avatar{width:54px;height:54px;flex-basis:54px;border-radius:17px;font-size:22px}.account-hero h1{font-size:29px}.account-hero p{font-size:12px}.settings-tabs{overflow-x:auto}.settings-tabs a{flex:1 0 auto;justify-content:center;padding-inline:11px;font-size:11px}.account-card,.order-card,.payment-card,.subscription-active-main,.subscription-included-card{padding:20px;border-radius:19px}.account-form-actions{align-items:flex-start;flex-direction:column}.account-form-actions .button{width:100%}.account-password-intro{margin-bottom:3px}.password-change-grid{grid-template-columns:1fr}.password-change-grid label:first-child{grid-column:auto}.password-change-grid .button{width:100%}.subscription-plan-banner{align-items:flex-start;flex-direction:column;padding:25px 22px;border-radius:21px}.subscription-plan-price{width:100%;flex-basis:auto;text-align:right}.subscription-active-copy{min-height:auto;align-items:flex-start;flex-direction:column;padding:28px 0}.subscription-price{text-align:right}.subscription-active-actions{align-items:stretch;flex-direction:column}.subscription-active-actions .button,.subscription-active-actions form,.subscription-active-actions form .button{width:100%}.studio-user .account-link{display:none}.upgrade-banner,.verification-banner{align-items:flex-start;gap:12px}
   .template-preview-bar{top:10px;inset-inline:10px}.template-preview-bar .button{padding:8px 10px;font-size:10px}.template-preview-bar .template-preview-back{padding:8px 10px}.marketing-pilot{padding:20px}.marketing-waitlist-form{grid-template-columns:1fr}.marketing-waitlist-form label,.marketing-waitlist-form label:nth-of-type(3),.marketing-waitlist-form .waitlist-consent,.marketing-waitlist-form .status-message,.marketing-waitlist-form .button{grid-column:1}.marketing-lead-list article{align-items:flex-start;flex-direction:column}.marketing-lead-list select{width:100%}
   .launch-checklist{padding:17px}.launch-checklist ol{grid-template-columns:1fr}.launch-checklist-heading h2{font-size:18px}.launch-checklist-action .button{width:100%;justify-content:center}
   .wrap{width:min(100% - 26px,1160px)}.nav-links>a:not(.button){display:none}.hero{min-height:auto;gap:20px}.hero h1{font-size:45px;letter-spacing:-2.6px}.hero-copy>p{font-size:17px}.hero-actions{flex-direction:column;gap:16px}.hero-stage{transform:scale(.86);margin:-30px -30px}.strip-inner{flex-wrap:wrap;justify-content:center;padding:18px 0}.strip-inner>span{width:100%;text-align:center}.section{padding-block:70px}.section-heading{display:block}.template-grid,.steps-grid,.pricing-grid{grid-template-columns:1fr}.template-art{height:160px}.steps-grid{gap:10px}.final-cta{width:calc(100% - 22px);border-radius:25px}.footer{flex-wrap:wrap;padding:30px 0}.footer p{width:100%;order:3;flex-basis:100%}.studio-header{padding:0 10px}.studio-main{width:calc(100% - 24px);padding-top:25px}.studio-title-row h1{font-size:29px}.studio-user>div:not(.user-avatar){display:none}.template-picker{grid-template-columns:repeat(2,1fr)}.form-section{grid-template-columns:1fr}.form-section label.full{grid-column:auto}.metrics{grid-template-columns:1fr 1fr}.upgrade-banner{align-items:flex-start;gap:12px}.published-card{padding:30px 20px}.simple-header{padding:0 15px}.simple-header nav a:not(:last-child){display:none}.legal-main{padding-top:30px}.contact-form{grid-template-columns:1fr}.contact-form label.full{grid-column:auto}.a11y-widget{left:10px;bottom:10px}.a11y-menu{width:min(270px,calc(100vw - 20px))}.checkout-main{padding-top:30px}.order-card,.payment-card{padding:20px}.auth-shell{padding:22px 16px 45px}.auth-brand{margin-bottom:30px}.auth-layout{min-height:auto}.auth-message h1{font-size:45px;letter-spacing:-2.5px}.auth-message>p{font-size:16px}.auth-card{padding:25px 20px;border-radius:22px}.admin-header{padding:0 12px}.admin-email{display:none}.admin-layout{grid-template-columns:1fr}.admin-sidebar{position:sticky;top:70px;z-index:20;flex-direction:row;overflow:auto;padding:8px;background:#251d33}.admin-sidebar>div{display:none}.admin-sidebar button{white-space:nowrap;padding:9px}.admin-sidebar button.active{box-shadow:inset 0 -3px var(--pink)}.admin-main{padding:25px 12px 60px}.admin-title-row{align-items:flex-start}.admin-title-row h1{font-size:28px}.admin-title-actions{flex-direction:column}.admin-create-user{grid-template-columns:1fr}.admin-create-user h2,.admin-create-user small{grid-column:auto}.admin-metric-grid{grid-template-columns:1fr 1fr;gap:8px}.admin-metric-grid article{padding:14px;min-height:115px}.admin-metric-grid strong{font-size:23px}.admin-two-columns{grid-template-columns:1fr}.audit-row{grid-template-columns:28px 1fr}.audit-row time{grid-column:2}.admin-header nav>a{display:none}
