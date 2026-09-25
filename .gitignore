@@ -7,3 +7,17 @@ dist
 *.log
 *.tsbuildinfo
 .DS_Store
+playwright-report
+test-results
+/output/
+.dev.vars
+.dev.vars.*
+
+# Local tooling / secrets (added pre-GitHub import)
+.playwright-cli/
+.playwright-mcp/
+*.pem
+*.key
+*.p12
+*.pfx
+.secrets*

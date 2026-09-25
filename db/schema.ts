@@ -3,6 +3,11 @@ export const schemaStatements = [
     email TEXT PRIMARY KEY,
     display_name TEXT NOT NULL,
     plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'plus')),
+    plan_tier TEXT NOT NULL DEFAULT 'free',
+    referral_code TEXT,
+    referred_by TEXT,
+    bonus_pages INTEGER NOT NULL DEFAULT 0,
+    referral_rewarded INTEGER NOT NULL DEFAULT 0,
     billing_customer_id TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -24,6 +29,22 @@ export const schemaStatements = [
   )`,
   `CREATE INDEX IF NOT EXISTS projects_owner_idx ON projects(owner_email)`,
   `CREATE INDEX IF NOT EXISTS projects_slug_idx ON projects(slug)`,
+  `CREATE TABLE IF NOT EXISTS project_backgrounds (
+    project_id TEXT PRIMARY KEY,
+    mime TEXT NOT NULL,
+    data BLOB NOT NULL,
+    object_key TEXT,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+  )`,
+  `CREATE TABLE IF NOT EXISTS project_emoji_images (
+    project_id TEXT PRIMARY KEY,
+    mime TEXT NOT NULL,
+    data BLOB NOT NULL,
+    object_key TEXT,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+  )`,
   `CREATE TABLE IF NOT EXISTS support_requests (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -45,9 +66,49 @@ export const schemaStatements = [
     event_id TEXT PRIMARY KEY,
     event_type TEXT NOT NULL,
     customer_email TEXT NOT NULL,
+    payload_json TEXT,
+    provider_event_at TEXT,
+    sequence INTEGER,
+    status TEXT NOT NULL DEFAULT 'processed' CHECK (status IN ('received', 'processing', 'processed', 'ignored', 'failed')),
+    processed_at TEXT,
     received_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE INDEX IF NOT EXISTS billing_events_received_idx ON billing_events(received_at)`,
+  `CREATE TABLE IF NOT EXISTS billing_customers (
+    user_email TEXT PRIMARY KEY,
+    provider TEXT NOT NULL DEFAULT 'hosted',
+    provider_customer_id TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TEXT
+  )`,
+  `CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    user_email TEXT NOT NULL,
+    provider TEXT NOT NULL DEFAULT 'hosted',
+    provider_order_id TEXT,
+    plan TEXT NOT NULL,
+    price_id TEXT,
+    amount_minor INTEGER NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL DEFAULT 'ILS',
+    status TEXT NOT NULL CHECK (status IN ('pending', 'paid', 'refunded', 'chargeback', 'failed')),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    paid_at TEXT,
+    provider_event_at TEXT
+  )`,
+  `CREATE INDEX IF NOT EXISTS orders_user_idx ON orders(user_email, created_at)`,
+  `CREATE TABLE IF NOT EXISTS subscriptions (
+    id TEXT PRIMARY KEY,
+    user_email TEXT NOT NULL,
+    provider_subscription_id TEXT,
+    plan TEXT NOT NULL,
+    price_id TEXT,
+    status TEXT NOT NULL CHECK (status IN ('active', 'past_due', 'cancel_scheduled', 'cancelled', 'expired')),
+    current_period_end TEXT,
+    cancel_at TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE INDEX IF NOT EXISTS subscriptions_user_idx ON subscriptions(user_email, status)`,
   `CREATE TABLE IF NOT EXISTS marketing_events (
     id TEXT PRIMARY KEY,
     event_name TEXT NOT NULL,
@@ -113,9 +174,10 @@ export const schemaStatements = [
   `CREATE TABLE IF NOT EXISTS auth_tokens (
     token_hash TEXT PRIMARY KEY,
     user_email TEXT NOT NULL,
-    purpose TEXT NOT NULL CHECK (purpose IN ('verify_email', 'reset_password')),
+    purpose TEXT NOT NULL CHECK (purpose IN ('verify_email', 'reset_password', 'change_password', 'delete_account')),
     expires_at INTEGER NOT NULL,
     used_at INTEGER,
+    payload TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
   )`,
@@ -140,4 +202,26 @@ export const schemaStatements = [
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE INDEX IF NOT EXISTS admin_audit_created_idx ON admin_audit_log(created_at)`,
+  `CREATE TABLE IF NOT EXISTS rsvp_responses (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('yes', 'maybe', 'no')),
+    guest_count INTEGER NOT NULL DEFAULT 1,
+    plus_ones_json TEXT,
+    song TEXT,
+    answers_json TEXT,
+    name TEXT NOT NULL,
+    contact_hash TEXT,
+    response_token_hash TEXT NOT NULL UNIQUE,
+    ip_hash TEXT,
+    consent_at TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+  )`,
+  `CREATE INDEX IF NOT EXISTS rsvp_responses_project_idx ON rsvp_responses(project_id, created_at)`,
+  `CREATE INDEX IF NOT EXISTS rsvp_responses_token_idx ON rsvp_responses(response_token_hash)`,
+  `CREATE INDEX IF NOT EXISTS rsvp_responses_contact_idx ON rsvp_responses(project_id, contact_hash)`,
+  `CREATE INDEX IF NOT EXISTS rsvp_responses_expires_idx ON rsvp_responses(expires_at)`,
 ];

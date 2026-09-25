@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type DemoTopic = "date" | "birthday" | "rsvp";
+type DemoTopic = "date" | "birthday" | "event";
 
 const DEMOS: Record<DemoTopic, {
   emoji: string;
@@ -33,7 +33,7 @@ const DEMOS: Record<DemoTopic, {
     resultTitle: "יום הולדת שמח! 🎉",
     resultSub: "שתהיה שנה של המון סיבות לחייך.",
   },
-  rsvp: {
+  event: {
     emoji: "🥂",
     title: "הזמנה לאירוע",
     questions: [
@@ -41,8 +41,8 @@ const DEMOS: Record<DemoTopic, {
       { prompt: "כמה מקומות לשמור?", helper: "כולל מי שמגיע איתכם", options: ["מקום אחד 👤", "שני מקומות 👥", "3+ מקומות 👨‍👩‍👧"] },
       { prompt: "העדפות תזונה?", helper: "נתאים את המנות עבורכם", options: ["ללא העדפה מיוחדת", "צמחוני / טבעוני", "ללא גלוטן"] },
     ],
-    resultTitle: "אישור ההגעה התקבל! 🥂",
-    resultSub: "נתראה באירוע!",
+    resultTitle: "המענה מוכן לשליחה 🥂",
+    resultSub: "אפשר לשלוח אותו ב-WhatsApp ולהוסיף ליומן.",
   },
 };
 
@@ -79,7 +79,7 @@ export default function HeroInteractive() {
   return (
     <div className="hero-stage" aria-label="תצוגה מקדימה אינטראקטיבית של עמוד Linkli">
       <div className="hero-emoji-rain" aria-hidden="true"><i>💕</i><i>✨</i><i>🌸</i><i>💗</i></div>
-      <div className="spark spark-one">✦</div><div className="spark spark-two">✦</div>
+      <div className="spark spark-one">●</div><div className="spark spark-two">●</div>
 
       <div className="phone-card interactive-phone">
         <div className="phone-top">
@@ -92,7 +92,7 @@ export default function HeroInteractive() {
         <div className="hero-topic-tabs">
           <button className={topic === "date" ? "active" : ""} onClick={() => switchTopic("date")}>💘 דייט</button>
           <button className={topic === "birthday" ? "active" : ""} onClick={() => switchTopic("birthday")}>🎂 יום הולדת</button>
-          <button className={topic === "rsvp" ? "active" : ""} onClick={() => switchTopic("rsvp")}>🥂 אירוע</button>
+          <button className={topic === "event" ? "active" : ""} onClick={() => switchTopic("event")}>🥂 אירוע</button>
         </div>
 
         <div className="phone-content">
@@ -125,9 +125,9 @@ export default function HeroInteractive() {
                 })}
               </div>
 
-              <div className="mini-button" onClick={() => step < demo.questions.length - 1 && setStep((s) => s + 1)}>
+              <button type="button" className="mini-button" onClick={() => step < demo.questions.length - 1 && setStep((s) => s + 1)}>
                 {step < demo.questions.length - 1 ? "לשאלה הבאה ←" : "לצפייה בתוצאה ✨"}
-              </div>
+              </button>
             </>
           ) : (
             <div className="hero-mini-result">

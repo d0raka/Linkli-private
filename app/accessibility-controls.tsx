@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { resolveReduceMotion } from "@/lib/a11y";
 
 type Preferences = { font: number; contrast: boolean; links: boolean; motion: boolean };
 const defaults: Preferences = { font: 100, contrast: false, links: false, motion: false };
@@ -19,17 +20,27 @@ export default function AccessibilityControls() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem("linkli-a11y-dismissed") === "true") {
-        setDismissed(true);
-      }
-      const saved = localStorage.getItem("linkli-accessibility");
-      if (saved) {
-        const parsed = { ...defaults, ...JSON.parse(saved) } as Preferences;
+    const storageSync = window.setTimeout(() => {
+      try {
+        if (sessionStorage.getItem("linkli-a11y-dismissed") === "true") {
+          setDismissed(true);
+        }
+        const systemPrefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const saved = localStorage.getItem("linkli-accessibility");
+        const parsedSaved = saved ? JSON.parse(saved) as Partial<Preferences> : null;
+        const parsed = {
+          ...defaults,
+          ...(parsedSaved || {}),
+          motion: resolveReduceMotion({
+            saved: typeof parsedSaved?.motion === "boolean" ? parsedSaved.motion : undefined,
+            systemPrefersReduce,
+          }),
+        } as Preferences;
         setPreferences(parsed);
         applyPreferences(parsed);
-      }
-    } catch { /* keep accessible defaults */ }
+      } catch { /* keep accessible defaults */ }
+    }, 0);
+    return () => window.clearTimeout(storageSync);
   }, []);
 
   function dismiss(e: React.MouseEvent) {
@@ -45,7 +56,10 @@ export default function AccessibilityControls() {
     try { localStorage.setItem("linkli-accessibility", JSON.stringify(next)); } catch { /* preferences remain for this visit */ }
   }
 
-  function reset() { update(defaults); }
+  function reset() {
+    const systemPrefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    update({ ...defaults, motion: resolveReduceMotion({ systemPrefersReduce }) });
+  }
 
   if (dismissed) return null;
 
@@ -57,7 +71,17 @@ export default function AccessibilityControls() {
         </svg>
       </button>
       <button className="a11y-trigger" aria-label="פתיחת תפריט נגישות" aria-expanded={open} aria-controls="a11y-menu" onClick={() => setOpen((value) => !value)}>
-        <span className="a11y-icon">♿</span>
+        <span className="a11y-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="14.8" cy="4" r="2" />
+            <path d="M13.8 6.2 11.6 12" />
+            <path d="M13.2 8.7h5.4" />
+            <path d="M7.6 12h10.4" />
+            <path d="M18 12v5.4h2.2" />
+            <circle cx="9" cy="16.5" r="4.7" />
+            <circle cx="18" cy="19.2" r="1.5" />
+          </svg>
+        </span>
         <span className="a11y-label">נגישות</span>
       </button>
     </div>

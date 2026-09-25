@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { ensureDatabase } from "@/db";
 import { requireAdminUser } from "@/lib/auth";
-import LogoutButton from "@/app/studio/logout-button";
+import { billingMetrics } from "@/lib/billing";
+import { normalizePlan } from "@/lib/plans";
+import AppTopbar from "@/app/app-topbar";
 import AdminClient from "./admin-client";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export default async function AdminPage() {
   const [metricsResult, usersResult, projectsResult, supportResult, auditResult, campaignsResult, leadsResult] = await db.batch([
     db.prepare(`SELECT
       (SELECT COUNT(*) FROM users) AS users,
-      (SELECT COUNT(*) FROM users WHERE plan = 'plus') AS plus_users,
+      (SELECT COUNT(*) FROM users WHERE plan = 'plus' OR COALESCE(plan_tier, '') IN ('pro', 'max', 'business')) AS plus_users,
       (SELECT COUNT(*) FROM users WHERE plan = 'plus' AND billing_customer_id IS NOT NULL AND TRIM(billing_customer_id) <> '') AS paying_customers,
       (SELECT COUNT(DISTINCT owner_email) FROM projects) AS activated_users,
       (SELECT COUNT(DISTINCT owner_email) FROM projects WHERE published = 1) AS publishing_users,
@@ -22,7 +23,7 @@ export default async function AdminPage() {
       (SELECT COALESCE(SUM(clicks), 0) FROM projects) AS clicks,
       (SELECT COUNT(*) FROM support_requests WHERE status = 'new') AS open_support,
       (SELECT COUNT(*) FROM marketing_leads WHERE status = 'new') AS open_leads`),
-    db.prepare(`SELECT users.email, login_aliases.username, users.display_name, users.plan, users.billing_customer_id, users.created_at,
+    db.prepare(`SELECT users.email, login_aliases.username, users.display_name, users.plan, users.plan_tier, users.billing_customer_id, users.created_at,
       COALESCE(user_controls.status, 'active') AS status,
       COALESCE(user_controls.note, '') AS note,
       CASE WHEN email_verifications.user_email IS NULL OR email_verifications.verified_at IS NOT NULL THEN 1 ELSE 0 END AS email_verified,
@@ -33,7 +34,7 @@ export default async function AdminPage() {
       LEFT JOIN user_controls ON user_controls.email = users.email
       LEFT JOIN email_verifications ON email_verifications.user_email = users.email
       LEFT JOIN projects ON projects.owner_email = users.email
-      GROUP BY users.email, login_aliases.username, users.display_name, users.plan, users.billing_customer_id, users.created_at, user_controls.status, user_controls.note, email_verifications.user_email, email_verifications.verified_at
+      GROUP BY users.email, login_aliases.username, users.display_name, users.plan, users.plan_tier, users.billing_customer_id, users.created_at, user_controls.status, user_controls.note, email_verifications.user_email, email_verifications.verified_at
       ORDER BY users.created_at DESC LIMIT 200`),
     db.prepare(`SELECT id, owner_email, title, slug, template_id, published, views, clicks, updated_at
       FROM projects ORDER BY updated_at DESC LIMIT 200`),
@@ -59,23 +60,18 @@ export default async function AdminPage() {
       FROM marketing_leads ORDER BY created_at DESC LIMIT 200`),
   ]);
   const metrics = (metricsResult.results?.[0] || {}) as Record<string, unknown>;
+  const revenue = await billingMetrics(db);
 
   return (
     <main className="admin-shell" id="main-content">
-      <header className="admin-header">
-        <Link href="/studio" className="brand">Link<span>li</span></Link>
-        <nav aria-label="ניווט מנהל">
-          <Link href="/studio">העמודים שלי</Link>
-          <span className="admin-owner-badge">OWNER</span>
-          <span className="admin-email">{admin.email}</span>
-          <LogoutButton />
-        </nav>
-      </header>
+      <AppTopbar displayName={admin.displayName} plan={admin.plan} isAdmin current="admin" />
       <AdminClient
         initialMetrics={{
           users: Number(metrics.users || 0),
           plusUsers: Number(metrics.plus_users || 0),
-          payingCustomers: Number(metrics.paying_customers || 0),
+          payingCustomers: revenue.payingCustomers,
+          mrrMinor: revenue.mrrMinor,
+          oneTimeRevenueMinor: revenue.oneTimeRevenueMinor,
           activatedUsers: Number(metrics.activated_users || 0),
           publishingUsers: Number(metrics.publishing_users || 0),
           projects: Number(metrics.projects || 0),
@@ -85,7 +81,10 @@ export default async function AdminPage() {
           openSupport: Number(metrics.open_support || 0),
           openLeads: Number(metrics.open_leads || 0),
         }}
-        initialUsers={usersResult.results || []}
+        initialUsers={(usersResult.results || []).map((row: Record<string, unknown>) => ({
+          ...row,
+          plan: normalizePlan(String(row.plan_tier || row.plan || "free")),
+        }))}
         initialProjects={projectsResult.results || []}
         initialSupport={supportResult.results || []}
         initialAudit={auditResult.results || []}

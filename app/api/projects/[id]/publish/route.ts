@@ -3,7 +3,7 @@ import { getProductUser } from "@/lib/auth";
 import { ensureDatabase } from "@/db";
 import { projectFromRow } from "@/lib/projects";
 import { enforceRateLimit, errorResponse, readJsonObject, requireSameOrigin, validUuid } from "@/lib/security";
-import { PROJECT_LIMITS } from "@/lib/plans";
+import { pageLimit } from "@/lib/plans";
 import { recordMarketingEventSafely } from "@/lib/marketing";
 
 type Context = { params: Promise<{ id: string }> };
@@ -23,12 +23,19 @@ export async function POST(request: Request, context: Context) {
     if (!current) return NextResponse.json({ error: "העמוד לא נמצא" }, { status: 404 });
     const shouldPublish = body.published !== false;
     if (shouldPublish && !current.published) {
-      const count = await db.prepare("SELECT COUNT(*) AS total FROM projects WHERE owner_email = ? AND published = 1").bind(user.email).first();
-      const limit = PROJECT_LIMITS[user.plan];
-      if (Number(count?.total || 0) >= limit) return NextResponse.json({ error: `המסלול שלכם מאפשר לפרסם עד ${limit} עמודים.` }, { status: 403 });
+      const limit = pageLimit(user.plan, user.bonusPages);
+      // The quota check and the flip happen in one statement so concurrent publishes cannot both slip under the limit.
+      const flipped = await db.prepare(
+        `UPDATE projects SET published = 1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND owner_email = ? AND published = 0
+           AND (SELECT COUNT(*) FROM projects WHERE owner_email = ? AND published = 1) < ?`,
+      ).bind(id, user.email, user.email, limit).run();
+      if (!Number(flipped.meta?.changes || 0)) {
+        return NextResponse.json({ error: user.plan === "free" ? "המסלול החינמי כולל עמוד מפורסם אחד. אפשר להשאיר טיוטות, או לשדרג כדי לפרסם עוד." : `המסלול שלך מאפשר לפרסם עד ${limit} עמודים.`, code: "plan_limit", feature: "morePages" }, { status: 403 });
+      }
+    } else if (!shouldPublish) {
+      await db.prepare("UPDATE projects SET published = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND owner_email = ?").bind(id, user.email).run();
     }
-    await db.prepare("UPDATE projects SET published = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND owner_email = ?")
-      .bind(shouldPublish ? 1 : 0, id, user.email).run();
     if (shouldPublish && !current.published) {
       await recordMarketingEventSafely(db, "project_published", { userEmail: user.email, templateId: String(current.template_id || "") });
     }

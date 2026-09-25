@@ -1,30 +1,15 @@
-import Link from "next/link";
-import LogoutButton from "@/app/studio/logout-button";
+import AppTopbar from "@/app/app-topbar";
+import type { PlanType } from "@/lib/plans";
 
 export default function AccountHeader({
   displayName,
-  email,
   plan,
+  isAdmin,
 }: {
   displayName: string;
-  email: string;
-  plan: "free" | "plus";
+  email?: string;
+  plan: PlanType;
+  isAdmin?: boolean;
 }) {
-  return (
-    <header className="studio-header account-header">
-      <Link href="/studio" className="brand" aria-label="חזרה לעמודים שלי">
-        Link<span>li</span>
-      </Link>
-      <div className="studio-user">
-        <Link href="/studio" className="account-link">העמודים שלי</Link>
-        <span className={`plan-pill ${plan}`}>{plan === "plus" ? "PLUS" : "FREE"}</span>
-        <div className="account-header-person">
-          <b>{displayName}</b>
-          <span>{email}</span>
-        </div>
-        <div className="user-avatar" aria-hidden="true">{displayName.slice(0, 1)}</div>
-        <LogoutButton />
-      </div>
-    </header>
-  );
+  return <AppTopbar displayName={displayName} plan={plan} isAdmin={isAdmin} current="account" />;
 }

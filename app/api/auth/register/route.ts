@@ -6,6 +6,7 @@ import { actionUrl, issueAuthToken } from "@/lib/account-security";
 import { emailDeliveryConfigured, sendAuthEmail } from "@/lib/email";
 import { plainText } from "@/lib/text";
 import { campaignFromObject, recordMarketingEventSafely } from "@/lib/marketing";
+import { ensureReferralCode, findReferrerEmail, referralCodeFromCookieHeader, sanitizeReferralCode } from "@/lib/referrals";
 
 export async function POST(request: Request) {
   let stage = "request";
@@ -37,6 +38,11 @@ export async function POST(request: Request) {
     ).bind(email, passwordRecord.hash, passwordRecord.salt, passwordRecord.iterations).run();
     if (!inserted.meta?.changes) return NextResponse.json({ error: "כבר קיים חשבון עם כתובת הדוא״ל הזו. אפשר להתחבר במקום." }, { status: 409 });
     await db.prepare("UPDATE users SET display_name = ?, updated_at = CURRENT_TIMESTAMP WHERE email = ?").bind(displayName, email).run();
+    const referralCode = sanitizeReferralCode(body.referralCode) || referralCodeFromCookieHeader(request.headers.get("cookie"));
+    if (referralCode && await findReferrerEmail(db, referralCode, email)) {
+      await db.prepare("UPDATE users SET referred_by = ? WHERE email = ? AND (referred_by IS NULL OR TRIM(referred_by) = '')").bind(referralCode, email).run();
+    }
+    await ensureReferralCode(db, email);
     await db.prepare("INSERT OR REPLACE INTO email_verifications (user_email, verified_at, updated_at) VALUES (?, NULL, CURRENT_TIMESTAMP)").bind(email).run();
 
     stage = "verification";

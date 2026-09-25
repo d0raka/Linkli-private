@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { ensureDatabase } from "@/db";
-import { isApiResponse, requireAdminApiUser, writeAdminAudit } from "@/lib/admin";
+import { deleteOwnedAccount } from "@/lib/account-security";
+import { isApiResponse, requireAdminApiUser, requireAdminReauth, writeAdminAudit } from "@/lib/admin";
 import { isAdminEmail } from "@/lib/auth";
 import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, RequestError, requireSameOrigin } from "@/lib/security";
+import { persistPlan, parseAdminPlan, planFromUserRow } from "@/lib/plans";
 import { plainText } from "@/lib/text";
 
 type Context = { params: Promise<{ email: string }> };
@@ -18,15 +20,23 @@ export async function PATCH(request: Request, context: Context) {
     const action = typeof body.action === "string" ? body.action : "";
     const db = await ensureDatabase();
     await enforceRateLimit(db, request, "admin-user", 60, 60, admin.email);
-    const target = await db.prepare("SELECT email, plan FROM users WHERE email = ?").bind(email).first();
+    const target = await db.prepare("SELECT email, plan, plan_tier FROM users WHERE email = ?").bind(email).first();
     if (!target) throw new RequestError(404, "המשתמש לא נמצא");
+    await requireAdminReauth(db, request, admin, body);
 
     if (action === "set_plan") {
-      const plan = body.plan === "plus" ? "plus" : body.plan === "free" ? "free" : null;
+      const plan = parseAdminPlan(body.plan);
       if (!plan) throw new RequestError(400, "המסלול שנבחר אינו תקין.");
-      await db.prepare("UPDATE users SET plan = ?, updated_at = CURRENT_TIMESTAMP WHERE email = ?").bind(plan, email).run();
-      await writeAdminAudit(admin.email, "user.plan_changed", "user", email, { from: target.plan, to: plan });
-      return NextResponse.json({ ok: true, plan });
+      try {
+        await persistPlan(db, email, plan);
+      } catch {
+        throw new RequestError(500, "לא הצלחנו לעדכן את המסלול.");
+      }
+      const saved = await db.prepare("SELECT plan, plan_tier FROM users WHERE email = ?").bind(email).first();
+      const persisted = planFromUserRow(saved);
+      if (persisted !== plan) throw new RequestError(500, "המסלול לא נשמר כמו שנבחר.");
+      await writeAdminAudit(admin.email, "user.plan_changed", "user", email, { from: planFromUserRow(target), to: persisted });
+      return NextResponse.json({ ok: true, plan: persisted });
     }
 
     if (action === "suspend" || action === "restore") {
@@ -64,39 +74,21 @@ export async function DELETE(request: Request, context: Context) {
 
     const db = await ensureDatabase();
     await enforceRateLimit(db, request, "admin-user-delete", 10, 900, admin.email);
-    const target = await db.prepare(
-      `SELECT users.email, users.plan,
-        COUNT(projects.id) AS project_count,
-        COALESCE(SUM(CASE WHEN projects.published = 1 THEN 1 ELSE 0 END), 0) AS published_count
-       FROM users LEFT JOIN projects ON projects.owner_email = users.email
-       WHERE users.email = ? GROUP BY users.email, users.plan`,
-    ).bind(email).first();
-    if (!target) throw new RequestError(404, "המשתמש לא נמצא");
-
-    await db.batch([
-      db.prepare("DELETE FROM login_aliases WHERE user_email = ?").bind(email),
-      db.prepare("DELETE FROM auth_tokens WHERE user_email = ?").bind(email),
-      db.prepare("DELETE FROM email_verifications WHERE user_email = ?").bind(email),
-      db.prepare("DELETE FROM sessions WHERE user_email = ?").bind(email),
-      db.prepare("DELETE FROM auth_credentials WHERE email = ?").bind(email),
-      db.prepare("DELETE FROM user_controls WHERE email = ?").bind(email),
-      db.prepare("DELETE FROM projects WHERE owner_email = ?").bind(email),
-      db.prepare("DELETE FROM marketing_leads WHERE email = ?").bind(email),
-      db.prepare("UPDATE marketing_events SET user_email = NULL WHERE user_email = ?").bind(email),
-      db.prepare("DELETE FROM users WHERE email = ?").bind(email),
-    ]);
+    await requireAdminReauth(db, request, admin, body);
+    const deleted = await deleteOwnedAccount(email);
+    if (!deleted) throw new RequestError(404, "המשתמש לא נמצא");
     await writeAdminAudit(admin.email, "user.deleted", "user", email, {
-      plan: target.plan,
-      projectCount: Number(target.project_count || 0),
-      publishedCount: Number(target.published_count || 0),
+      plan: deleted.plan,
+      projectCount: deleted.projectCount,
+      publishedCount: deleted.publishedCount,
     });
     return NextResponse.json({
       ok: true,
       deleted: {
-        email,
-        plan: target.plan,
-        projectCount: Number(target.project_count || 0),
-        publishedCount: Number(target.published_count || 0),
+        email: deleted.email,
+        plan: deleted.plan,
+        projectCount: deleted.projectCount,
+        publishedCount: deleted.publishedCount,
       },
     });
   } catch (error) {

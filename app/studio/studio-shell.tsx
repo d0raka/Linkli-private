@@ -1,30 +1,28 @@
-import Link from "next/link";
 import { requireProductUser } from "@/lib/auth";
-import StudioClient from "./studio-client";
-import LogoutButton from "./logout-button";
+import AppTopbar from "@/app/app-topbar";
+import "./studio.css";
 
 export default async function StudioShell({ createMode = false }: { createMode?: boolean }) {
   const returnTo = createMode ? "/studio/create" : "/studio";
   const user = await requireProductUser(returnTo);
+  const { default: StudioClient } = await import("./studio-client");
 
   return (
-    <main className="studio-body" id="main-content">
-      <header className="studio-header">
-        <a href="/studio" className="brand" aria-label="חזרה לעמודים שלי">Link<span>li</span></a>
-        <div className="studio-user">
-          {user.isAdmin ? <Link href="/admin" className="admin-link">ניהול</Link> : null}
-          <Link href="/account" className="account-link">הגדרות</Link>
-          <span className="plan-pill">{user.plan === "plus" ? "PLUS" : "FREE"}</span>
-          <div><b>{user.displayName}</b><span>{user.email}</span></div>
-          <div className="user-avatar">{user.displayName.slice(0, 1)}</div>
-          <LogoutButton />
-        </div>
-      </header>
-      <StudioClient
-        key={createMode ? "create" : "dashboard"}
-        initialName={user.displayName}
-        initialMode={createMode ? "templates" : "dashboard"}
+    <main className="studio-app-shell studio-body" id="main-content">
+      <AppTopbar
+        displayName={user.displayName}
+        plan={user.plan}
+        isAdmin={user.isAdmin}
+        current={createMode ? "create" : "studio"}
       />
+
+      <section className="studio-app-frame">
+        <StudioClient
+          key={createMode ? "create" : "dashboard"}
+          initialName={user.displayName}
+          initialMode={createMode ? "templates" : "dashboard"}
+        />
+      </section>
     </main>
   );
 }

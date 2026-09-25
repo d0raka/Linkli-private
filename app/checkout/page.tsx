@@ -1,36 +1,39 @@
 import Link from "next/link";
 import { requireProductUser } from "@/lib/auth";
 import CheckoutClient from "./checkout-client";
-import { PROJECT_LIMITS } from "@/lib/plans";
+import CheckoutPlanSwitcher from "./checkout-plan-switcher";
+import MarketingWaitlistForm from "@/app/marketing-waitlist-form";
+import { PLAN_CATALOG, getPlanName, isPaidPlan, pageLimit, parsePurchasablePlan, planRank } from "@/lib/plans";
+import { availableCheckoutMethods } from "@/lib/billing";
 import { runtimeValue } from "@/db";
-import AccountHeader from "@/app/account/account-header";
+import AppTopbar from "@/app/app-topbar";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "מנוי וחיוב | Linkli", robots: { index: false, follow: false } };
 
-export default async function CheckoutPage() {
+export default async function CheckoutPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const user = await requireProductUser("/checkout");
-  const developmentCheckout = process.env.NODE_ENV === "development";
-  const fallbackCheckout = Boolean(runtimeValue("BILLING_CHECKOUT_URL"));
-  const availableMethods = ([
-    ["card", "BILLING_CREDIT_CARD_URL"],
-    ["paypal", "BILLING_PAYPAL_URL"],
-    ["bit", "BILLING_BIT_URL"],
-  ] as const)
-    .filter(([, key]) => developmentCheckout || fallbackCheckout || Boolean(runtimeValue(key)))
-    .map(([method]) => method);
+  const rawParams = await searchParams;
+  const rawPlan = Array.isArray(rawParams.plan) ? rawParams.plan[0] : rawParams.plan;
+  const waitlistPlan = PLAN_CATALOG.find((plan) => plan.waitlist && plan.id === rawPlan);
+  const requested = parsePurchasablePlan(rawPlan) || "pro";
+  const selected = waitlistPlan || PLAN_CATALOG.find((plan) => plan.id === requested) || PLAN_CATALOG.find((plan) => plan.id === "pro")!;
+  const alreadyCovered = isPaidPlan(user.plan) && planRank(user.plan) >= planRank(selected.id);
+  const availableMethods = availableCheckoutMethods();
   const portalReady = Boolean(runtimeValue("BILLING_PORTAL_URL"));
+  const limit = pageLimit(user.plan, user.bonusPages);
 
   return (
     <main className="checkout-shell" id="main-content">
-      <AccountHeader displayName={user.displayName} email={user.email} plan={user.plan} />
+      <AppTopbar displayName={user.displayName} plan={user.plan} isAdmin={user.isAdmin} current="account" />
       <div className="checkout-main">
+        <Link href="/studio" className="account-back"><span aria-hidden="true">→</span> חזרה לסטודיו</Link>
         <div className="account-hero checkout-account-hero">
-          <div className="account-hero-avatar subscription-avatar" aria-hidden="true">✦</div>
+          <div className="account-hero-avatar subscription-avatar" aria-hidden="true">{isPaidPlan(user.plan) ? "✦" : "+"}</div>
           <div>
             <span className="kicker">מנוי וחיוב</span>
-            <h1>{user.plan === "plus" ? "המנוי שלכם" : "יותר מקום ליצור"}</h1>
-            <p>{user.plan === "plus" ? "כל פרטי המסלול והגישה שלכם במקום אחד." : "בחרו את המסלול שמתאים לקצב היצירה שלכם."}</p>
+            <h1>{alreadyCovered ? "המסלול שלך" : `שדרוג ל-${selected.name}`}</h1>
+            <p>{alreadyCovered ? "כל פרטי המסלול והגישה במקום אחד." : selected.summary}</p>
           </div>
         </div>
         <nav className="settings-tabs" aria-label="הגדרות החשבון">
@@ -38,23 +41,23 @@ export default async function CheckoutPage() {
           <Link href="/checkout" className="active" aria-current="page"><span aria-hidden="true">◇</span> מנוי וחיוב</Link>
         </nav>
 
-        {user.plan === "plus" ? (
+        {alreadyCovered ? (
           <section className="subscription-active">
             <div className="subscription-active-main">
               <div className="subscription-active-topline">
-                <span className="subscription-status"><i /> מנוי פעיל</span>
-                <span>Linkli Plus</span>
+                <span className="subscription-status"><i /> מסלול פעיל</span>
+                <span>Linkli {getPlanName(user.plan)}</span>
               </div>
               <div className="subscription-active-copy">
                 <div>
                   <span>המסלול הנוכחי</span>
-                  <h2>Linkli Plus</h2>
-                  <p>כל כלי היצירה פתוחים עבורכם — עד {PROJECT_LIMITS.plus} עמודים, כל התבניות וללא מיתוג.</p>
+                  <h2>Linkli {getPlanName(user.plan)}</h2>
+                  <p>עד {limit} עמודים במכסה{user.bonusPages ? `, כולל ${user.bonusPages} מעמודי הפניה` : ""}, בלי מיתוג Linkli.</p>
                 </div>
-                <div className="subscription-price"><strong>₪9.90</strong><span>לחודש</span></div>
               </div>
               <div className="subscription-active-actions">
                 <Link href="/studio" className="button button-primary">חזרה לעמודים שלי</Link>
+                <CheckoutPlanSwitcher currentPlan={user.plan} email={user.email} label="לכל המסלולים" />
                 {portalReady ? (
                   <form action="/api/billing/portal" method="post">
                     <button className="button button-outline">ניהול חיוב וביטול</button>
@@ -66,11 +69,11 @@ export default async function CheckoutPage() {
             </div>
             <aside className="subscription-included-card">
               <span>כלול במסלול</span>
-              <h2>Plus נותן לכם יותר חופש</h2>
+              <h2>{getPlanName(user.plan)} פותח יותר מקום ליצור</h2>
               <ul className="subscription-feature-list">
-                <li><span>✓</span><div><b>עד {PROJECT_LIMITS.plus} עמודים</b><small>צרו כמה חוויות במקביל</small></div></li>
-                <li><span>✓</span><div><b>כל התבניות והרכיבים</b><small>ללא נעילות או הגבלות עיצוב</small></div></li>
-                <li><span>✓</span><div><b>ללא מיתוג Linkli</b><small>העמוד נשאר כולו שלכם</small></div></li>
+                {(PLAN_CATALOG.find((plan) => plan.id === user.plan)?.features || []).map((item) => (
+                  <li key={item}><span>✓</span><div><b>{item}</b></div></li>
+                ))}
               </ul>
             </aside>
           </section>
@@ -78,26 +81,33 @@ export default async function CheckoutPage() {
           <>
             <section className="subscription-plan-banner">
               <div>
-                <span className="subscription-plan-label">PLUS</span>
-                <h2>כל מה שצריך כדי ליצור בלי לעצור</h2>
-                <p>עברו מעמוד אחד לסביבת יצירה מלאה, עם כל התבניות וללא מיתוג Linkli.</p>
+                <span className="subscription-plan-label">{selected.name.toUpperCase()}</span>
+                <h2>{selected.summary}</h2>
+                <p>אפשר תמיד לחזור ל<CheckoutPlanSwitcher currentPlan={user.plan} email={user.email} label="כל המסלולים" variant="link" /> ולבחור אחר.</p>
               </div>
-              <div className="subscription-plan-price"><strong>₪9.90</strong><span>לחודש · ביטול בכל עת</span></div>
+              <div className="subscription-plan-price"><strong>{selected.price}</strong><span>{selected.cadence}</span></div>
             </section>
             <div className="checkout-grid">
               <aside className="order-card">
                 <span className="checkout-section-label">מה מקבלים</span>
-                <h2>הכול פתוח ב־Plus</h2>
+                <h2>הכול פתוח ב-{selected.name}</h2>
                 <ul className="subscription-feature-list order-list">
-                  <li><span>10</span><div><b>עד 10 עמודים במקביל</b><small>לכל אירוע, קמפיין או רעיון חדש</small></div></li>
-                  <li><span>✦</span><div><b>כל התבניות והרכיבים</b><small>כולל ספירה לאחור, Waze ושוברי מתנה</small></div></li>
-                  <li><span>✓</span><div><b>עמודים ללא מיתוג</b><small>חוויה נקייה ומקצועית שמתאימה למותג שלכם</small></div></li>
-                  <li><span>⌁</span><div><b>פרטיות וערוצי מענה</b><small>הגנת סיסמה, WhatsApp, Telegram ו־DM</small></div></li>
+                  {selected.features.map((item) => (
+                    <li key={item}><span>✓</span><div><b>{item}</b></div></li>
+                  ))}
                 </ul>
-                <div className="order-total"><span>סה״כ לחודש</span><strong>₪9.90</strong></div>
-                <p className="order-reassurance">אפשר לבטל את החידוש בכל עת. הגישה נשארת פעילה עד סוף התקופה ששולמה.</p>
+                <div className="order-total"><span>סה״כ</span><strong>{selected.price}</strong></div>
               </aside>
-              <CheckoutClient email={user.email} availableMethods={availableMethods} />
+              {selected.waitlist ? (
+                <section className="payment-card">
+                  <span className="checkout-section-label">רשימת המתנה</span>
+                  <h2>Business נפתח בהדרגה</h2>
+                  <p>אפשר להשאיר פרטים, ונחזור כשהמסלול יהיה זמין לרכישה.</p>
+                  <MarketingWaitlistForm compact defaultEmail={user.email} />
+                </section>
+              ) : (
+                <CheckoutClient email={user.email} plan={requested} priceLabel={selected.price} availableMethods={availableMethods} />
+              )}
             </div>
           </>
         )}

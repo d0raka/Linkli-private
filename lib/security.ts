@@ -3,14 +3,14 @@ import { NextResponse } from "next/server";
 const encoder = new TextEncoder();
 
 export class RequestError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public code?: string) {
     super(message);
   }
 }
 
 export function errorResponse(error: unknown) {
   if (error instanceof RequestError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json({ error: error.message, ...(error.code ? { code: error.code } : {}) }, { status: error.status });
   }
   console.error("Unhandled request error", error);
   return NextResponse.json({ error: "אירעה שגיאה. נסו שוב בעוד רגע." }, { status: 500 });

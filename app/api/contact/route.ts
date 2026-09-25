@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureDatabase } from "@/db";
+import { sendSupportEmail } from "@/lib/email";
 import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, requireSameOrigin } from "@/lib/security";
 import { plainText } from "@/lib/text";
 
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     await enforceRateLimit(db, request, "contact", 5, 3_600);
     await db.prepare("INSERT INTO support_requests (id, name, email, topic, message, page_url) VALUES (?, ?, ?, ?, ?, ?)")
       .bind(crypto.randomUUID(), name, email, topic, message, pageUrl || null).run();
+    await sendSupportEmail({ name, email, topic, body: message, pageUrl });
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
     return errorResponse(error);

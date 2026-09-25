@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import type { CampaignAttribution } from "@/lib/marketing";
+import { apiFetch, errorMessage } from "@/lib/api-client";
 
 export default function MarketingWaitlistForm({ campaign, compact = false, defaultEmail = "" }: { campaign?: CampaignAttribution; compact?: boolean; defaultEmail?: string }) {
   const [status, setStatus] = useState<{ text: string; error?: boolean } | null>(null);
@@ -13,23 +14,25 @@ export default function MarketingWaitlistForm({ campaign, compact = false, defau
     setStatus(null);
     const form = event.currentTarget;
     const data = new FormData(form);
-    const response = await fetch("/api/marketing/waitlist", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        ...Object.fromEntries(data.entries()),
-        ...(campaign || {}),
-        contactConsent: data.get("contactConsent") === "on",
-      }),
-    });
-    const body = await response.json().catch(() => ({}));
-    setSending(false);
-    if (!response.ok) return setStatus({ text: body.error || "לא הצלחנו לשמור את הפרטים", error: true });
-    form.reset();
-    setStatus({ text: "הפנייה נתקלה בהצלחה! צוות Linkli Max יחזור אליכם בהקדם ✨" });
+    try {
+      await apiFetch("/api/marketing/waitlist", {
+        method: "POST",
+        json: {
+          ...Object.fromEntries(data.entries()),
+          ...(campaign || {}),
+          contactConsent: data.get("contactConsent") === "on",
+        },
+      });
+      form.reset();
+      setStatus({ text: "הפרטים נשמרו בהצלחה! נחזור אליכם בהקדם ✨" });
+    } catch (caught) {
+      setStatus({ text: errorMessage(caught, "לא הצלחנו לשמור את הפרטים"), error: true });
+    } finally {
+      setSending(false);
+    }
   }
 
-  return <form className={`marketing-waitlist-form ${compact ? "compact" : ""}`} onSubmit={submit}>
+  return <form className={`marketing-waitlist-form ${compact ? "compact" : ""}`} method="post" action="/api/forms/noscript" onSubmit={submit}>
     <label>שם<input name="name" required minLength={2} maxLength={80} autoComplete="name" /></label>
     <label>דוא״ל<input name="email" type="email" required maxLength={160} autoComplete="email" dir="ltr" defaultValue={defaultEmail} /></label>
     <label>מה תרצו ליצור?<select name="useCase" defaultValue="events"><option value="events">אירועים והזמנות</option><option value="birthdays">ימי הולדת והפתעות</option><option value="couples">זוגיות ודייטים</option><option value="creators">תוכן וקהל</option><option value="business">שימוש עסקי</option><option value="other">משהו אחר</option></select></label>

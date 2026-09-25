@@ -41,7 +41,8 @@ export async function POST(request: Request) {
     const verification = await db.prepare(
       "SELECT verified_at FROM email_verifications WHERE user_email = ?",
     ).bind(email).first();
-    const requiresVerification = Boolean(verification && !verification.verified_at);
+    // Fail closed: an account without a verification record has not proven its email.
+    const requiresVerification = !verification?.verified_at;
     const redirectTo = requiresVerification
       ? `/verify-email?returnTo=${encodeURIComponent(returnTo)}`
       : returnTo;

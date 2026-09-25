@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureDatabase } from "@/db";
 import { getProductUser, hashPassword } from "@/lib/auth";
+import { canUsePagePassword } from "@/lib/plans";
 import { projectFromRow } from "@/lib/projects";
 import { enforceRateLimit, errorResponse, readJsonObject, RequestError, requireSameOrigin, validUuid } from "@/lib/security";
 
@@ -19,6 +20,9 @@ export async function POST(request: Request, context: Context) {
     const password = typeof body.password === "string" ? body.password.normalize("NFC") : "";
     if (!remove && (Array.from(password).length < 6 || Array.from(password).length > 64)) {
       throw new RequestError(400, "הסיסמה לעמוד צריכה להכיל 6–64 תווים.");
+    }
+    if (!remove && !canUsePagePassword(user.plan)) {
+      return NextResponse.json({ error: "סיסמת כניסה כלולה במסלול Max ומעלה", code: "plan_limit", feature: "pagePassword" }, { status: 403 });
     }
     const db = await ensureDatabase();
     await enforceRateLimit(db, request, "project-password", 12, 900, user.email);

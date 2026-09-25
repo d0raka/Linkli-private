@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { ensureDatabase, runtimeValue } from "@/db";
-import { enforceRateLimit, errorResponse, normalizeEmail, RequestError, verifyWebhookSignature } from "@/lib/security";
+import { applyBillingEvent, parseBillingPayload } from "@/lib/billing";
+import { rewardReferralIfNeeded } from "@/lib/referrals";
+import { enforceRateLimit, errorResponse, RequestError, verifyWebhookSignature } from "@/lib/security";
 
 export async function POST(request: Request) {
   try {
@@ -25,28 +27,15 @@ export async function POST(request: Request) {
     } catch {
       throw new RequestError(400, "Invalid payload");
     }
-    const email = normalizeEmail(body.email);
-    const status = body.status === "active" ? "active" : body.status === "cancelled" ? "cancelled" : "";
-    const eventId = typeof body.eventId === "string" ? body.eventId.trim().slice(0, 128) : "";
-    const customerId = typeof body.customerId === "string" ? body.customerId.trim().slice(0, 160) : "";
-    if (!email || !status || !/^[A-Za-z0-9_.:-]{8,128}$/.test(eventId)) throw new RequestError(400, "Invalid payload");
 
+    const event = parseBillingPayload(body);
     const db = await ensureDatabase();
     await enforceRateLimit(db, request, "billing-webhook", 120, 60);
-    const user = await db.prepare("SELECT email FROM users WHERE email = ?").bind(email).first();
-    if (!user) throw new RequestError(404, "Customer not found");
-
-    const plan = status === "active" ? "plus" : "free";
-    const inserted = await db.prepare("INSERT OR IGNORE INTO billing_events (event_id, event_type, customer_email) VALUES (?, ?, ?)").bind(eventId, status, email).run();
-    if (!inserted.meta?.changes) return NextResponse.json({ ok: true, duplicate: true });
-    try {
-      await db.prepare("UPDATE users SET plan = ?, billing_customer_id = ?, updated_at = CURRENT_TIMESTAMP WHERE email = ?")
-        .bind(plan, customerId || null, email).run();
-    } catch (error) {
-      await db.prepare("DELETE FROM billing_events WHERE event_id = ?").bind(eventId).run();
-      throw error;
+    const result = await applyBillingEvent(db, event);
+    if (result.plan && result.plan !== "free" && !result.duplicate && !result.ignored) {
+      await rewardReferralIfNeeded(db, event.email, result.plan);
     }
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     return errorResponse(error);
   }

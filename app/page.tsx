@@ -1,26 +1,45 @@
+import PublishedExperience from "@/app/p/[slug]/published-experience";
 import Link from "next/link";
 import { getProductUser } from "@/lib/auth";
-import { templates } from "@/lib/templates";
-import { PROJECT_LIMITS } from "@/lib/plans";
+import { getTemplate, safeConfig, normalizeTemplateId, templates } from "@/lib/templates";
+import { PLAN_CATALOG } from "@/lib/plans";
 import { campaignFromObject, withCampaign } from "@/lib/marketing";
+import { formatHostWhatsAppInvite } from "@/lib/whatsapp-share";
 import MarketingTracker from "./marketing-tracker";
-import MarketingWaitlistForm from "./marketing-waitlist-form";
-import HeroInteractive from "./hero-interactive";
+import LandingPlanButton from "./paywall/landing-plan-button";
+import LandingNav from "./landing-nav";
+import Reveal from "./reveal";
+import WhatsAppDevice from "./whatsapp-device";
 
 export const dynamic = "force-dynamic";
 export const metadata = { alternates: { canonical: "/" } };
+
+const OCCASIONS = ["ימי הולדת", "חתונות", "בריתות", "בר ובת מצווה", "חינה", "דייטים", "מתנות"];
+const PATH_STEPS = [
+  { title: "בוחרים רגע", text: "דייט, יום הולדת, חתונה — מה שחשוב עכשיו." },
+  { title: "כותבים כמה מילים", text: "שם, משפט, מה שתרצו שיקראו." },
+  { title: "שולחים קישור", text: "בוואטסאפ, כמו כל הודעה. מי שפותח — נכנס." },
+];
 
 export default async function LandingPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const user = await getProductUser();
   const rawParams = await searchParams;
   const flatParams = Object.fromEntries(Object.entries(rawParams).map(([key, value]) => [key, Array.isArray(value) ? value[0] || "" : value || ""]));
   const campaign = campaignFromObject(flatParams);
-  const campaignTemplate = typeof flatParams.template === "string" ? templates.find((template) => template.id === flatParams.template) : undefined;
+  const campaignTemplate = typeof flatParams.template === "string"
+    ? templates.find((template) => template.id === normalizeTemplateId(flatParams.template))
+    : undefined;
   const homeHref = user ? "/studio" : "/";
-  const creationPath = campaignTemplate ? `/studio/create?template=${campaignTemplate.id}` : "/studio";
-  const startHref = user ? creationPath : withCampaign(`/register?returnTo=${encodeURIComponent(creationPath)}`, campaign);
-  const freeTemplateCount = templates.filter((template) => template.free).length;
-  const totalTemplateCount = templates.length;
+  const birthdayStartHref = "/create/birthday";
+  const datePreviewHref = "/preview/date";
+  const landingTemplates = ["date", "birthday", "wedding", "event", "memories", "gift", "brit", "henna"].map((id) => templates.find((template) => template.id === id)!);
+  const dateTemplate = getTemplate("date");
+  const demoInvite = formatHostWhatsAppInvite({
+    headline: dateTemplate.config.headline,
+    tease: dateTemplate.config.subtitle,
+    url: "https://linkli.online/p/shira",
+    emoji: dateTemplate.config.emoji,
+  });
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -29,84 +48,186 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
     operatingSystem: "Web",
     url: "https://linkli.online",
     inLanguage: "he",
-    description: "יצירת עמודים אינטראקטיביים לאירועים, הפתעות, חידונים ורגעים אישיים.",
-    offers: [
-      { "@type": "Offer", name: "Linkli Free", price: "0", priceCurrency: "ILS" },
-      { "@type": "Offer", name: "Linkli Plus", price: "9.90", priceCurrency: "ILS" },
-    ],
+    description: "הופכים רגע מיוחד לקישור שאי אפשר להתעלם ממנו. שולחים בוואטסאפ, נפתח עמוד.",
+    offers: PLAN_CATALOG.map((plan) => ({
+      "@type": "Offer",
+      name: `Linkli ${plan.name}`,
+      price: plan.price.replace(/[^\d.]/g, "") || "0",
+      priceCurrency: "ILS",
+    })),
   };
+
   return (
     <main className="landing-shell" id="main-content">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <MarketingTracker campaign={campaign} templateId={campaignTemplate?.id} />
-      <nav className="topbar wrap">
-        <Link href={homeHref} className="brand">Link<span>li</span></Link>
-        <div className="nav-links">
-          <a href="#templates">תבניות</a>
-          <a href="#pricing">מסלולים</a>
-          {user ? <Link className="button button-small button-dark" href="/studio">לעמודים שלי</Link> : <><Link href={withCampaign("/login", campaign)}>כניסה</Link><Link data-marketing-event="signup_nav" className="button button-small button-dark" href={startHref}>הרשמה חינם</Link></>}
-        </div>
-      </nav>
+      <LandingNav
+        homeHref={homeHref}
+        startHref={birthdayStartHref}
+        loginHref={withCampaign("/login", campaign)}
+        signedIn={Boolean(user)}
+        pricingHref={user ? "#pricing" : "/paywall"}
+      />
 
-      <section className="hero wrap">
-        <div className="hero-copy">
-          <h1>{campaignTemplate ? <>יוצרים {campaignTemplate.name}<br />ש<span className="marker">כולם ירצו לפתוח.</span></> : <>הופכים רגע מיוחד<br />לקישור ש<span className="marker">אי אפשר להתעלם ממנו.</span></>}</h1>
-          <p>{campaignTemplate ? `${campaignTemplate.description} מתחילים מתבנית מוכנה, מתאימים את התוכן ומשתפים קישור אחד שנראה מצוין בכל מכשיר.` : "יוצרים הזמנה, הפתעה, חידון או ברכה אישית עם שאלות, אנימציות ועמוד סיום מעוצב — ואז שולחים קישור אחד שנראה מצוין בכל מכשיר."}</p>
+      <section className="editorial-hero wrap">
+        <Reveal className="editorial-hero-copy" eager>
+          <p className="hero-kicker">שולחים בוואטסאפ · נפתח כעמוד</p>
+          <h1>הופכים רגע מיוחד<br />לקישור שאי אפשר להתעלם ממנו</h1>
+          <p>במקום הודעה שנעלמת בקבוצה — קישור. מי שפותח מקבל רגע: דייט, יום הולדת, חתונה. לא עוד שורה בין מאה הודעות.</p>
           <div className="hero-actions">
-            <Link data-marketing-event="signup_hero" className="button button-primary" href={startHref}>{user ? "לעמודים שלי" : campaignTemplate ? `יצירת ${campaignTemplate.name} בחינם` : "יצירת עמוד בחינם"} <span>←</span></Link>
-            <a className="text-link" href="#templates">לצפייה בתבניות</a>
+            <Link data-marketing-event="signup_hero" className="button button-primary" href={datePreviewHref}>
+              תראו איך נראית הזמנה לדייט <span aria-hidden="true">←</span>
+            </Link>
+            <small>בלי חשבון. בלי כרטיס.</small>
           </div>
-          <div className="trust-row">
-            <span className="trust-icon" aria-hidden="true">✦</span>
-            <span>ללא כרטיס אשראי · מוכנים לשיתוף בתוך דקות</span>
+          <div className="occasion-links">
+            <Link href="/create/wedding">מתחתנים?</Link>
+            <Link href="/create/event">מזמינים לאירוע?</Link>
           </div>
-        </div>
-
-        <HeroInteractive />
-      </section>
-
-      <section className="logo-strip">
-        <div className="wrap strip-inner"><span>מתאים במיוחד ל־</span><b>ימי הולדת 🎂</b><b>אירועים 🥂</b><b>דייטים 💘</b><b>חברים 🤝</b></div>
+          <ul className="hero-occasions" aria-label="סוגי הזמנות">
+            {OCCASIONS.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        </Reveal>
+        <Reveal className="hero-preview-wrap" eager delay={80}>
+          <div className="hero-preview invitation-demo">
+            <div className="preview-chrome-desktop" aria-hidden="true">
+              <span className="preview-dots"><i /><i /><i /></span>
+              <span className="preview-url">linkli.online/p/shira</span>
+            </div>
+            <div className="preview-chrome-phone" aria-hidden="true">
+              <i className="device-notch" />
+              <div className="invitation-demo-caption">
+                <span>לשירה</span>
+                <span>נפתח בטלפון</span>
+              </div>
+            </div>
+            <div className="device-screen preview-screen">
+              <PublishedExperience
+                slug="date-example"
+                templateId="date"
+                config={safeConfig(dateTemplate.config, "date")}
+                showWatermark
+                embedded
+                previewMode
+                trackAnalytics={false}
+              />
+            </div>
+            <Link href={datePreviewHref}>לראות במסך מלא ↗</Link>
+          </div>
+        </Reveal>
+        <Reveal as="div" className="landing-path" aria-label="איך זה עובד">
+          {PATH_STEPS.map((step) => (
+            <div key={step.title}>
+              <strong>{step.title}</strong>
+              <p>{step.text}</p>
+            </div>
+          ))}
+        </Reveal>
       </section>
 
       <section className="section wrap" id="templates">
-        <div className="section-heading"><div><span className="kicker">מתחילים מתבנית</span><h2>משהו לכל רגע</h2></div><p>בוחרים רגע, פותחים תצוגה חיה, ואז הופכים אותה לעמוד משלכם.</p></div>
+        <Reveal className="section-heading">
+          <div>
+            <h2>יש רגע? יש עמוד.</h2>
+          </div>
+          <p>דייט זה לא יום הולדת, וחתונה זה לא ברית. לכל רגע שאלות וסיום משלו — פותחים, משנים שמות, שולחים.</p>
+        </Reveal>
         <div className="template-grid landing-templates">
-          {templates.map((template, index) => (
-            <article className={`template-showcase template-tone-${index + 1}`} key={template.id}>
-              <Link href={withCampaign(`/preview/${template.id}`, campaign)} className="template-art" aria-label={`תצוגה מקדימה של ${template.name}`}><span>{template.emoji}</span><i>{template.category}</i><b>תצוגה חיה</b></Link>
-              <div className="template-info"><h3>{template.name}</h3><p>{template.description}</p><small>3 שאלות · אנימציות · תוצאה אישית</small><div className="template-actions"><Link href={withCampaign(`/preview/${template.id}`, campaign)} className="template-preview-link">תצוגה מקדימה</Link><Link data-marketing-event={`template_${template.id}`} href={user ? `/studio/create?template=${template.id}` : withCampaign(`/register?returnTo=${encodeURIComponent(`/studio/create?template=${template.id}`)}`, campaign)} className="template-use-link">{template.free ? "יצירה בחינם" : "יצירה עם Plus"} <span>←</span></Link></div></div>
-            </article>
+          {landingTemplates.map((template, index) => (
+            <Reveal as="article" className={`template-showcase paper-${template.id}`} key={template.id} delay={index * 40}>
+              <Link href={withCampaign(`/preview/${template.id}`, campaign)} className="template-art" aria-label={`תצוגה מקדימה של ${template.name}`}>
+                <i>{template.category}</i>
+                <div className="template-mini">
+                  <span>{template.emoji}</span>
+                  <strong>{template.config.headline}</strong>
+                </div>
+              </Link>
+              <div className="template-info">
+                <h3>{template.name}</h3>
+                <p>{template.description}</p>
+                <div className="template-actions">
+                  <Link href={withCampaign(`/preview/${template.id}`, campaign)} className="template-preview-link" aria-label={`תצוגה מקדימה: ${template.name}`}>תצוגה</Link>
+                  <Link
+                    data-marketing-event={`template_${template.id}`}
+                    href={["birthday", "wedding", "event"].includes(template.id) ? `/create/${template.id}` : user ? `/studio/create?template=${template.id}` : withCampaign(`/register?returnTo=${encodeURIComponent(`/studio/create?template=${template.id}`)}`, campaign)}
+                    className="template-use-link"
+                  >
+                    {template.free ? "יצירה בחינם" : "במסלול יוצר"} <span>←</span>
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal as="div" className="template-index" aria-label="עוד הזמנות">
+          {templates.filter((template) => !landingTemplates.some((item) => item.id === template.id)).map((template) => (
+            <Link key={template.id} href={`/preview/${template.id}`}>{template.name} <span aria-hidden="true">↗</span></Link>
+          ))}
+        </Reveal>
+      </section>
+
+      <section className="sent-note wrap">
+        <Reveal>
+          <p className="hero-kicker">ככה זה מגיע אליהם</p>
+          <h2>״הכנתי לך משהו.<br />תפתח כשיש לך רגע.״</h2>
+          <p>מדביקים בוואטסאפ כמו כל הודעה. בלי לחבר כלום, בלי לבקש מהם להוריד אפליקציה.</p>
+        </Reveal>
+        <Reveal delay={80}>
+          <WhatsAppDevice message={demoInvite} href={datePreviewHref} name="שירה" caption="הודעה רגילה. הקישור עושה את השאר." />
+        </Reveal>
+      </section>
+
+      <section className="section wrap" id="pricing">
+        <Reveal className="center-heading">
+          <h2>עמוד ראשון בחינם. משלמים רק אם צריך יותר.</h2>
+          <p>אפשר לשלוח עמוד אחד בלי לשלם. תמונות, שיר ואישורי הגעה — כשצריך יותר מרגע אחד.</p>
+        </Reveal>
+        <div className="pricing-grid landing-pricing-grid">
+          {PLAN_CATALOG.map((plan, index) => (
+            <Reveal as="article" className={`price-card ${plan.featured ? "featured" : ""} ${plan.waitlist ? "is-waitlist" : ""}`} key={plan.id} delay={index * 40}>
+              <div className="popular-slot">
+                {plan.featured ? <div className="popular">לרוב האנשים</div> : null}
+              </div>
+              <div className="price-card-header">
+                <span className="plan-label">{plan.name}</span>
+                <h3>{plan.price} <small>/ {plan.cadence}</small></h3>
+                <p>{plan.summary}</p>
+              </div>
+              <ul>
+                {plan.features.map((item) => <li key={item}>{item}</li>)}
+                {plan.blocked.map((item) => <li className="muted" key={item}>{item}</li>)}
+              </ul>
+              {plan.id === "free" ? (
+                <Link href={birthdayStartHref} className={`button ${plan.featured ? "button-primary" : "button-outline"}`}>
+                  {user ? "לעמודים שלי" : "מתחילים בחינם"}
+                </Link>
+              ) : user ? (
+                <LandingPlanButton email={user.email} currentPlan={user.plan} planId={plan.id} featured={plan.featured} label={plan.waitlist ? "להרשמה מוקדמת" : `ל${plan.name}`} />
+              ) : (
+                <Link href={`/register?returnTo=${encodeURIComponent(`/checkout?plan=${plan.id}`)}`} className={`button ${plan.featured ? "button-primary" : "button-outline"}`}>
+                  {plan.waitlist ? "להרשמה מוקדמת" : `ל${plan.name}`}
+                </Link>
+              )}
+            </Reveal>
           ))}
         </div>
       </section>
 
-      <section className="section how-section">
-        <div className="wrap">
-          <div className="center-heading"><span className="kicker">פשוט. ממש פשוט.</span><h2>שלושה צעדים ויש לכם עמוד</h2></div>
-          <div className="steps-grid">
-            <article><span>01</span><div>🧩</div><h3>בוחרים תבנית</h3><p>מתחילים מהסגנון שמתאים לרגע שלכם.</p></article>
-            <article><span>02</span><div>✍️</div><h3>הופכים אותה לשלכם</h3><p>עורכים שאלות, תשובות, צבעים ואת כפתור השיתוף.</p></article>
-            <article><span>03</span><div>🚀</div><h3>מפרסמים ומשתפים</h3><p>מקבלים קישור מוכן לשיתוף ב־WhatsApp וברשתות החברתיות.</p></article>
-          </div>
-        </div>
-      </section>
+      <Reveal as="section" className="final-cta wrap">
+        <h2>יש לכם רגע מיוחד?</h2>
+        <p>תראו קודם איך זה נראה. נרשמים רק אם רוצים לשמור.</p>
+        <Link data-marketing-event="signup_final" href={datePreviewHref} className="button button-light">תראו איך נראית הזמנה לדייט ←</Link>
+      </Reveal>
 
-      <section className="section wrap" id="pricing">
-        <div className="center-heading"><span className="kicker">פשוט להתחיל</span><h2>מתחילים בחינם, משדרגים כשצריך</h2><p>העמוד הראשון נותן לכם לבדוק את הרעיון באמת. Plus מיועד ליוצרים, זוגות ומארחים שרוצים כמה עמודים וקישור נקי בלי מיתוג.</p></div>
-        <div className="pricing-grid">
-          <article className="price-card"><div className="price-card-header"><span className="plan-label">חינם</span><h3>₪0 <small>/ ללא הגבלת זמן</small></h3><p>דרך מהירה ליצור עמוד ראשון ולראות איך כולם מתלהבים.</p></div><ul><li>✓ יצירה מהירה של עמוד אישי</li><li>✓ שיתוף קל ומענה ב-WhatsApp</li><li>✓ אנימציות ועיצוב דינמי</li><li>✓ מעקב צפיות ותגובות בזמן אמת</li><li className="muted">✖ כולל מיתוג Linkli בתחתית העמוד</li></ul><Link href={startHref} className="button button-outline">{user ? "לעמודים שלי" : "מתחילים בחינם"}</Link></article>
-          <article className="price-card featured"><div className="popular">הבחירה של היוצרים והמארחים</div><div className="price-card-header"><span className="plan-label">Plus</span><h3>₪9.90 <small>/ לחודש</small></h3><p>כל הכלים המתקדמים ליצירת עמודים מרגשים ללא שום מגבלה.</p></div><ul><li>✓ יצירת עד 10 עמודים במקביל</li><li>✓ גישה מלאה לכל התבניות במערכת</li><li>✓ עמודים נקיים לחלוטין ללא מיתוג Linkli</li><li>✓ מענה מרובה ערוצים (WhatsApp, Telegram, DM)</li><li>✓ רכיבים אינטראקטיביים (ספירה לאחור, Waze, שוברי מתנה)</li><li>✓ הגנת סיסמה ושליטה מלאה בפרטיות</li></ul><Link href="/checkout" className="button button-primary">שדרוג ל־Plus <span>←</span></Link></article>
+      <footer className="footer wrap">
+        <Link href={homeHref} className="brand">Link<span>li</span></Link>
+        <p>רגע מיוחד, קישור שאי אפשר להתעלם ממנו.</p>
+        <div>
+          <Link href="/legal">תנאים ופרטיות</Link>
+          <Link href="/accessibility">נגישות</Link>
+          <Link href="/contact">יצירת קשר</Link>
         </div>
-        <div className="marketing-pilot" id="marketing-pilot">
-          <div><span className="kicker">Linkli Max</span><h3>צריכים יותר מ-10 עמודים או מיתוג מותאם אישית?</h3><p>פתרון מתקדם לעסקים, מפיקי אירועים וארגונים שצריכים עשרות עמודים במקביל, דומיין אישי וליווי צמוד.</p></div>
-          <MarketingWaitlistForm campaign={campaign} compact />
-        </div>
-      </section>
-
-      <section className="final-cta wrap"><span>✦</span><h2>הרעיון כבר אצלכם.<br />בואו נהפוך אותו לעמוד שאפשר לשתף.</h2><p>העמוד הראשון שלכם יכול להיות מוכן בתוך כמה דקות.</p><Link data-marketing-event="signup_final" href={startHref} className="button button-light">{user ? "חזרה לעמודים שלי" : "יצירת עמוד בחינם"} ←</Link></section>
-
-      <footer className="footer wrap"><Link href={homeHref} className="brand">Link<span>li</span></Link><p>עמודים קטנים לרגעים גדולים.</p><div><Link href="/legal">תנאים ופרטיות</Link><Link href="/accessibility">נגישות</Link><Link href="/contact">יצירת קשר</Link></div></footer>
+      </footer>
     </main>
   );
 }

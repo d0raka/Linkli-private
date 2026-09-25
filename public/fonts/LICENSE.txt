@@ -1,0 +1,4 @@
+Heebo and Rubik are SIL Open Font License 1.1.
+Heebo: Copyright 2014 The Heebo Project Authors, sourced via Fontsource.
+Rubik: Copyright 2015 The Rubik Project Authors, sourced via Fontsource.
+https://scripts.sil.org/OFL

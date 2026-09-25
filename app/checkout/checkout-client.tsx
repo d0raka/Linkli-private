@@ -8,16 +8,22 @@ type PaymentMethod = "card" | "paypal" | "bit";
 
 const methods: Array<{ id: PaymentMethod; icon: string; name: string; description: string }> = [
   { id: "card", icon: "💳", name: "כרטיס אשראי", description: "Visa, Mastercard וכרטיסים נתמכים נוספים" },
-  { id: "paypal", icon: "P", name: "PayPal", description: "תשלום מאובטח דרך חשבון PayPal" },
+  { id: "paypal", icon: "PayPal", name: "PayPal", description: "תשלום דרך PayPal (כרטיס או חשבון PayPal)" },
   { id: "bit", icon: "bit", name: "bit", description: "תשלום דרך bit, בהתאם לאפשרויות ספק הסליקה" },
 ];
 
 export default function CheckoutClient({
   email,
+  plan,
+  priceLabel,
   availableMethods,
+  embedded = false,
 }: {
   email: string;
+  plan: "pro" | "max";
+  priceLabel: string;
   availableMethods: PaymentMethod[];
+  embedded?: boolean;
 }) {
   const offeredMethods = methods.filter((method) => availableMethods.includes(method.id));
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(offeredMethods[0]?.id || null);
@@ -33,7 +39,7 @@ export default function CheckoutClient({
       const response = await fetch("/api/billing/upgrade", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ method }),
+        body: JSON.stringify({ method, plan }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -52,12 +58,12 @@ export default function CheckoutClient({
 
   if (!offeredMethods.length) {
     return (
-      <section className="payment-card">
-        <span className="checkout-section-label">הצטרפות ל־Plus</span>
-        <h2>רוצים שנעדכן אתכם?</h2>
+      <section className={`payment-card${embedded ? " is-embedded" : ""}`}>
+        <span className="checkout-section-label">הצטרפות ל-{plan}</span>
+        <h2>התשלום ייפתח בקרוב</h2>
         <div className="checkout-beta-note" role="status">
-          <strong>ההצטרפות האוטומטית נפתחת בהדרגה.</strong>
-          <span>השאירו פרטים ונעדכן אתכם אישית ברגע שאפשר יהיה להצטרף.</span>
+          <strong>התשלום ייפתח בקרוב.</strong>
+          <span>אפשר להשאיר פרטים כאן, ונעדכן ברגע שאפשר יהיה לשלם.</span>
         </div>
         <MarketingWaitlistForm compact defaultEmail={email} />
         <p className="checkout-security">בינתיים אפשר ליצור ולשתף את העמוד הראשון בחינם, בלי כרטיס אשראי.</p>
@@ -66,10 +72,10 @@ export default function CheckoutClient({
   }
 
   return (
-    <section className="payment-card">
+    <section className={`payment-card${embedded ? " is-embedded" : ""}`}>
       <span className="checkout-section-label">תשלום מאובטח</span>
-      <h2>איך נוח לכם לשלם?</h2>
-      <p className="payment-card-intro">בחרו אמצעי תשלום. בשלב הבא תעברו לספק הסליקה להשלמת החיוב.</p>
+      <h2>איך נוח לך לשלם?</h2>
+      <p className="payment-card-intro">בחירת אמצעי תשלום, ובשלב הבא מעבר לספק הסליקה להשלמת החיוב.</p>
       {error ? (
         <div className={billingUnavailable ? "checkout-beta-note" : "checkout-error"} role="alert">
           <strong>{error}</strong>
@@ -106,7 +112,7 @@ export default function CheckoutClient({
         onClick={() => selectedMethod && pay(selectedMethod)}
         disabled={!selectedMethod || loading !== null}
       >
-        {loading ? "מעבירים לתשלום מאובטח…" : "המשך לתשלום ₪9.90"}
+        {loading ? "מעבירים לתשלום מאובטח…" : `המשך לתשלום ${priceLabel}`}
         {!loading ? <span aria-hidden="true">←</span> : null}
       </button>
       <div className="checkout-security">
@@ -114,7 +120,7 @@ export default function CheckoutClient({
         <p><b>הפרטים נשארים אצל ספק התשלום</b>Linkli מקבלת רק אישור על מצב המנוי, ללא מספר הכרטיס המלא.</p>
       </div>
       <p className="checkout-consent">
-        בלחיצה על המשך אני מאשר/ת חיוב בסך ₪9.90 ואת <Link href="/terms">תנאי השימוש</Link>, <Link href="/privacy">מדיניות הפרטיות</Link> ו<Link href="/refunds">מדיניות הביטולים</Link>. אמצעי תשלום שתומך במנוי יחויב מדי חודש עד לביטול. אישור יישלח ל־<span dir="ltr">{email}</span>.
+        בלחיצה על המשך אני מאשר/ת חיוב בסך {priceLabel} ואת <Link href="/terms">תנאי השימוש</Link>, <Link href="/privacy">מדיניות הפרטיות</Link> ו<Link href="/refunds">מדיניות הביטולים</Link>. אישור יישלח ל־<span dir="ltr">{email}</span>.
       </p>
     </section>
   );

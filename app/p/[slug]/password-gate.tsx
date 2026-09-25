@@ -18,7 +18,7 @@ export default function PasswordGate({ slug, title, emoji, accent, accentSoft }:
 
   return <main className="page-lock-shell" id="main-content" style={{ "--page-soft": accentSoft, "--page-accent": accent } as React.CSSProperties}>
     <section className="page-lock-card"><div className="page-lock-icon"><span>{emoji}</span><i aria-hidden="true">🔒</i></div><span className="preview-mini-label">עמוד מוגן</span><h1>{title}</h1><p>העמוד הזה מוגן בסיסמה. הזינו אותה כדי להמשיך.</p>
-      <form onSubmit={unlock}><label htmlFor="page-password">סיסמת העמוד</label><input id="page-password" name="password" type="password" required minLength={6} maxLength={64} autoComplete="current-password" autoFocus dir="ltr" />{error && <div className="auth-error" role="alert">{error}</div>}<button className="button button-primary" disabled={working}>{working ? "פותחים…" : "פתיחת העמוד"}</button></form>
+      <form method="post" action="/api/forms/noscript" onSubmit={unlock}><label htmlFor="page-password">סיסמת העמוד</label><input id="page-password" name="password" type="password" required minLength={6} maxLength={64} autoComplete="current-password" autoFocus dir="ltr" />{error && <div className="auth-error" role="alert">{error}</div>}<button className="button button-primary" disabled={working}>{working ? "פותחים…" : "פתיחת העמוד"}</button></form>
       <small>הסיסמה נבדקת בצורה מאובטחת ואינה נשמרת בדפדפן.</small>
     </section>
   </main>;

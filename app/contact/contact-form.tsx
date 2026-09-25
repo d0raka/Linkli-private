@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { apiFetch, errorMessage } from "@/lib/api-client";
 
 export default function ContactForm() {
   const [topic, setTopic] = useState(() => {
@@ -13,14 +14,19 @@ export default function ContactForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSending(true); setStatus(null);
-    const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/contact", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(form.entries())) });
-    const data = await response.json(); setSending(false);
-    if (!response.ok) return setStatus({ text: data.error || "לא הצלחנו לשלוח את הפנייה", error: true });
-    event.currentTarget.reset(); setTopic("general"); setStatus({ text: "הפנייה התקבלה. תודה שכתבתם לנו 💌" });
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    try {
+      await apiFetch("/api/contact", { method: "POST", json: Object.fromEntries(form.entries()) });
+      formElement.reset(); setTopic("general"); setStatus({ text: "הפנייה התקבלה. תודה שכתבתם לנו 💌" });
+    } catch (caught) {
+      setStatus({ text: errorMessage(caught, "לא הצלחנו לשלוח את הפנייה"), error: true });
+    } finally {
+      setSending(false);
+    }
   }
 
-  return <form className="contact-form" onSubmit={submit}>
+  return <form className="contact-form" method="post" action="/api/forms/noscript" onSubmit={submit}>
     <label>שם מלא<input name="name" required maxLength={80} autoComplete="name" /></label>
     <label>דוא״ל לחזרה<input name="email" type="email" required maxLength={160} autoComplete="email" /></label>
     <label className="full">נושא<select name="topic" value={topic} onChange={(event) => setTopic(event.target.value)}><option value="general">שאלה כללית</option><option value="billing">חיוב, ביטול או החזר</option><option value="accessibility">נגישות</option><option value="privacy">פרטיות ומידע אישי</option><option value="technical">תקלה טכנית</option></select></label>

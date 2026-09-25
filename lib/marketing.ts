@@ -53,6 +53,12 @@ export function withCampaign(path: string, campaign: CampaignAttribution) {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+async function existingUserEmail(db: any, email?: string | null) {
+  if (!email) return null;
+  const row = await db.prepare("SELECT email FROM users WHERE email = ?").bind(email).first();
+  return row ? String(row.email) : null;
+}
+
 export async function recordMarketingEvent(
   db: any,
   eventName: MarketingEventName,
@@ -63,6 +69,7 @@ export async function recordMarketingEvent(
   } = {},
 ) {
   const campaign = options.campaign || { source: "", medium: "", campaign: "", content: "", term: "" };
+  const userEmail = await existingUserEmail(db, options.userEmail);
   await db.prepare(
     `INSERT INTO marketing_events (
       id, event_name, user_email, campaign_source, campaign_medium, campaign_name,
@@ -71,7 +78,7 @@ export async function recordMarketingEvent(
   ).bind(
     crypto.randomUUID(),
     eventName,
-    options.userEmail || null,
+    userEmail,
     campaign.source || null,
     campaign.medium || null,
     campaign.campaign || null,

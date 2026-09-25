@@ -27,6 +27,13 @@ export default defineConfig(async () => {
           d1_databases: hostingConfig.d1
             ? [{ binding: hostingConfig.d1, database_name: "linkli-d1", database_id: LOCAL_DATABASE_ID }]
             : [],
+          assets: { binding: "ASSETS" },
+          images: { binding: "IMAGES" },
+          r2_buckets: hostingConfig.r2
+            ? [{ binding: hostingConfig.r2, bucket_name: "linkli-media" }]
+            : [],
+          observability: { enabled: true, head_sampling_rate: 0.1, logs: { enabled: true, invocation_logs: false } },
+          triggers: { crons: ["15 3 * * *"] },
         },
       }),
     ],
