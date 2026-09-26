@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
-const PUBLIC_PATHS = ["/", "/login", "/register", "/paywall", "/preview/birthday"];
+const PUBLIC_PATHS = ["/", "/login", "/register", "/pricing", "/preview/birthday", "/create/birthday", "/legal"];
 
 async function seriousViolations(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();

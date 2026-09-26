@@ -10,9 +10,16 @@ All notable changes to Linkli are documented here. The format follows
 - Design system: semantic tokens (light, opt-in dark, high contrast), `ui-` primitives and React components for buttons, fields, badges, notices, dialogs, menus, toasts and empty states. Icons come from one family (Phosphor).
 - Guests page per invitation (`/studio/[id]/guests`): who is coming, total guests, song requests, a searchable response table with delete, and export to Excel/CSV.
 - Every page has its own editor URL (`/studio/[id]`), so the browser back button, bookmarks and "open in new tab" work. Old `/studio?edit=` links redirect.
+- `/pricing` with plan columns, a feature-by-plan comparison table and the referral program. `/paywall` redirects permanently.
+- Landing page FAQ covering apps, privacy, editing after sending, the free plan, payment and deletion.
 
 ### Changed
 
+- New landing page: a split hero with a live, clickable invitation in a phone frame (birthday, wedding or date), how it works, a template showcase, the real WhatsApp message guests receive, host tools for events, pricing, FAQ and a closing call to action. Campaign links with `?template=` open the matching example and creation flow.
+- Guided creators (birthday, wedding, event) share one layout and preview the real invitation renderer with the host's answers applied, instead of a hand-drawn imitation.
+- Sign-in, sign-up, password recovery and email verification share one focused layout built from the new form components.
+- Legal, accessibility, contact, 404 and payment result pages use the public site header and footer and readable long-form typography.
+- Visible copy no longer uses em-dashes; plan and template texts were tightened.
 - The Studio home is now a server-rendered "My pages" list: each page shows a thumbnail of the invitation, its state (draft or live), views, responses or confirmed guests, and the next useful action (continue editing, or share on WhatsApp). The duplicate stats strip, "next action" card and five-step journey card are gone.
 - The template gallery groups templates into invitations and greetings; the whole thumbnail starts a page, and guided-wizard drafts are applied before the editor opens.
 - Authenticated pages share one header with an account menu (settings, plan and billing, admin, help, sign out) instead of a crowded top bar.
@@ -23,6 +30,8 @@ All notable changes to Linkli are documented here. The format follows
 - Editable regions on the canvas are outlined only on hover or focus instead of permanently.
 
 ### Fixed
+
+- The Business waitlist form asked for consent to be contacted about "Linkli Max", a different, purchasable plan.
 
 - Clicking a short text element twice to edit it no longer lands on a resize handle; handle hit areas extend outward only.
 - A fast second click on a selected element now reliably enters text editing (the selection was read from a stale render).

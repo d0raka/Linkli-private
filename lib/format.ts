@@ -12,7 +12,7 @@ const relative = new Intl.RelativeTimeFormat("he", { numeric: "auto" });
 const dayMonth = new Intl.DateTimeFormat("he-IL", { day: "numeric", month: "short", timeZone: TIME_ZONE });
 const dayMonthYear = new Intl.DateTimeFormat("he-IL", { day: "numeric", month: "short", year: "numeric", timeZone: TIME_ZONE });
 
-/** "לפני 5 דקות", "אתמול", "12 בספט׳" — recent edits read as relative time, older ones as dates. */
+/** "לפני 5 דקות", "אתמול", "12 בספט׳": recent edits read as relative time, older ones as dates. */
 export function formatRelativeDate(value: string, now = Date.now()): string {
   const date = parseDbTimestamp(value);
   if (!date) return "";

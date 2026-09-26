@@ -323,7 +323,7 @@ export default function PublishedExperience({ slug, templateId, config, showWate
     if (question.widget === "dj-song" && config.showDjSong) return customSong.trim() || "נשאיר לכם לבחור";
     return answers[question.id] || "";
   });
-  const answerSummary = config.questions.map((question, index) => `• ${question.prompt} — ${formattedAnswers[index] || "נבחר"}`).join("\n");
+  const answerSummary = config.questions.map((question, index) => `• ${question.prompt}: ${formattedAnswers[index] || "נבחר"}`).join("\n");
   const pageUrl = typeof window !== "undefined" ? window.location.href : "";
   const fullShareText = formatGuestWhatsAppReply({ message: config.whatsappText, answers: answerSummary, url: pageUrl });
   const whatsappMessage = fullShareText.slice(0, 1800);
@@ -584,7 +584,7 @@ export default function PublishedExperience({ slug, templateId, config, showWate
         <div className="experience-navigation"><button className="experience-back" onClick={back}>חזרה</button><button className={elementClass(config, "primaryButton", "experience-primary", false)} style={elementStyle(config, "primaryButton", false)} onClick={next}>{step === config.questions.length - 1 ? config.finalButtonText : "לשלב הבא"}<span aria-hidden="true">←</span></button></div>
       </div> : null}
 
-      {draftPreview && config.rsvpEnabled && <p className="rsvp-test-banner" role="status">מצב בדיקה — התשובה לא נשמרת אצל האורחים</p>}
+      {draftPreview && config.rsvpEnabled && <p className="rsvp-test-banner" role="status">מצב בדיקה: התשובה לא נשמרת אצל האורחים</p>}
       {screen === "rsvp" ? <div className="experience-screen experience-result preview-layout-stack">
         <span className={elementClass(config, "resultLabel", "score-pill")} style={elementStyle(config, "resultLabel")}>לפני ששולחים</span>
         <h2 className={elementClass(config, "resultTitle")} style={elementStyle(config, "resultTitle")}>אישור ההגעה</h2>

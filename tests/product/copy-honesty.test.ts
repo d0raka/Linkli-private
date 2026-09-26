@@ -7,7 +7,7 @@ const root = new URL("../../", import.meta.url);
 describe("user-facing copy honesty", () => {
   it("uses the full RSVP rehearsal banner on draft preview", () => {
     const source = readFileSync(new URL("app/p/[slug]/published-experience.tsx", root), "utf8");
-    expect(source).toContain("מצב בדיקה — התשובה לא נשמרת אצל האורחים");
+    expect(source).toContain("מצב בדיקה: התשובה לא נשמרת אצל האורחים");
   });
 
   it("keeps Free plan copy as one published page plus unlimited drafts", () => {

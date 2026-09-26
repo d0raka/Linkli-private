@@ -2,20 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { CheckCircle, HourglassMedium, SignIn } from "@phosphor-icons/react/ssr";
 import { getPlanName, pageLimit, type PlanType } from "@/lib/plans";
 
-export default function PaymentSuccessClient({
-  state,
-  plan,
-  bonusPages = 0,
-}: {
-  state: "signin" | "processing" | "paid";
-  plan?: PlanType | null;
-  bonusPages?: number;
-}) {
+export default function PaymentSuccessClient({ state, plan, bonusPages = 0 }: { state: "signin" | "processing" | "paid"; plan?: PlanType | null; bonusPages?: number }) {
   const [current, setCurrent] = useState(state);
   const [currentPlan, setCurrentPlan] = useState<PlanType>(plan || "free");
+  const [gaveUp, setGaveUp] = useState(false);
 
+  // The browser redirect proves nothing; the plan is granted only after the provider webhook lands.
   useEffect(() => {
     if (state !== "processing") return;
     let cancelled = false;
@@ -32,56 +27,48 @@ export default function PaymentSuccessClient({
           return;
         }
       } catch {
-        /* keep processing */
+        /* keep polling */
       }
-      if (!cancelled && attempts < 15) window.setTimeout(poll, 2000);
+      if (cancelled) return;
+      if (attempts < 15) window.setTimeout(poll, 2000);
+      else setGaveUp(true);
     }
     const timer = window.setTimeout(poll, 1500);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
+    return () => { cancelled = true; window.clearTimeout(timer); };
   }, [state]);
 
   if (current === "signin") {
     return (
-      <div className="legal-card" style={{ textAlign: "center", padding: "40px 24px" }}>
-        <h1 style={{ fontSize: 28, margin: "16px 0 8px" }}>מתחברים כדי לאשר את התשלום</h1>
-        <p style={{ maxWidth: 460, margin: "0 auto 24px", color: "var(--muted)", lineHeight: 1.6 }}>
-          אי אפשר לסמן מסלול כפעיל לפי הקישור בלבד. אחרי ההתחברות נבדוק אם התשלום נקלט.
-        </p>
-        <Link href="/login?returnTo=/payment/success" className="button button-primary">התחברות</Link>
-      </div>
+      <section className="status-page" aria-live="polite">
+        <span className="status-page__icon" aria-hidden="true"><SignIn /></span>
+        <h1>נכנסים כדי לאשר את התשלום</h1>
+        <p>המסלול מופעל רק אחרי שספק התשלום מאשר. אחרי הכניסה נבדוק אם התשלום נקלט.</p>
+        <div className="status-page__actions"><Link href="/login?returnTo=/account" className="ui-button" data-variant="primary">כניסה</Link></div>
+      </section>
     );
   }
 
   if (current === "processing") {
     return (
-      <div className="legal-card" style={{ textAlign: "center", padding: "40px 24px" }}>
-        <span className="score-pill" style={{ background: "#fff7ed", color: "#9a3412", border: "1px solid #fdba74" }}>
-          התשלום בבדיקה
-        </span>
-        <h1 style={{ fontSize: 28, margin: "16px 0 8px" }}>עוד לא קיבלנו אישור מהסליקה</h1>
-        <p style={{ maxWidth: 460, margin: "0 auto 24px", color: "var(--muted)", lineHeight: 1.6 }}>
-          אם שילמתם עכשיו, זה יכול לקחת כמה שניות. המסלול יתעדכן לבד ברגע שההזמנה תסומן כשולמה.
-        </p>
-        <Link href="/checkout" className="button button-outline">חזרה לחיוב</Link>
-      </div>
+      <section className="status-page" aria-live="polite">
+        <span className="status-page__icon" aria-hidden="true"><HourglassMedium /></span>
+        <h1>{gaveUp ? "האישור מתעכב" : "מחכים לאישור מספק התשלום"}</h1>
+        <p>{gaveUp ? "זה קורה לפעמים. המסלול יתעדכן לבד ברגע שהאישור יגיע, ואפשר לבדוק שוב בהגדרות החשבון." : "אם שילמתם עכשיו, זה לוקח בדרך כלל כמה שניות. הדף מתעדכן לבד."}</p>
+        <div className="status-page__actions">
+          <Link href="/account#plan" className="ui-button">למסלול שלי</Link>
+          {gaveUp ? <Link href="/contact?topic=billing" className="ui-button" data-variant="ghost">פנייה לעזרה</Link> : null}
+        </div>
+      </section>
     );
   }
 
   const name = getPlanName(currentPlan);
   return (
-    <div className="legal-card" style={{ textAlign: "center", padding: "40px 24px" }}>
-      <div style={{ fontSize: 72, marginBottom: 12 }}>🎉</div>
-      <span className="score-pill" style={{ background: "#f0fdf4", color: "#166534", border: "1px solid #86efac" }}>
-        מסלול {name} פעיל
-      </span>
-      <h1 style={{ fontSize: 28, margin: "16px 0 8px" }}>תודה שהצטרפת ל-{name}</h1>
-      <p style={{ maxWidth: 460, margin: "0 auto 24px", color: "var(--muted)", lineHeight: 1.6 }}>
-        החשבון שודרג. עכשיו אפשר ליצור עד <strong>{pageLimit(currentPlan, bonusPages)}</strong> עמודים במכסה של המסלול.
-      </p>
-      <Link href="/studio" className="button button-primary">לסטודיו ←</Link>
-    </div>
+    <section className="status-page" aria-live="polite">
+      <span className="status-page__icon" aria-hidden="true"><CheckCircle weight="fill" /></span>
+      <h1>מסלול {name} פעיל</h1>
+      <p>תודה! עכשיו אפשר לפרסם עד {pageLimit(currentPlan, bonusPages)} עמודים, בלי הסימן של Linkli.</p>
+      <div className="status-page__actions"><Link href="/studio" className="ui-button" data-variant="primary">לעמודים שלי</Link></div>
+    </section>
   );
 }

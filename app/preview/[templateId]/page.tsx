@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: Pick<Props, "params">): Promi
   const { templateId } = await params;
   const template = getTemplate(templateId === "rsvp" ? "event" : templateId);
   if (template.id !== (templateId === "rsvp" ? "event" : templateId)) return { title: "תבנית לא נמצאה | Linkli", robots: { index: false, follow: false } };
-  const title = `${template.name} — תבנית אינטראקטיבית | Linkli`;
+  const title = `${template.name}: תבנית אינטראקטיבית | Linkli`;
   return {
     title,
     description: template.description,

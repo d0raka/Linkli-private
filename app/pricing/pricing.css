@@ -1,0 +1,33 @@
+.pricing-hero { padding-block: clamp(2.5rem, 5vw, 4.5rem) var(--space-8); }
+.pricing-hero h1 { margin: 0; max-width: 20ch; font-family: var(--font-display); font-size: clamp(2rem, 1.4rem + 2vw, 3.25rem); font-weight: var(--weight-heavy); line-height: var(--leading-tight); letter-spacing: -0.015em; }
+.pricing-hero__current { display: inline-flex; margin-top: var(--space-5); padding: var(--space-2) var(--space-4); border-radius: var(--radius-control); background: var(--color-surface); border: 1px solid var(--color-border); font-size: var(--text-sm); }
+
+.pricing-compare { padding-block: var(--space-16) var(--space-8); }
+.pricing-compare .landing-title { margin-bottom: var(--space-6); }
+.pricing-table th, .pricing-table td { text-align: center; }
+.pricing-table thead th { color: var(--color-text); font-family: var(--font-display); font-size: var(--text-md); }
+.pricing-table tbody th[scope="row"] { text-align: start; font-weight: var(--weight-bold); color: var(--color-text); font-size: var(--text-sm); }
+.pricing-table td { color: var(--color-text-muted); font-size: var(--text-sm); }
+.pricing-table svg { display: inline-block; width: 1.1rem; height: 1.1rem; vertical-align: middle; }
+.pricing-table .is-yes { color: var(--color-success); }
+.pricing-table .is-no { color: var(--color-text-subtle); }
+
+.pricing-referral {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-6) var(--space-10);
+  margin-block: var(--space-12);
+  padding: var(--space-10);
+  border-radius: var(--radius-surface);
+  background: var(--color-accent-soft);
+}
+.referral-copy { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.referral-copy code { padding: var(--space-3) var(--space-4); border-radius: var(--radius-control); background: var(--color-surface); font-family: var(--font-mono); font-size: var(--text-sm); overflow-wrap: anywhere; }
+
+.pricing-help { padding-bottom: var(--space-16); color: var(--color-text-muted); text-align: center; }
+
+@media (max-width: 760px) {
+  .pricing-referral { grid-template-columns: 1fr; padding: var(--space-6); }
+  .pricing-table { min-width: 36rem; }
+}

@@ -365,7 +365,7 @@ export default function AdminClient({ initialMetrics, initialUsers, initialProje
         <section className="admin-card marketing-section">
           <div className="marketing-section-heading"><div><h2>לידים לתשלום</h2><p>אנשים שביקשו שניצור איתם קשר בנושא המסלול בתשלום.</p></div><strong>{metrics.openLeads} חדשים</strong></div>
           <div className="marketing-lead-list">{leads.length ? leads.map((lead) => <article key={lead.email}>
-            <div><b>{lead.name}</b><a href={`mailto:${lead.email}?subject=${encodeURIComponent("Linkli — המשך לבקשת הגישה")}`}>{lead.email}</a><small>{useCaseLabels[lead.use_case] || lead.use_case} · {lead.campaign_source || "ישיר"}{lead.campaign_name ? ` / ${lead.campaign_name}` : ""} · {date(lead.created_at)}</small></div>
+            <div><b>{lead.name}</b><a href={`mailto:${lead.email}?subject=${encodeURIComponent("Linkli: המשך לבקשת הגישה")}`}>{lead.email}</a><small>{useCaseLabels[lead.use_case] || lead.use_case} · {lead.campaign_source || "ישיר"}{lead.campaign_name ? ` / ${lead.campaign_name}` : ""} · {date(lead.created_at)}</small></div>
             <select disabled={busy === lead.email} value={lead.status} onChange={(event) => updateLead(lead, event.target.value as LeadRow["status"])} aria-label={`סטטוס ליד ${lead.email}`}><option value="new">חדש</option><option value="contacted">נוצר קשר</option><option value="converted">הומר ללקוח</option><option value="closed">סגור</option></select>
           </article>) : <p className="admin-empty">עדיין אין לידים. טופס ההמתנה באתר מוכן לאסוף אותם.</p>}</div>
         </section>

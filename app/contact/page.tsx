@@ -1,11 +1,18 @@
-import LegalHeader from "@/app/legal-header";
+import type { Metadata } from "next";
+import SiteShell, { ContentPage } from "@/app/site/site-shell";
 import ContactForm from "./contact-form";
 
-export const metadata = { title: "יצירת קשר | Linkli" };
+export const metadata: Metadata = { title: "יצירת קשר | Linkli", alternates: { canonical: "/contact" } };
 
 export default function ContactPage() {
-  return <main className="legal-shell" id="main-content"><LegalHeader /><article className="legal-main"><div className="legal-card">
-    <span className="kicker">אנחנו כאן</span><h1>יצירת קשר</h1><p>שאלה על חיוב, בקשת נגישות, פרטיות או עזרה בעמוד שיצרתם? כתבו לנו דרך הטופס או אל <a href="mailto:info@linkli.online">info@linkli.online</a>. אל תשלחו מספר כרטיס אשראי, סיסמה או מידע רגיש שאינו נחוץ לטיפול.</p>
-    <ContactForm />
-  </div></article></main>;
+  return (
+    <SiteShell>
+      <ContentPage
+        title="יצירת קשר"
+        lead={<>שאלה על תשלום, בקשת נגישות, פרטיות או עזרה עם עמוד? כתבו כאן או ל־<a href="mailto:info@linkli.online">info@linkli.online</a>. אנחנו עונים בדרך כלל תוך יום עסקים. אל תשלחו מספר כרטיס אשראי או סיסמה.</>}
+      >
+        <ContactForm />
+      </ContentPage>
+    </SiteShell>
+  );
 }

@@ -12,7 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.8,
     })),
-    { url: `${base}/paywall`, lastModified: updated, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${base}/pricing`, lastModified: updated, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/legal`, lastModified: updated, changeFrequency: "monthly", priority: 0.3 },
     { url: `${base}/contact`, lastModified: updated, changeFrequency: "monthly", priority: 0.4 },
     { url: `${base}/accessibility`, lastModified: updated, changeFrequency: "monthly", priority: 0.3 },

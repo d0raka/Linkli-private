@@ -13,8 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   // Only development follows the request host; everywhere else the canonical origin is fixed.
   const base = new URL(canonicalOrigin(requestHeaders.get("host") || "localhost:3000"));
-  const title = "Linkli — הופכים רגע מיוחד לקישור שאי אפשר להתעלם ממנו";
-  const description = "במקום הודעה שנעלמת בקבוצה — קישור שנפתח כעמוד. דייט, יום הולדת, חתונה. שולחים בוואטסאפ.";
+  const title = "הופכים רגע מיוחד לקישור שאי אפשר להתעלם ממנו | Linkli";
+  const description = "במקום הודעה שנעלמת בקבוצה, קישור שנפתח כעמוד. דייט, יום הולדת, חתונה. שולחים בוואטסאפ.";
   return {
     metadataBase: base,
     title,
@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
       ],
       apple: [{ url: "/icon.svg" }]
     },
-    openGraph: { title, description, type: "website", images: [{ url: "/og-marketing.jpg", width: 1200, height: 630, alt: "Linkli — עמוד קטן, רגע גדול" }] },
+    openGraph: { title, description, type: "website", images: [{ url: "/og-marketing.jpg", width: 1200, height: 630, alt: "Linkli: עמוד קטן, רגע גדול" }] },
     twitter: { card: "summary_large_image", title, description, images: ["/og-marketing.jpg"] },
   };
 }
