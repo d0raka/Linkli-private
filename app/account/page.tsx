@@ -6,7 +6,7 @@ import { ensureReferralCode } from "@/lib/referrals";
 import { hasActiveSubscription } from "@/lib/billing";
 import { canonicalOrigin } from "@/lib/site";
 import { headers } from "next/headers";
-import AppTopbar from "@/app/app-topbar";
+import AppShell from "@/app/app-shell/app-shell";
 import AccountClient from "./account-client";
 
 export const dynamic = "force-dynamic";
@@ -40,8 +40,8 @@ export default async function AccountPage() {
   const subscriptionActive = await hasActiveSubscription(db, user.email);
 
   return (
-    <main className="account-shell" id="main-content">
-      <AppTopbar displayName={user.displayName} plan={user.plan} isAdmin={user.isAdmin} current="account" />
+    <AppShell user={user} current="account">
+      <div className="account-shell">
       <section className="account-main">
         <Link href="/studio" className="account-back">
           <span aria-hidden="true">→</span>
@@ -80,6 +80,7 @@ export default async function AccountPage() {
           hasActiveSubscription={subscriptionActive}
         />
       </section>
-    </main>
+      </div>
+    </AppShell>
   );
 }

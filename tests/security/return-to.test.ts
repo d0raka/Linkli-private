@@ -19,6 +19,17 @@ describe("SEC-07: returnTo never carries personal content", () => {
     expect(safeReturnTo("/checkout?plan=evil")).toBe("/checkout");
   });
 
+  it("allows page-scoped studio routes only for well-formed page ids", () => {
+    const id = "6f1d2c3e-4b5a-4c6d-8e7f-90a1b2c3d4e5";
+    expect(safeReturnTo(`/studio/${id}`)).toBe(`/studio/${id}`);
+    expect(safeReturnTo(`/studio/${id}/guests`)).toBe(`/studio/${id}/guests`);
+    expect(safeReturnTo(`/studio/preview/${id}`)).toBe(`/studio/preview/${id}`);
+    expect(safeReturnTo(`/studio/${id}?memory=secret`)).toBe(`/studio/${id}`);
+    expect(safeReturnTo("/studio/not-a-page")).toBe("/studio");
+    expect(safeReturnTo(`/studio/${id}/../../evil`)).toBe("/studio");
+    expect(safeReturnTo("/pricing")).toBe("/pricing");
+  });
+
   it("keeps the existing path allowlist and fallbacks", () => {
     expect(safeReturnTo("https://evil.example/studio")).toBe("/studio");
     expect(safeReturnTo("//evil.example")).toBe("/studio");

@@ -6,7 +6,7 @@ import MarketingWaitlistForm from "@/app/marketing-waitlist-form";
 import { PLAN_CATALOG, getPlanName, isPaidPlan, pageLimit, parsePurchasablePlan, planRank } from "@/lib/plans";
 import { availableCheckoutMethods } from "@/lib/billing";
 import { runtimeValue } from "@/db";
-import AppTopbar from "@/app/app-topbar";
+import AppShell from "@/app/app-shell/app-shell";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "מנוי וחיוב | Linkli", robots: { index: false, follow: false } };
@@ -24,8 +24,8 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
   const limit = pageLimit(user.plan, user.bonusPages);
 
   return (
-    <main className="checkout-shell" id="main-content">
-      <AppTopbar displayName={user.displayName} plan={user.plan} isAdmin={user.isAdmin} current="account" />
+    <AppShell user={user} current="account">
+      <div className="checkout-shell">
       <div className="checkout-main">
         <Link href="/studio" className="account-back"><span aria-hidden="true">→</span> חזרה לסטודיו</Link>
         <div className="account-hero checkout-account-hero">
@@ -112,6 +112,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
           </>
         )}
       </div>
-    </main>
+      </div>
+    </AppShell>
   );
 }

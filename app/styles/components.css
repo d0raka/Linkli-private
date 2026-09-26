@@ -16,6 +16,8 @@
 .ui-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cluster-gap, var(--space-3)); }
 
 .ui-brand {
+  direction: ltr;
+  unicode-bidi: isolate;
   display: inline-flex;
   align-items: baseline;
   font-family: var(--font-display);

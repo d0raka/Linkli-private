@@ -53,7 +53,12 @@ export class FakeD1Statement {
     return { success: true, results: [], meta: { changes: Number(info.changes), last_row_id: Number(info.lastInsertRowid) } };
   }
 
+  /** Like D1, a batched statement that produces rows returns them in `results`. */
   runSync(): D1RunResult {
+    if (/^\s*(SELECT|WITH|PRAGMA)\b/i.test(this.sql) || /\bRETURNING\b/i.test(this.sql)) {
+      const results = this.statement().all(...this.params);
+      return { success: true, results, meta: { changes: 0, last_row_id: 0 } };
+    }
     const info = this.statement().run(...this.params);
     return { success: true, results: [], meta: { changes: Number(info.changes), last_row_id: Number(info.lastInsertRowid) } };
   }

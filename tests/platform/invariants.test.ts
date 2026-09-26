@@ -16,7 +16,7 @@ describe("M7 platform invariants", () => {
   });
 
   it("lists only hosted Hebrew fonts in Studio pickers", () => {
-    const studio = readFileSync(new URL("app/studio/studio-client.tsx", root), "utf8");
+    const studio = readFileSync(new URL("app/studio/editor/editor.tsx", root), "utf8");
     const allowed = new Set<string>(FONT_FAMILIES);
     const options = Array.from(studio.matchAll(/<option value="([^"]+)">[^<]*(?:Rubik|Heebo|Assistant|Varela|Secular)[^<]*<\/option>/g), (match) => match[1]);
     expect(options.length).toBeGreaterThan(0);
@@ -51,9 +51,11 @@ describe("M7 platform invariants", () => {
     }
   });
 
-  it("loads Studio client only from the Studio shell", () => {
-    const shell = readFileSync(new URL("app/studio/studio-shell.tsx", root), "utf8");
-    expect(shell).toMatch(/import\(["']\.\/studio-client["']\)/);
+  it("loads the editor bundle and its stylesheet only on the editor route", () => {
+    const route = readFileSync(new URL("app/studio/[id]/page.tsx", root), "utf8");
+    expect(route).toMatch(/studio\/editor\/editor-screen/);
+    expect(route).toMatch(/studio\/editor\.css/);
+    expect(readFileSync(new URL("app/layout.tsx", root), "utf8")).not.toMatch(/editor\.css/);
     expect(readFileSync(new URL("app/studio/editor.css", root), "utf8")).toMatch(/\.studio-body/);
   });
 });
