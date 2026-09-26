@@ -63,8 +63,8 @@ export default async function AdminPage() {
   const revenue = await billingMetrics(db);
 
   return (
-    <AppShell user={admin} current="admin">
-      <div className="admin-shell">
+    <AppShell user={admin} current="admin" width="wide">
+      <div>
       <AdminClient
         initialMetrics={{
           users: Number(metrics.users || 0),

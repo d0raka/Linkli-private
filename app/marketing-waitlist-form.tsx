@@ -6,8 +6,14 @@ import { apiFetch, errorMessage } from "@/lib/api-client";
 import { Button } from "@/app/ui/button";
 import { Notice } from "@/app/ui/status";
 
-/** Waitlist for the Business plan, which is not purchasable yet. */
-export default function MarketingWaitlistForm({ campaign, compact = false, defaultEmail = "" }: { campaign?: CampaignAttribution; compact?: boolean; defaultEmail?: string }) {
+const COPY = {
+  business: { consent: "אני מסכים/ה ש-Linkli תיצור איתי קשר לגבי מסלול ארגונים.", done: "הפרטים נשמרו. נחזור אליכם כשמסלול ארגונים ייפתח.", submit: "הצטרפות לרשימת ההמתנה" },
+  payment: { consent: "אני מסכים/ה ש-Linkli תעדכן אותי כשאפשר יהיה לשלם.", done: "הפרטים נשמרו. נעדכן אתכם ברגע שהתשלום ייפתח.", submit: "עדכנו אותי" },
+} as const;
+
+/** Lead capture for plans that cannot be bought yet: the Business waitlist, or checkout before payments open. */
+export default function MarketingWaitlistForm({ campaign, compact = false, defaultEmail = "", purpose = "business" }: { campaign?: CampaignAttribution; compact?: boolean; defaultEmail?: string; purpose?: keyof typeof COPY }) {
+  const copy = COPY[purpose];
   const id = useId();
   const [status, setStatus] = useState<{ text: string; error?: boolean } | null>(null);
   const [sending, setSending] = useState(false);
@@ -24,7 +30,7 @@ export default function MarketingWaitlistForm({ campaign, compact = false, defau
         json: { ...Object.fromEntries(data.entries()), ...(campaign || {}), contactConsent: data.get("contactConsent") === "on" },
       });
       form.reset();
-      setStatus({ text: "הפרטים נשמרו. נחזור אליכם כשמסלול ארגונים ייפתח." });
+      setStatus({ text: copy.done });
     } catch (caught) {
       setStatus({ text: errorMessage(caught, "לא הצלחנו לשמור את הפרטים"), error: true });
     } finally {
@@ -44,7 +50,7 @@ export default function MarketingWaitlistForm({ campaign, compact = false, defau
       </div>
       <div className="ui-field">
         <label className="ui-label" htmlFor={`${id}-use`}>למה תשתמשו ב-Linkli?</label>
-        <select id={`${id}-use`} className="ui-input" name="useCase" defaultValue="events">
+        <select id={`${id}-use`} className="ui-input" name="useCase" defaultValue={purpose === "business" ? "business" : "events"}>
           <option value="events">אירועים והזמנות</option>
           <option value="birthdays">ימי הולדת והפתעות</option>
           <option value="couples">זוגיות ודייטים</option>
@@ -56,10 +62,10 @@ export default function MarketingWaitlistForm({ campaign, compact = false, defau
       <label className="auth-honeypot" aria-hidden="true">חברה<input name="company" tabIndex={-1} autoComplete="off" /></label>
       <label className="ui-check">
         <input name="contactConsent" type="checkbox" required />
-        <span>אני מסכים/ה ש-Linkli תיצור איתי קשר לגבי מסלול ארגונים.</span>
+        <span>{copy.consent}</span>
       </label>
       {status ? <Notice tone={status.error ? "danger" : "success"}>{status.text}</Notice> : null}
-      <Button type="submit" variant="primary" loading={sending} loadingLabel="שולחים…">הצטרפות לרשימת ההמתנה</Button>
+      <Button type="submit" variant="primary" loading={sending} loadingLabel="שולחים…">{copy.submit}</Button>
     </form>
   );
 }

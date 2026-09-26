@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { type FormEvent, useMemo, useState } from "react";
 import { getPlanName, type PlanType } from "@/lib/plans";
+import { Button } from "@/app/ui/button";
+import { Dialog } from "@/app/ui/dialog";
+import { Badge, Notice, PageHeader } from "@/app/ui/status";
+import "./admin.css";
 
 type Metrics = { users: number; plusUsers: number; payingCustomers: number; mrrMinor: number; oneTimeRevenueMinor: number; activatedUsers: number; publishingUsers: number; projects: number; published: number; views: number; clicks: number; openSupport: number; openLeads: number };
 type UserRow = { email: string; username?: string | null; display_name: string; plan: "free" | "pro" | "max" | "business"; billing_customer_id?: string | null; created_at: string; status: "active" | "suspended"; note: string; email_verified: number | boolean; project_count: number; published_count: number };
@@ -278,108 +282,150 @@ export default function AdminClient({ initialMetrics, initialUsers, initialProje
     link.click(); URL.revokeObjectURL(link.href);
   }
 
-  const tabs: [Tab, string, string][] = [
-    ["overview", "סקירה", "⌂"],
-    ["marketing", "שיווק ומכירות", "↗"],
-    ["users", "משתמשים", "♙"],
-    ["projects", "עמודים", "▤"],
-    ["support", "פניות", "✉"],
-    ["audit", "יומן פעילות", "✓"],
+  const tabs: [Tab, string, number][] = [
+    ["overview", "סקירה", 0],
+    ["marketing", "שיווק ומכירות", metrics.openLeads],
+    ["users", "משתמשים", 0],
+    ["projects", "עמודים", 0],
+    ["support", "פניות", metrics.openSupport],
+    ["audit", "יומן פעילות", 0],
   ];
+  const titles: Record<Tab, string> = { overview: "תמונת מצב", marketing: "שיווק ומכירות", users: "משתמשים ולקוחות", projects: "עמודים", support: "פניות שירות", audit: "יומן פעילות" };
+  const num = (value: number) => Number(value).toLocaleString("he-IL");
+  const pct = (part: number, whole: number) => (whole ? Math.round((part / whole) * 1000) / 10 : 0);
 
-  return <div className="admin-layout">
-    {reauth ? (
-      <div className="admin-reauth-overlay" role="presentation" onClick={cancelReauth}>
-        <form
-          className="admin-reauth-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="admin-reauth-title"
-          method="post"
-          action="/api/forms/noscript"
-          onClick={(event) => event.stopPropagation()}
-          onSubmit={submitReauth}
-        >
-          <span className="kicker">אישור פעולה רגישה</span>
-          <h2 id="admin-reauth-title">{reauth.title}</h2>
-          <p id="admin-reauth-help">כדי להמשיך, הזינו שוב את סיסמת המנהל שלכם. הפעולה נרשמת ביומן הפעילות.</p>
-          <label>סיסמת המנהל<input name="currentPassword" type="password" required autoFocus autoComplete="current-password" dir="ltr" aria-describedby="admin-reauth-help" /></label>
-          <div className="admin-reauth-actions">
-            <button type="button" className="button button-outline" onClick={cancelReauth}>ביטול</button>
-            <button type="submit" className="button button-primary">אישור והמשך</button>
+  return <div className="admin">
+    <Dialog
+      open={Boolean(reauth)}
+      onClose={cancelReauth}
+      title={reauth?.title || "אישור פעולה"}
+      description="כדי להמשיך, הזינו שוב את סיסמת המנהל. הפעולה נרשמת ביומן הפעילות."
+    >
+      <form className="admin-reauth" method="post" action="/api/forms/noscript" onSubmit={submitReauth}>
+        <div className="ui-field">
+          <label className="ui-label" htmlFor="admin-reauth-password">סיסמת המנהל</label>
+          <input id="admin-reauth-password" className="ui-input" name="currentPassword" type="password" required autoFocus autoComplete="current-password" dir="ltr" />
+        </div>
+        <div className="admin-reauth__actions">
+          <Button onClick={cancelReauth}>ביטול</Button>
+          <Button type="submit" variant="primary">אישור והמשך</Button>
+        </div>
+      </form>
+    </Dialog>
+
+    <PageHeader
+      title={titles[tab]}
+      lead="מרכז ניהול Linkli. כל פעולה רגישה דורשת את סיסמת המנהל ונרשמת ביומן."
+      actions={tab === "users" ? <>
+        <Button variant="primary" size="sm" onClick={() => setShowCreate((value) => !value)}>{showCreate ? "ביטול" : "משתמש דמו חדש"}</Button>
+        <Button size="sm" onClick={exportUsers}>ייצוא CSV</Button>
+      </> : undefined}
+    />
+
+    <nav className="ui-segmented admin-tabs" aria-label="אזורי ניהול">
+      {tabs.map(([id, label, badge]) => (
+        <button key={id} type="button" aria-pressed={tab === id} onClick={() => { setTab(id); setQuery(""); }}>
+          {label}{badge ? <span className="ui-badge" data-tone="accent">{badge}</span> : null}
+        </button>
+      ))}
+    </nav>
+
+    {notice ? <div className="admin-notice"><Notice actions={<Button size="sm" variant="ghost" onClick={() => setNotice("")}>סגירה</Button>}>{notice}</Notice></div> : null}
+
+    {tab === "overview" ? <>
+      <dl className="admin-metrics">
+        <div><dt>משתמשים</dt><dd>{num(metrics.users)}</dd><p>{metrics.plusUsers} במסלול בתשלום</p></div>
+        <div><dt>יצרו עמוד</dt><dd>{activationRate}%</dd><p>{metrics.activatedUsers} משתמשים</p></div>
+        <div><dt>פרסמו</dt><dd>{publishRate}%</dd><p>{metrics.publishingUsers} מתוך מי שיצר</p></div>
+        <div><dt>צפיות</dt><dd>{num(metrics.views)}</dd><p>{num(metrics.clicks)} תגובות · {conversion}%</p></div>
+        <div><dt>לקוחות משלמים</dt><dd>{metrics.payingCustomers}</dd><p>₪{(metrics.oneTimeRevenueMinor / 100).toFixed(2)} חד-פעמי · ₪{(metrics.mrrMinor / 100).toFixed(2)} חודשי</p></div>
+        <div><dt>פניות פתוחות</dt><dd>{metrics.openSupport}</dd><p>ממתינות לטיפול</p></div>
+      </dl>
+      <div className="admin-columns">
+        <section className="ui-panel"><div className="ui-panel__section">
+          <h2 className="ui-section-title">נרשמו לאחרונה</h2>
+          <ul className="admin-feed">{users.slice(0, 6).map((user) => <li key={user.email}><span className="ui-avatar" aria-hidden="true">{user.display_name.slice(0, 1)}</span><div><b>{user.display_name}</b><span>{user.username ? `@${user.username}` : user.email}</span></div><Badge tone={user.plan === "free" ? "neutral" : "accent"}>{getPlanName(user.plan)}</Badge></li>)}</ul>
+        </div></section>
+        <section className="ui-panel"><div className="ui-panel__section">
+          <h2 className="ui-section-title">העמודים הנצפים</h2>
+          <ul className="admin-feed">{[...projects].sort((a, b) => Number(b.views) - Number(a.views)).slice(0, 6).map((project) => <li key={project.id}><div><b>{project.title}</b><span>{project.owner_email}</span></div><span className="admin-feed__num">{num(project.views)} צפיות</span></li>)}</ul>
+        </div></section>
+      </div>
+    </> : null}
+
+    {tab === "marketing" ? <>
+      <dl className="admin-metrics">
+        <div><dt>כניסות מקמפיינים</dt><dd>{num(campaignTotals.landingViews)}</dd><p>30 ימים</p></div>
+        <div><dt>לחיצות לפעולה</dt><dd>{num(campaignTotals.ctaClicks)}</dd><p>{pct(campaignTotals.ctaClicks, campaignTotals.landingViews)}% מהכניסות</p></div>
+        <div><dt>הרשמות</dt><dd>{num(campaignTotals.signups)}</dd><p>{pct(campaignTotals.signups, campaignTotals.landingViews)}% מהכניסות</p></div>
+        <div><dt>עמודים שנוצרו</dt><dd>{num(campaignTotals.projects)}</dd><p>{campaignTotals.publishes} פורסמו</p></div>
+        <div><dt>כניסות לתשלום</dt><dd>{num(campaignTotals.checkouts)}</dd><p>כוונת רכישה</p></div>
+        <div><dt>לידים</dt><dd>{num(leads.length)}</dd><p>{metrics.openLeads} חדשים</p></div>
+      </dl>
+      <section className="admin-block">
+        <h2 className="ui-section-title">ביצועי קמפיינים</h2>
+        <p className="ui-section-lead">לפי מקור וקמפיין (UTM), בלי עוגיות פרסום. 30 הימים האחרונים.</p>
+        <div className="ui-table-wrap"><table className="ui-table"><thead><tr><th>קמפיין</th><th className="num">כניסות</th><th className="num">לחיצות</th><th className="num">הרשמות</th><th className="num">נוצרו</th><th className="num">פורסמו</th><th className="num">תשלום</th><th className="num">לידים</th></tr></thead><tbody>{campaigns.length ? campaigns.map((row) => <tr key={`${row.source}-${row.campaign}`}><td><b>{row.campaign}</b><div className="admin-sub">{row.source}</div></td><td className="num">{Number(row.landing_views)}</td><td className="num">{Number(row.cta_clicks)}</td><td className="num">{Number(row.signups)}</td><td className="num">{Number(row.projects)}</td><td className="num">{Number(row.publishes)}</td><td className="num">{Number(row.checkouts)}</td><td className="num">{Number(row.leads)}</td></tr>) : <tr><td colSpan={8}>הנתונים יופיעו אחרי הכניסות הראשונות.</td></tr>}</tbody></table></div>
+      </section>
+      <section className="admin-block">
+        <h2 className="ui-section-title">לידים</h2>
+        <p className="ui-section-lead">מי שביקש שנחזור אליו: רשימת המתנה למסלול ארגונים, או עדכון כשהתשלום ייפתח.</p>
+        {leads.length ? <div className="ui-table-wrap"><table className="ui-table"><thead><tr><th>שם</th><th>שימוש</th><th>מקור</th><th>התקבל</th><th>מצב</th></tr></thead><tbody>{leads.map((lead) => <tr key={lead.email}>
+          <td><b>{lead.name}</b><div className="admin-sub"><a href={`mailto:${lead.email}?subject=${encodeURIComponent("Linkli: המשך לבקשה שלך")}`} dir="ltr">{lead.email}</a></div></td>
+          <td>{useCaseLabels[lead.use_case] || lead.use_case}</td>
+          <td>{lead.campaign_source || "ישיר"}{lead.campaign_name ? ` / ${lead.campaign_name}` : ""}</td>
+          <td>{date(lead.created_at)}</td>
+          <td><select className="ui-input admin-select" disabled={busy === lead.email} value={lead.status} onChange={(event) => updateLead(lead, event.target.value as LeadRow["status"])} aria-label={`מצב הליד ${lead.email}`}><option value="new">חדש</option><option value="contacted">נוצר קשר</option><option value="converted">הומר ללקוח</option><option value="closed">סגור</option></select></td>
+        </tr>)}</tbody></table></div> : <p className="admin-empty">עוד אין לידים.</p>}
+      </section>
+    </> : null}
+
+    {tab === "users" && showCreate ? (
+      <form className="ui-panel admin-create" method="post" action="/api/forms/noscript" onSubmit={createDemoUser}>
+        <div className="ui-panel__section">
+          <h2 className="ui-section-title">משתמש דמו בלי דוא״ל</h2>
+          <p className="ui-section-lead">נכנסים עם שם המשתמש והסיסמה. אין צורך באימות.</p>
+          <div className="admin-create__grid">
+            <div className="ui-field"><label className="ui-label" htmlFor="demo-username">שם משתמש</label><input id="demo-username" className="ui-input" name="username" required minLength={3} maxLength={32} pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}" dir="ltr" autoComplete="off" /></div>
+            <div className="ui-field"><label className="ui-label" htmlFor="demo-name">שם תצוגה</label><input id="demo-name" className="ui-input" name="displayName" required minLength={2} maxLength={80} /></div>
+            <div className="ui-field"><label className="ui-label" htmlFor="demo-password">סיסמה</label><input id="demo-password" className="ui-input" name="password" type="password" required minLength={15} maxLength={128} dir="ltr" autoComplete="new-password" /></div>
+            <div className="ui-field"><label className="ui-label" htmlFor="demo-plan">מסלול</label><select id="demo-plan" className="ui-input" name="plan" defaultValue="free">{PLAN_OPTIONS.map((plan) => <option key={plan} value={plan}>{getPlanName(plan)}</option>)}</select></div>
           </div>
-        </form>
-      </div>
+          <Button type="submit" variant="primary" loading={busy === "create"} loadingLabel="יוצרים…">יצירת המשתמש</Button>
+        </div>
+      </form>
     ) : null}
-    <aside className="admin-sidebar" aria-label="תפריט ניהול">
-      <div className="admin-sidebar-brand"><b>מרכז ניהול</b><span>שליטה ובקרה על Linkli</span></div>
-      <nav className="admin-sidebar-nav">
-        {tabs.map(([id, label, icon]) => {
-          const badge = id === "support" && metrics.openSupport
-            ? metrics.openSupport
-            : id === "marketing" && metrics.openLeads
-              ? metrics.openLeads
-              : 0;
-          return (
-            <button key={id} type="button" className={tab === id ? "active" : ""} onClick={() => { setTab(id); setQuery(""); }}>
-              <span className="admin-sidebar-icon" aria-hidden="true">{icon}</span>
-              <span className="admin-sidebar-label">{label}</span>
-              {badge ? <i>{badge}</i> : null}
-            </button>
-          );
-        })}
-      </nav>
-    </aside>
-    <section className="admin-main">
-      <div className="admin-main-inner">
-      <Link href="/studio" className="account-back"><span aria-hidden="true">→</span> חזרה לסטודיו</Link>
-      <div className="admin-title-row"><div><span className="kicker">מרכז ניהול</span><h1>{tab === "overview" ? "תמונת מצב" : tab === "marketing" ? "שיווק ומכירות" : tab === "users" ? "משתמשים ולקוחות" : tab === "projects" ? "עמודים שפורסמו" : tab === "support" ? "פניות שירות" : "יומן פעילות"}</h1></div>{tab === "users" ? <div className="admin-title-actions"><button type="button" className="button button-primary button-small" onClick={() => setShowCreate((value) => !value)}>{showCreate ? "ביטול" : "יצירת משתמש דמו"}</button><button type="button" className="button button-outline button-small" onClick={exportUsers}>ייצוא CSV</button></div> : null}</div>
-      {notice ? <div className="admin-notice" role="status">{notice}<button onClick={() => setNotice("")} aria-label="סגירה">×</button></div> : null}
-      {tab === "overview" ? <>
-        <div className="admin-metric-grid">
-          <article><span>משתמשים</span><strong>{metrics.users.toLocaleString("he-IL")}</strong><small>{metrics.plusUsers} במסלול בתשלום</small></article>
-          <article><span>הפעלת מוצר</span><strong>{activationRate}%</strong><small>{metrics.activatedUsers} יצרו לפחות עמוד אחד</small></article>
-          <article><span>פרסום ראשון</span><strong>{publishRate}%</strong><small>{metrics.publishingUsers} פרסמו לפחות עמוד אחד</small></article>
-          <article><span>תנועה לעמודים</span><strong>{metrics.views.toLocaleString("he-IL")}</strong><small>{metrics.clicks.toLocaleString("he-IL")} לחיצות · {conversion}% המרה</small></article>
-          <article><span>לקוחות משלמים</span><strong>{metrics.payingCustomers}</strong><small>₪{(metrics.mrrMinor / 100).toFixed(2)} MRR מאומת · ₪{(metrics.oneTimeRevenueMinor / 100).toFixed(2)} חד-פעמי</small></article>
-          <article><span>פניות חדשות</span><strong>{metrics.openSupport}</strong><small>ממתינות לטיפול</small></article>
-        </div>
-        <div className="admin-two-columns">
-          <article className="admin-card"><h2>לקוחות אחרונים</h2>{users.slice(0,5).map((user) => <div className="admin-feed-row" key={user.email}><div className="admin-avatar">{user.display_name.slice(0,1)}</div><div><b>{user.display_name}</b><span>{user.email}</span></div><em className={`admin-status ${user.plan}`}>{getPlanName(user.plan)}</em></div>)}</article>
-          <article className="admin-card"><h2>עמודים מובילים</h2>{[...projects].sort((a,b) => Number(b.views)-Number(a.views)).slice(0,5).map((project) => <div className="admin-feed-row" key={project.id}><div className="admin-avatar">↗</div><div><b>{project.title}</b><span>{project.owner_email}</span></div><em>{Number(project.views).toLocaleString("he-IL")} צפיות</em></div>)}</article>
-        </div>
-      </> : null}
-      {tab === "marketing" ? <>
-        <div className="admin-metric-grid marketing-metrics">
-          <article><span>כניסות לקמפיינים</span><strong>{campaignTotals.landingViews.toLocaleString("he-IL")}</strong><small>30 הימים האחרונים</small></article>
-          <article><span>לחיצות לפעולה</span><strong>{campaignTotals.ctaClicks.toLocaleString("he-IL")}</strong><small>{campaignTotals.landingViews ? Math.round((campaignTotals.ctaClicks / campaignTotals.landingViews) * 1000) / 10 : 0}% מהכניסות</small></article>
-          <article><span>הרשמות</span><strong>{campaignTotals.signups.toLocaleString("he-IL")}</strong><small>{campaignTotals.landingViews ? Math.round((campaignTotals.signups / campaignTotals.landingViews) * 1000) / 10 : 0}% מהכניסות</small></article>
-          <article><span>עמודים שנוצרו</span><strong>{campaignTotals.projects.toLocaleString("he-IL")}</strong><small>{campaignTotals.publishes} הגיעו לפרסום</small></article>
-          <article><span>כוונת רכישה</span><strong>{campaignTotals.checkouts.toLocaleString("he-IL")}</strong><small>כניסות לתשלום</small></article>
-          <article><span>לידים לתשלום</span><strong>{leads.length.toLocaleString("he-IL")}</strong><small>{metrics.openLeads} חדשים לטיפול</small></article>
-        </div>
-        <section className="admin-card marketing-section">
-          <div className="marketing-section-heading"><div><h2>ביצועי קמפיינים</h2><p>מקור וקמפיין לפי UTM, ללא עוגיות פרסום.</p></div><small>30 ימים</small></div>
-          <div className="admin-table-wrap"><table><thead><tr><th>מקור / קמפיין</th><th>כניסות</th><th>CTA</th><th>הרשמות</th><th>נוצרו</th><th>פורסמו</th><th>תשלום</th><th>לידים</th></tr></thead><tbody>{campaigns.length ? campaigns.map((row) => <tr key={`${row.source}-${row.campaign}`}><td><b>{row.campaign}</b><span>{row.source}</span></td><td>{Number(row.landing_views)}</td><td>{Number(row.cta_clicks)}</td><td>{Number(row.signups)}</td><td>{Number(row.projects)}</td><td>{Number(row.publishes)}</td><td>{Number(row.checkouts)}</td><td>{Number(row.leads)}</td></tr>) : <tr><td colSpan={8}>נתוני הקמפיינים יופיעו אחרי הכניסות הראשונות.</td></tr>}</tbody></table></div>
-        </section>
-        <section className="admin-card marketing-section">
-          <div className="marketing-section-heading"><div><h2>לידים לתשלום</h2><p>אנשים שביקשו שניצור איתם קשר בנושא המסלול בתשלום.</p></div><strong>{metrics.openLeads} חדשים</strong></div>
-          <div className="marketing-lead-list">{leads.length ? leads.map((lead) => <article key={lead.email}>
-            <div><b>{lead.name}</b><a href={`mailto:${lead.email}?subject=${encodeURIComponent("Linkli: המשך לבקשת הגישה")}`}>{lead.email}</a><small>{useCaseLabels[lead.use_case] || lead.use_case} · {lead.campaign_source || "ישיר"}{lead.campaign_name ? ` / ${lead.campaign_name}` : ""} · {date(lead.created_at)}</small></div>
-            <select disabled={busy === lead.email} value={lead.status} onChange={(event) => updateLead(lead, event.target.value as LeadRow["status"])} aria-label={`סטטוס ליד ${lead.email}`}><option value="new">חדש</option><option value="contacted">נוצר קשר</option><option value="converted">הומר ללקוח</option><option value="closed">סגור</option></select>
-          </article>) : <p className="admin-empty">עדיין אין לידים. טופס ההמתנה באתר מוכן לאסוף אותם.</p>}</div>
-        </section>
-      </> : null}
-      {tab === "users" && showCreate ? <form className="admin-create-user" method="post" action="/api/forms/noscript" onSubmit={createDemoUser}><h2>חשבון דמו ללא דוא״ל</h2><label>שם משתמש<input name="username" required minLength={3} maxLength={32} pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}" dir="ltr" autoComplete="off" /></label><label>שם תצוגה<input name="displayName" required minLength={2} maxLength={80} /></label><label>סיסמה<input name="password" type="password" required minLength={15} maxLength={128} dir="ltr" autoComplete="new-password" /></label><label>מסלול<select name="plan" defaultValue="free">{PLAN_OPTIONS.map((plan) => <option key={plan} value={plan}>{getPlanName(plan)}</option>)}</select></label><button className="button button-primary" disabled={busy === "create"}>{busy === "create" ? "יוצר…" : "יצירת החשבון"}</button><small>המשתמש יוכל להתחבר עם שם המשתמש והסיסמה. אין צורך באימות דוא״ל.</small></form> : null}
-      {(tab === "users" || tab === "projects") ? <div className="admin-search"><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === "users" ? "חיפוש לפי שם, משתמש או דוא״ל..." : "חיפוש עמוד, בעלים או כתובת..."} aria-label="חיפוש" /></div> : null}
-      {tab === "users" ? <div className="admin-table-wrap"><table><thead><tr><th>לקוח</th><th>מסלול</th><th>אימות</th><th>עמודים</th><th>מצב</th><th>נרשם</th><th>פעולות</th></tr></thead><tbody>{filteredUsers.map((user) => <tr key={user.email}><td><b>{user.display_name}</b><span>{user.username ? `@${user.username} · חשבון דמו` : user.email}</span>{user.email === adminEmail ? <small>מנהל ראשי</small> : null}</td><td><span className={`admin-status ${user.plan}`}>{getPlanName(user.plan)}</span>{user.billing_customer_id ? <small>לקוח משלם</small> : user.plan !== "free" ? <small>גישה ידנית</small> : null}</td><td><span className={`admin-status ${user.email_verified ? "active" : "new"}`}>{user.username ? "ללא דוא״ל" : user.email_verified ? "מאומת" : "ממתין"}</span></td><td>{Number(user.project_count)} <small>({Number(user.published_count)} פורסמו)</small></td><td><span className={`admin-status ${user.status}`}>{statusLabels[user.status]}</span>{user.note ? <small title={user.note}>יש הערה</small> : null}</td><td>{date(user.created_at)}</td><td><div className="admin-actions"><select className="admin-plan-select" disabled={busy === user.email} value={user.plan} onChange={(event) => updatePlan(user, event.target.value as UserRow["plan"])} aria-label={`מסלול עבור ${user.display_name}`}>{PLAN_OPTIONS.map((plan) => <option key={plan} value={plan}>{getPlanName(plan)}</option>)}</select><button className={user.status === "suspended" ? "restore" : "danger"} disabled={busy === user.email || user.email === adminEmail} onClick={() => toggleUser(user)}>{user.status === "suspended" ? "החזר" : "השעיה"}</button><button className="delete" disabled={busy === user.email || user.email === adminEmail} onClick={() => deleteUser(user)}>מחיקה</button></div></td></tr>)}</tbody></table></div> : null}
-      {tab === "projects" ? <div className="admin-table-wrap"><table><thead><tr><th>עמוד</th><th>בעלים</th><th>תבנית</th><th>תנועה</th><th>מצב</th><th>פעולה</th></tr></thead><tbody>{filteredProjects.map((project) => <tr key={project.id}><td><b>{project.title}</b><span dir="ltr">/p/{project.slug}</span></td><td>{project.owner_email}</td><td>{project.template_id}</td><td>{Number(project.views)} צפיות · {Number(project.clicks)} לחיצות</td><td><span className={`admin-status ${project.published ? "active" : "closed"}`}>{project.published ? "פורסם" : "טיוטה"}</span></td><td><div className="admin-actions">{project.owner_email === adminEmail ? <a href={`/studio?edit=${project.id}`}>עריכה בסטודיו</a> : null}{project.published ? <a href={`/p/${project.slug}`} target="_blank" rel="noreferrer">צפייה</a> : null}<button className={project.published ? "danger" : "restore"} disabled={busy === project.id} onClick={() => toggleProject(project)}>{project.published ? "העבר לטיוטה" : "פרסם"}</button></div></td></tr>)}</tbody></table></div> : null}
-      {tab === "support" ? <div className="support-list">{support.length ? support.map((item) => {
-        const pageUrl = safeHttpUrl(item.page_url);
-        return <article className="admin-card support-item" key={item.id}><header><div><b>{item.name}</b><a href={`mailto:${item.email}`}>{item.email}</a>{pageUrl ? <a href={pageUrl} target="_blank" rel="noreferrer">{pageUrl}</a> : null}</div><span className={`admin-status ${item.status}`}>{statusLabels[item.status]}</span></header><p>{item.message}</p><footer><span>{topicLabels[item.topic] || item.topic} · {date(item.created_at)}</span><select disabled={busy === item.id} value={item.status} onChange={(event) => updateSupport(item, event.target.value as SupportRow["status"])} aria-label="סטטוס פנייה"><option value="new">חדש</option><option value="in_progress">בטיפול</option><option value="closed">סגור</option></select></footer></article>;
-      }) : <p className="admin-empty">אין פניות ממתינות. טופס יצירת הקשר באתר מעביר אותן לכאן.</p>}</div> : null}
-      {tab === "audit" ? <div className="admin-card audit-list">{audit.length ? audit.map((item) => <div className="audit-row" key={item.id}><span>✓</span><div><b>{actionLabels[item.action] || item.action}</b><small>{item.target_type}: {item.target_id}</small></div><time>{date(item.created_at)}</time></div>) : <p className="admin-empty">היומן עדיין ריק. פעולות ניהול יופיעו כאן.</p>}</div> : null}
-      </div>
-    </section>
+
+    {(tab === "users" || tab === "projects") ? <div className="admin-search"><label className="sr-only" htmlFor="admin-search">חיפוש</label><input id="admin-search" className="ui-input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tab === "users" ? "חיפוש לפי שם, משתמש או דוא״ל" : "חיפוש לפי עמוד, בעלים או כתובת"} /></div> : null}
+
+    {tab === "users" ? <div className="ui-table-wrap"><table className="ui-table"><thead><tr><th>משתמש</th><th>מסלול</th><th>אימות</th><th className="num">עמודים</th><th>מצב</th><th>נרשם</th><th><span className="sr-only">פעולות</span></th></tr></thead><tbody>{filteredUsers.map((user) => <tr key={user.email}>
+      <td><b>{user.display_name}</b><div className="admin-sub">{user.username ? `@${user.username} · דמו` : user.email}{user.email === adminEmail ? " · מנהל ראשי" : ""}</div></td>
+      <td><select className="ui-input admin-select" disabled={busy === user.email} value={user.plan} onChange={(event) => updatePlan(user, event.target.value as UserRow["plan"])} aria-label={`מסלול של ${user.display_name}`}>{PLAN_OPTIONS.map((plan) => <option key={plan} value={plan}>{getPlanName(plan)}</option>)}</select><div className="admin-sub">{user.billing_customer_id ? "לקוח משלם" : user.plan !== "free" ? "גישה ידנית" : ""}</div></td>
+      <td><Badge tone={user.username ? "neutral" : user.email_verified ? "success" : "warning"}>{user.username ? "ללא דוא״ל" : user.email_verified ? "מאומת" : "ממתין"}</Badge></td>
+      <td className="num">{Number(user.project_count)}<div className="admin-sub">{Number(user.published_count)} באוויר</div></td>
+      <td><Badge tone={user.status === "suspended" ? "danger" : "success"}>{statusLabels[user.status]}</Badge>{user.note ? <div className="admin-sub" title={user.note}>יש הערה</div> : null}</td>
+      <td className="admin-date">{date(user.created_at)}</td>
+      <td><div className="admin-row-actions"><Button size="sm" variant={user.status === "suspended" ? "secondary" : "danger-quiet"} disabled={busy === user.email || user.email === adminEmail} onClick={() => toggleUser(user)}>{user.status === "suspended" ? "החזרה" : "השעיה"}</Button><Button size="sm" variant="danger-quiet" disabled={busy === user.email || user.email === adminEmail} onClick={() => deleteUser(user)}>מחיקה</Button></div></td>
+    </tr>)}</tbody></table></div> : null}
+
+    {tab === "projects" ? <div className="ui-table-wrap"><table className="ui-table"><thead><tr><th>עמוד</th><th>בעלים</th><th>תבנית</th><th className="num">צפיות</th><th>מצב</th><th><span className="sr-only">פעולות</span></th></tr></thead><tbody>{filteredProjects.map((project) => <tr key={project.id}>
+      <td><b>{project.title}</b><div className="admin-sub" dir="ltr">/p/{project.slug}</div></td>
+      <td>{project.owner_email}</td>
+      <td>{project.template_id}</td>
+      <td className="num">{num(project.views)}<div className="admin-sub">{num(project.clicks)} תגובות</div></td>
+      <td><Badge tone={project.published ? "success" : "neutral"}>{project.published ? "באוויר" : "טיוטה"}</Badge></td>
+      <td><div className="admin-row-actions">{project.owner_email === adminEmail ? <Link className="ui-button" data-size="sm" data-variant="ghost" href={`/studio/${project.id}`}>עריכה</Link> : null}{project.published ? <a className="ui-button" data-size="sm" data-variant="ghost" href={`/p/${project.slug}`} target="_blank" rel="noreferrer">צפייה</a> : null}<Button size="sm" variant={project.published ? "danger-quiet" : "secondary"} disabled={busy === project.id} onClick={() => toggleProject(project)}>{project.published ? "להוריד מהאוויר" : "לפרסם"}</Button></div></td>
+    </tr>)}</tbody></table></div> : null}
+
+    {tab === "support" ? (support.length ? <ul className="admin-support">{support.map((item) => {
+      const pageUrl = safeHttpUrl(item.page_url);
+      return <li key={item.id} className="ui-panel"><div className="ui-panel__section">
+        <div className="admin-support__head"><div><b>{item.name}</b><div className="admin-sub"><a href={`mailto:${item.email}`} dir="ltr">{item.email}</a> · {topicLabels[item.topic] || item.topic} · {date(item.created_at)}</div></div><select className="ui-input admin-select" disabled={busy === item.id} value={item.status} onChange={(event) => updateSupport(item, event.target.value as SupportRow["status"])} aria-label={`מצב הפנייה של ${item.name}`}><option value="new">חדש</option><option value="in_progress">בטיפול</option><option value="closed">סגור</option></select></div>
+        <p className="admin-support__message">{item.message}</p>
+        {pageUrl ? <a className="admin-sub" href={pageUrl} target="_blank" rel="noreferrer" dir="ltr">{pageUrl}</a> : null}
+      </div></li>;
+    })}</ul> : <p className="admin-empty">אין פניות. טופס יצירת הקשר מעביר אותן לכאן.</p>) : null}
+
+    {tab === "audit" ? (audit.length ? <div className="ui-table-wrap"><table className="ui-table"><thead><tr><th>פעולה</th><th>יעד</th><th>מנהל</th><th>מתי</th></tr></thead><tbody>{audit.map((item) => <tr key={item.id}><td><b>{actionLabels[item.action] || item.action}</b></td><td><span className="admin-sub">{item.target_type}:</span> {item.target_id}</td><td>{item.admin_email}</td><td className="admin-date">{date(item.created_at)}</td></tr>)}</tbody></table></div> : <p className="admin-empty">היומן ריק. פעולות ניהול יופיעו כאן.</p>) : null}
   </div>;
 }

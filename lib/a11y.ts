@@ -1,7 +1,5 @@
 const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
-export const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
 export function parseCssRootVars(css: string): Record<string, string> {
   const match = css.match(/:root\s*\{([^}]+)\}/);
   if (!match) return {};
@@ -43,9 +41,4 @@ export function resolveReduceMotion({
   systemPrefersReduce: boolean;
 }): boolean {
   return typeof saved === "boolean" ? saved : systemPrefersReduce;
-}
-
-export function wrapFocusIndex(current: number, delta: number, count: number): number {
-  if (count <= 0) return 0;
-  return ((current + delta) % count + count) % count;
 }

@@ -1,0 +1,55 @@
+.account-layout { display: grid; grid-template-columns: 12rem minmax(0, 1fr); align-items: start; gap: var(--space-8); }
+
+.account-nav { position: sticky; top: calc(var(--header-h) + var(--space-6)); }
+.account-nav ul { display: grid; gap: 2px; padding: 0; list-style: none; }
+.account-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+.account-nav a:hover { background: var(--color-bg-sunken); color: var(--color-text); }
+
+.account-sections { display: grid; gap: var(--space-5); min-width: 0; }
+.account-section { scroll-margin-top: calc(var(--header-h) + var(--space-6)); }
+.account-section__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-5); }
+.account-section__icon { width: 2rem; height: 2rem; color: var(--color-accent); }
+.account-form { display: grid; gap: var(--space-5); }
+.account-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+.account-grid .is-wide { grid-column: 1 / -1; }
+.account-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.account-email-hint { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.account-usage { display: grid; gap: var(--space-2); margin-bottom: var(--space-5); }
+.account-usage__label { display: flex; justify-content: space-between; font-size: var(--text-sm); }
+.account-usage__label span { color: var(--color-text-muted); }
+.account-usage__bar { height: 8px; border-radius: var(--radius-full); background: var(--color-bg-sunken); overflow: hidden; }
+.account-usage__bar span { display: block; height: 100%; border-radius: inherit; background: var(--color-accent); }
+
+.account-features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2) var(--space-6); margin: 0 0 var(--space-6); padding: 0; list-style: none; font-size: var(--text-sm); }
+.account-features li { position: relative; padding-inline-start: var(--space-5); color: var(--color-text-muted); line-height: 1.5; }
+.account-features li::before { content: ""; position: absolute; inset-inline-start: 0; top: 0.55em; width: 0.5rem; height: 0.5rem; border-radius: 2px; background: var(--color-accent); }
+
+.account-devices { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
+.account-devices > svg { width: 2.25rem; height: 2.25rem; color: var(--color-text-muted); }
+.account-devices p { display: grid; flex: 1; min-width: 10rem; }
+.account-devices p span { color: var(--color-text-muted); font-size: var(--text-sm); }
+
+.account-danger { border-color: color-mix(in srgb, var(--color-danger) 28%, var(--color-border)); }
+.account-danger .ui-section-title { color: var(--color-danger); }
+
+@media (max-width: 860px) {
+  .account-layout { grid-template-columns: 1fr; gap: var(--space-4); }
+  .account-nav { position: sticky; top: var(--header-h); z-index: 5; margin-inline: calc(var(--gutter) * -1); padding: var(--space-2) var(--gutter); background: var(--color-bg); border-bottom: 1px solid var(--color-border); overflow-x: auto; scrollbar-width: none; }
+  .account-nav::-webkit-scrollbar { display: none; }
+  .account-nav ul { display: flex; gap: var(--space-1); }
+  .account-nav a { white-space: nowrap; }
+}
+@media (max-width: 600px) {
+  .account-grid, .account-features { grid-template-columns: 1fr; }
+  .account-actions .ui-button, .account-actions form, .account-actions form .ui-button { width: 100%; }
+}

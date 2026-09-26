@@ -41,10 +41,12 @@ describe("A11Y-04/05/06: semantic wiring on public and studio surfaces", () => {
     expect(source("app/studio/page-music-player.tsx")).toMatch(/title/);
   });
 
-  it("traps Tab inside the paywall overlay and focuses the dialog", () => {
-    const overlay = source("app/paywall/paywall-overlay.tsx");
-    expect(overlay).toMatch(/wrapFocusIndex|FOCUSABLE_SELECTOR/);
-    expect(overlay).toMatch(/\.focus\(/);
+  it("builds the paywall on the modal dialog primitive that traps focus and restores it", () => {
+    expect(source("app/paywall/paywall-overlay.tsx")).toMatch(/from "@\/app\/ui\/dialog"/);
+    const dialog = source("app/ui/dialog.tsx");
+    expect(dialog).toMatch(/showModal\(\)/);
+    expect(dialog).toMatch(/opener\.current\?\.focus\(\)/);
+    expect(dialog).toMatch(/aria-labelledby/);
   });
 
   it("seeds the accessibility widget from prefers-reduced-motion", () => {

@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const portalUrl = safeHostedCheckoutUrl(configuredUrl, request);
     portalUrl.searchParams.set("state", state);
     if (customerId) portalUrl.searchParams.set("customer_id", customerId);
-    portalUrl.searchParams.set("return_url", new URL("/checkout", request.url).toString());
+    portalUrl.searchParams.set("return_url", new URL("/account", request.url).toString());
 
     return NextResponse.redirect(portalUrl.toString(), 303);
   } catch (error) {

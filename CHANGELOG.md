@@ -22,6 +22,10 @@ All notable changes to Linkli are documented here. The format follows
 - Visible copy no longer uses em-dashes; plan and template texts were tightened.
 - The Studio home is now a server-rendered "My pages" list: each page shows a thumbnail of the invitation, its state (draft or live), views, responses or confirmed guests, and the next useful action (continue editing, or share on WhatsApp). The duplicate stats strip, "next action" card and five-step journey card are gone.
 - The template gallery groups templates into invitations and greetings; the whole thumbnail starts a page, and guided-wizard drafts are applied before the editor opens.
+- Account settings are one page with a section index: profile, plan and billing (usage of published pages, what the plan includes, upgrade, receipts or billing help), referrals, password, devices and account deletion. Subscription management moved here from the checkout page.
+- `/checkout` is only for buying: an order summary beside the payment step. Visitors who already have the plan are sent to their plan settings.
+- The upgrade dialog shown when a locked feature is used is a plan picker that continues to checkout, built on the native modal dialog.
+- The admin console uses the design system: tabs, one metrics strip instead of six tiles, shared tables and a password dialog for sensitive actions.
 - Authenticated pages share one header with an account menu (settings, plan and billing, admin, help, sign out) instead of a crowded top bar.
 - Plans now limit published pages only. Drafts are unlimited on every plan (with an account-wide cap of 100 to stop abuse); previously paid plans could not even start a draft once their quota was full.
 - Page deletion and unpublishing use accessible confirmation dialogs instead of `window.confirm`.
@@ -31,6 +35,9 @@ All notable changes to Linkli are documented here. The format follows
 
 ### Fixed
 
+- The upgrade dialog inside the Studio embedded a checkout form without the configured payment methods, so it always said payment would open soon even when PayPal was live.
+- When payments were not configured, buying a plan showed the Business waitlist form; it now collects a request to be notified when payment opens.
+- The billing portal returned customers to the checkout page instead of their plan settings.
 - The Business waitlist form asked for consent to be contacted about "Linkli Max", a different, purchasable plan.
 
 - Clicking a short text element twice to edit it no longer lands on a resize handle; handle hit areas extend outward only.
