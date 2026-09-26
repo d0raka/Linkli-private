@@ -1,6 +1,7 @@
 import { requireProductUser } from "@/lib/auth";
 import AppTopbar from "@/app/app-topbar";
-import "./studio.css";
+import "@/app/styles/experience.css";
+import "./editor.css";
 
 export default async function StudioShell({ createMode = false }: { createMode?: boolean }) {
   const returnTo = createMode ? "/studio/create" : "/studio";

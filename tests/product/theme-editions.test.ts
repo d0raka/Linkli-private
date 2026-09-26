@@ -1,13 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { templates } from "@/lib/templates";
+import { allAppCss } from "../helpers/css";
 
-const css = [
-  readFileSync(new URL("../../app/styles/experience.css", import.meta.url), "utf8"),
-  readFileSync(new URL("../../app/styles/marketing.css", import.meta.url), "utf8"),
-  readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8"),
-  readFileSync(new URL("../../app/studio/studio.css", import.meta.url), "utf8"),
-].join("\n");
+const css = allAppCss();
 
 describe("each invitation edition has its own paper", () => {
   it.each(templates)("$id is not a recolored clone", (template) => {

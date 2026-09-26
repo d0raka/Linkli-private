@@ -11,6 +11,10 @@ All notable changes to Linkli are documented here. The format follows
 - Removed a personal owner email that granted admin rights to any local development session. Admin access now comes only from `ADMIN_EMAILS`.
 - Removed obsolete AI-agent handoff prompts from `docs/`, one of which contained a plaintext account password. The password remains in earlier Git history and must be rotated.
 
+### Performance
+
+- Split the 288KB global stylesheet into route-scoped sheets. Guest pages (`/p/[slug]`, template previews and draft previews) no longer download editor and marketing CSS; the editor stylesheet loads only inside the Studio. About 37KB of CSS that no component could produce was deleted.
+
 ### Removed
 
 - Unused components (`hero-interactive`, `account-header`), a dead re-export module, unused Open Graph images, and committed Playwright screenshots and CLI snapshots.

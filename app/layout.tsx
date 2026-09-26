@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "./styles/tokens.css";
-import "./globals.css";
-import "./styles/marketing.css";
-import "./styles/experience.css";
+import "./styles/base.css";
+import "./styles/legacy.css";
 import AccessibilityControls from "./accessibility-controls";
 import CookieNotice from "./cookie-notice";
 import ReferralCapture from "./referral-capture";

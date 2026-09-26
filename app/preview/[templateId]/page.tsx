@@ -4,6 +4,7 @@ import PublishedExperience from "@/app/p/[slug]/published-experience";
 import { getTemplate, safeConfig, templates } from "@/lib/templates";
 import { campaignFromObject, withCampaign } from "@/lib/marketing";
 import MarketingTracker from "@/app/marketing-tracker";
+import "@/app/styles/experience.css";
 
 type Props = { params: Promise<{ templateId: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 

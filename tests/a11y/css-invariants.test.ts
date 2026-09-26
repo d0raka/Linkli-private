@@ -1,9 +1,9 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { allAppCss } from "../helpers/css";
 
-const css = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
-const studioCss = readFileSync(new URL("../../app/studio/studio.css", import.meta.url), "utf8");
-const marketingCss = readFileSync(new URL("../../app/styles/marketing.css", import.meta.url), "utf8");
+const css = allAppCss();
+const studioCss = css;
+const marketingCss = css;
 
 describe("A11Y-02 / FE-05 / A11Y-04: CSS motion, viewport, and touch invariants", () => {
   it("defines bounce instead of leaving the wax envelope animation as a no-op", () => {

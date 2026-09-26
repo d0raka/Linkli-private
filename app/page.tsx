@@ -10,6 +10,7 @@ import LandingPlanButton from "./paywall/landing-plan-button";
 import LandingNav from "./landing-nav";
 import Reveal from "./reveal";
 import WhatsAppDevice from "./whatsapp-device";
+import "./styles/experience.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = { alternates: { canonical: "/" } };
