@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/legacy.css";
+import "./styles/components.css";
 import AccessibilityControls from "./accessibility-controls";
 import CookieNotice from "./cookie-notice";
 import ReferralCapture from "./referral-capture";

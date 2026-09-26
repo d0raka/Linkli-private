@@ -127,27 +127,216 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/*
+ * Linkli design tokens.
+ * Primitive ramps stay private to this file; components consume the semantic layer (--color-*, --text-*, --space-*...).
+ * Shape rule: interactive controls use --radius-control, containers use --radius-surface,
+ * status pills and avatars use --radius-full. Nothing else.
+ */
 :root {
-  --ink: #16141c;
-  --muted: #5a5663;
-  --placeholder: #5a5663;
-  --cream: #f4f2ee;
-  --paper: #f4f2ee;
-  --canvas: #f4f2ee;
-  --seal: #7f3a48;
-  --gold-line: #e4dfd6;
-  --night: #14131a;
-  --pink: var(--seal);
-  --pink-dark: #6a303c;
-  --pink-soft: #f3e8e7;
-  --purple: #675464;
-  --line: #e4dfd6;
-  --badge-bg: #7f3a48;
-  --badge-fg: #fffaf2;
-  --ribbon-bg: #7f3a48;
-  --ribbon-fg: #fffaf2;
-  --shadow: 0 1px 2px rgba(22, 20, 28, .06), 0 18px 48px rgba(22, 20, 28, .08);
-  --shadow-hover: 0 8px 28px rgba(22, 20, 28, .12);
+  color-scheme: light;
+
+  /* Primitive: neutral (cool, slightly violet to sit with the wine accent) */
+  --n-0: #fefefe;
+  --n-25: #fafafb;
+  --n-50: #f5f5f6;
+  --n-100: #ececef;
+  --n-200: #dfdee3;
+  --n-300: #c9c7cf;
+  --n-400: #9e9ba7;
+  --n-500: #6c6975;
+  --n-600: #595663;
+  --n-700: #43414c;
+  --n-800: #2b2932;
+  --n-900: #18171d;
+
+  /* Primitive: wine, the wax-seal accent */
+  --wine-50: #fbf1f3;
+  --wine-100: #f5dfe4;
+  --wine-200: #ebbdc8;
+  --wine-500: #a8405c;
+  --wine-600: #8a2f4a;
+  --wine-700: #72253c;
+  --wine-800: #5b1d30;
+
+  /* Semantic: surfaces and text */
+  --color-bg: var(--n-50);
+  --color-bg-sunken: var(--n-100);
+  --color-surface: var(--n-0);
+  --color-surface-hover: var(--n-25);
+  --color-text: var(--n-900);
+  --color-text-muted: var(--n-600);
+  --color-text-subtle: var(--n-500);
+  --color-border: var(--n-200);
+  --color-border-strong: var(--n-300);
+  --color-border-input: #86828f;
+  --color-overlay: rgb(24 23 29 / 0.44);
+
+  /* Semantic: brand and state */
+  --color-accent: var(--wine-600);
+  --color-accent-hover: var(--wine-700);
+  --color-accent-active: var(--wine-800);
+  --color-accent-soft: var(--wine-50);
+  --color-accent-soft-border: var(--wine-200);
+  --color-on-accent: var(--n-0);
+  --color-inverse: var(--n-900);
+  --color-on-inverse: var(--n-0);
+  --color-success: #16704a;
+  --color-success-soft: #ebf6f0;
+  --color-warning: #8a5208;
+  --color-warning-soft: #fcf3e3;
+  --color-danger: #b3261e;
+  --color-danger-hover: #93201a;
+  --color-danger-soft: #fcecea;
+  --color-focus: #2458d6;
+  --color-whatsapp: #1b7f4b;
+
+  /* Typography */
+  --font-display: "Rubik", "Heebo", system-ui, sans-serif;
+  --font-body: "Heebo", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-display: clamp(2.375rem, 1.55rem + 2.8vw, 3.875rem);
+  --leading-tight: 1.12;
+  --leading-snug: 1.3;
+  --leading-normal: 1.6;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+
+  /* Space: 4px grid */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius-control: 10px;
+  --radius-surface: 16px;
+  --radius-full: 999px;
+  --control-h-sm: 2.25rem;
+  --control-h-md: 2.75rem;
+  --control-h-lg: 3.25rem;
+  --touch-target: 44px;
+
+  /* Elevation: overlays only; structure uses borders */
+  --shadow-sm: 0 1px 2px rgb(24 23 29 / 0.06);
+  --shadow-md: 0 1px 3px rgb(24 23 29 / 0.06), 0 8px 24px -10px rgb(24 23 29 / 0.2);
+  --shadow-lg: 0 2px 6px rgb(24 23 29 / 0.06), 0 28px 64px -18px rgb(24 23 29 / 0.32);
+
+  /* Motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-move: cubic-bezier(0.25, 1, 0.5, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 260ms;
+
+  /* Layout */
+  --container: 1200px;
+  --container-wide: 1320px;
+  --container-narrow: 760px;
+  --gutter: clamp(1rem, 0.6rem + 1.8vw, 2rem);
+  --header-h: 64px;
+
+  /* Layers */
+  --z-sticky: 20;
+  --z-floating: 30;
+  --z-overlay: 40;
+  --z-dialog: 50;
+  --z-toast: 60;
+
+  /* Legacy aliases, consumed by sheets that predate the token system */
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --placeholder: var(--color-text-subtle);
+  --cream: var(--color-bg);
+  --paper: var(--color-bg);
+  --canvas: var(--color-bg);
+  --seal: var(--color-accent);
+  --gold-line: var(--color-border);
+  --night: var(--color-inverse);
+  --pink: var(--color-accent);
+  --pink-dark: var(--color-accent-hover);
+  --pink-soft: var(--color-accent-soft);
+  --purple: var(--n-600);
+  --line: var(--color-border);
+  --badge-bg: var(--color-accent);
+  --badge-fg: var(--color-on-accent);
+  --ribbon-bg: var(--color-accent);
+  --ribbon-fg: var(--color-on-accent);
+  --shadow: var(--shadow-md);
+  --shadow-hover: var(--shadow-md);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root[data-color-scheme="auto"] {
+    color-scheme: dark;
+    --color-bg: #121116;
+    --color-bg-sunken: #0e0d12;
+    --color-surface: #1a1920;
+    --color-surface-hover: #211f27;
+    --color-text: #efedf2;
+    --color-text-muted: #b4b0bc;
+    --color-text-subtle: #9c98a5;
+    --color-border: #2e2c35;
+    --color-border-strong: #4a4753;
+    --color-border-input: #77737f;
+    --color-overlay: rgb(6 5 9 / 0.62);
+    --color-accent: #e58aa3;
+    --color-accent-hover: #ee9fb4;
+    --color-accent-active: #f5b6c7;
+    --color-accent-soft: #351a23;
+    --color-accent-soft-border: #5e2d3d;
+    --color-on-accent: #1d0c12;
+    --color-inverse: #efedf2;
+    --color-on-inverse: #18171d;
+    --color-success: #5cc995;
+    --color-success-soft: #13291f;
+    --color-warning: #e0a54f;
+    --color-warning-soft: #2c2213;
+    --color-danger: #f08a82;
+    --color-danger-hover: #f5a39c;
+    --color-danger-soft: #331716;
+    --color-focus: #7aa2ff;
+    --color-whatsapp: #5cc995;
+    --shadow-md: 0 1px 3px rgb(0 0 0 / 0.4), 0 8px 24px -10px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.4), 0 28px 64px -18px rgb(0 0 0 / 0.7);
+  }
+}
+
+/* Accessibility widget: high-contrast preference */
+html[data-high-contrast="true"] {
+  color-scheme: light;
+  --color-bg: #ffffff;
+  --color-bg-sunken: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f2f2f2;
+  --color-text: #000000;
+  --color-text-muted: #1a1a1a;
+  --color-text-subtle: #262626;
+  --color-border: #000000;
+  --color-border-strong: #000000;
+  --color-border-input: #000000;
+  --color-accent: #6d1f36;
+  --color-accent-hover: #4f1627;
+  --color-accent-soft: #ffffff;
+  --color-accent-soft-border: #000000;
+  --color-on-accent: #ffffff;
+  --color-focus: #0033cc;
+}
