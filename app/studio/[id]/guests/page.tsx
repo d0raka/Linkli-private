@@ -55,7 +55,7 @@ export default async function GuestsPage({ params, searchParams }: Props) {
       </PageHeader>
 
       {!enabled ? (
-        <Notice tone="warning" title="אישורי ההגעה כבויים בעמוד הזה" className="guests-notice" actions={<ButtonLink href={`/studio/${id}?section=guests`} size="sm">הפעלה בעורך</ButtonLink>}>
+        <Notice tone="warning" title="אישורי ההגעה כבויים בעמוד הזה" className="guests-notice" actions={<ButtonLink href={`/studio/${id}?tab=page#rsvp-settings`} size="sm">הפעלה בעורך</ButtonLink>}>
           אורחים לא יכולים לשלוח מענה עד שמפעילים את האפשרות. מענים שכבר התקבלו נשמרים כאן.
         </Notice>
       ) : null}

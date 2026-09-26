@@ -11,6 +11,7 @@ const EVENT_TICKET_THEMES = new Set<TemplateTheme>(["elegant", "wedding", "brit"
 import { buildIcs, clampGuestCount, countdownParts, googleCalendarUrl as buildGoogleCalendarUrl, normalizeEventInstant } from "@/lib/event-time";
 import PageMusicPlayer, { MusicMuteFab, MusicPlaybackProvider } from "@/app/studio/page-music-player";
 import { formatGuestWhatsAppReply, whatsappShareHref } from "@/lib/whatsapp-share";
+import { UserImage } from "@/app/ui/user-image";
 
 const subscribeToHydration = () => () => {};
 
@@ -133,7 +134,7 @@ function MemoriesSlider({ slides = DEFAULT_MEMORY_SLIDES, slug }: { slides?: typ
       }}
     >
       <div className="memory-slide-card">
-        {items[index].photoKey ? <img className="memory-slide-photo" src={`/api/public/${slug}/memory?key=${encodeURIComponent(items[index].photoKey!)}`} alt={items[index].title} /> : <span className="slide-icon">{items[index].icon}</span>}
+        {items[index].photoKey ? <UserImage className="memory-slide-photo" src={`/api/public/${slug}/memory?key=${encodeURIComponent(items[index].photoKey!)}`} alt={items[index].title} /> : <span className="slide-icon">{items[index].icon}</span>}
         <h4>{items[index].title}</h4>
         <p>{items[index].text}</p>
       </div>
@@ -493,7 +494,7 @@ export default function PublishedExperience({ slug, templateId, config, showWate
           </button>
         ) : (
           <>
-            {config.showEmoji !== false && customBlockEnabled("emoji") && <div className={elementClass(config, "emoji", "experience-emoji-wrap")} style={elementStyle(config, "emoji")}>{config.emojiImageVersion ? <img src={`/api/public/${slug}/emoji?v=${config.emojiImageVersion}`} alt="" className="symbol-photo" /> : <span>{config.emoji}</span>}</div>}
+            {config.showEmoji !== false && customBlockEnabled("emoji") && <div className={elementClass(config, "emoji", "experience-emoji-wrap")} style={elementStyle(config, "emoji")}>{config.emojiImageVersion ? <UserImage src={`/api/public/${slug}/emoji?v=${config.emojiImageVersion}`} alt="" className="symbol-photo" loading="eager" /> : <span>{config.emoji}</span>}</div>}
             {config.showGreeting !== false && <p className={elementClass(config, "greeting", "experience-greeting")} style={elementStyle(config, "greeting")}>שלום {config.recipient},</p>}
             <h1 className={elementClass(config, "headline")} style={elementStyle(config, "headline")}>{config.headline}</h1>
             <p className={elementClass(config, "subtitle", "experience-copy")} style={elementStyle(config, "subtitle")}>{config.subtitle}</p>

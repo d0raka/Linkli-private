@@ -18,6 +18,16 @@ All notable changes to Linkli are documented here. The format follows
 - Authenticated pages share one header with an account menu (settings, plan and billing, admin, help, sign out) instead of a crowded top bar.
 - Plans now limit published pages only. Drafts are unlimited on every plan (with an account-wide cap of 100 to stop abuse); previously paid plans could not even start a draft once their quota was full.
 - Page deletion and unpublishing use accessible confirmation dialogs instead of `window.confirm`.
+- The editor has its own focused top bar: back to "My pages", the page title with its live/draft state and a save indicator, preview, and one primary action (publish a draft, or update a live page), with share and an overflow menu. Cmd/Ctrl+S saves.
+- Drafts save automatically about a second after each change. Live pages only change when "Update page" is pressed, so guests never see half-typed text; leaving with pending updates asks first.
+- Editable regions on the canvas are outlined only on hover or focus instead of permanently.
+
+### Fixed
+
+- Clicking a short text element twice to edit it no longer lands on a resize handle; handle hit areas extend outward only.
+- A fast second click on a selected element now reliably enters text editing (the selection was read from a stale render).
+- Text typed while a save was in flight could be overwritten by the server response; saves are now serialized and newer local edits win.
+- Window-level pointer listeners in the canvas used a stale transform handler from the first render.
 
 ### Security
 

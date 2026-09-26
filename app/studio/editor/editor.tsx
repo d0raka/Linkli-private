@@ -1,473 +1,36 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowClockwise, ArrowCounterClockwise } from "@phosphor-icons/react/ssr";
 import { composeEmojiElementStyle, elementHasFreeLayout, elementLayoutStyle, insertElementInOrder, isElementStyleKey, isFlowLockedKey, isTextLayoutKey, paintsChildFill, applyCanvasKeyAction, resizeElementFromHandle, resolveElementOrder, resolvedCopyAlign, rotateElementFromDrag, setElementFreePosition, snapPosition, unpinElement, type ResizeHandle } from "@/lib/element-layout";
 import { CUSTOM_BLOCKS, FONT_FAMILIES, getTemplateFeatures, scratchSecretText, SCRATCH_COVER_PLACEHOLDER, SCRATCH_SECRET_PLACEHOLDER, templates, DEFAULT_MEMORY_SLIDES, type ElementStyleKey, type MemorySlide, type TemplateConfig, type TemplateElementStyle, type TemplateFeature, type TemplateQuestion } from "@/lib/templates";
 import type { ProjectRecord } from "@/lib/projects";
-import { canUsePagePassword, canUsePhotos, featureForConfigKey, featureForElementKey, hasPlanAccess, isPaidPlan, isPlanGatedValue, parsePlanFeature, planLockLabel, requiredPlanForFeature, type PlanFeatureId, type PlanType } from "@/lib/plans";
+import { canUsePagePassword, canUsePhotos, featureForConfigKey, featureForElementKey, hasPlanAccess, isPaidPlan, isPlanGatedValue, parsePlanFeature, requiredPlanForFeature, type PlanFeatureId, type PlanType } from "@/lib/plans";
 import { CanvasElementChrome, type CanvasTransformHandle } from "../canvas-element-chrome";
 import { ElementControlCard, ElementStyleEditor, type ElementContentField } from "../element-customizer";
 import { buildDecorationItems, decorationMotionKey } from "@/lib/decoration-motion";
-import { writeDraftPreviewConfig } from "@/lib/draft-preview";
 import { EVENT_TIMEZONE_OPTIONS } from "@/lib/event-time";
 import { ApiError, apiFetch, errorMessage } from "@/lib/api-client";
 import { primaryPublishLabel } from "@/lib/studio-actions";
 import { backgroundImageUrl, compressBackgroundImage, compressSymbolImage, emojiImageUrl } from "@/lib/background-image";
 import { DecorationMotionControls } from "../decoration-motion-controls";
-import { EditorToolbox, type ToolboxGroupId, type ToolboxRow, type ToolboxTab } from "../editor-toolbox";
-import { PlanLockBadge, PlanLockChip, PlanLockLayer } from "../plan-lock";
+import { EditorToolbox, type ToolboxTab } from "../editor-toolbox";
+import { PlanLockChip, PlanLockLayer } from "../plan-lock";
 import PageMusicPlayer, { MusicMuteFab, MusicPlaybackProvider } from "../page-music-player";
 import RsvpDashboard from "../rsvp-dashboard";
 import { formatHostWhatsAppInvite, whatsappShareHref } from "@/lib/whatsapp-share";
-
-function readInlineText(node: HTMLElement, maxLength: number, trim: boolean, multiline: boolean) {
-  const raw = (node.innerText || node.textContent || "").replace(/\u00a0/g, " ");
-  const withoutBreak = multiline ? raw.replace(/\n$/, "") : raw.replace(/\n/g, "");
-  const next = trim ? withoutBreak.trim() : withoutBreak;
-  return Array.from(next).slice(0, maxLength).join("");
-}
-
-function InlineField({
-  value,
-  onChange,
-  maxLength = 200,
-  multiline = false,
-  className = "",
-  style,
-  placeholder = "לחצו לעריכה",
-  as: Tag = "span",
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  maxLength?: number;
-  multiline?: boolean;
-  className?: string;
-  style?: CSSProperties;
-  placeholder?: string;
-  as?: "span" | "p" | "h2" | "h3" | "b" | "small" | "label";
-}) {
-  const ref = useRef<HTMLElement>(null);
-  const focused = useRef(false);
-  const empty = !(value || "").trim();
-
-  useEffect(() => {
-    if (!focused.current && ref.current && ref.current.textContent !== (value || "")) {
-      ref.current.textContent = value || "";
-    }
-  }, [value]);
-
-  return (
-    <Tag
-      ref={ref as never}
-      className={`inline-edit ${empty ? "is-empty" : ""} ${className}`.trim()}
-      style={style}
-      contentEditable
-      suppressContentEditableWarning
-      data-placeholder={placeholder}
-      role="textbox"
-      aria-label={placeholder}
-      aria-multiline={multiline}
-      onFocus={() => { focused.current = true; }}
-      onMouseDown={(event) => {
-        if (focused.current) event.stopPropagation();
-      }}
-      onClick={(event) => event.stopPropagation()}
-      onDoubleClick={(event) => {
-        event.stopPropagation();
-        focused.current = true;
-        event.currentTarget.focus();
-      }}
-      onInput={(event) => {
-        onChange(readInlineText(event.currentTarget, maxLength, false, multiline));
-      }}
-      onBlur={(event) => {
-        focused.current = false;
-        onChange(readInlineText(event.currentTarget, maxLength, true, multiline));
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Backspace" || event.key === "Delete") event.stopPropagation();
-        if (!multiline && event.key === "Enter") {
-          event.preventDefault();
-          event.currentTarget.blur();
-        }
-        if (event.key === "Escape") {
-          event.currentTarget.textContent = value;
-          event.currentTarget.blur();
-        }
-      }}
-    />
-  );
-}
+import { toDisplayPhone, toNormalizedPhone, editorSections, DESIGN_PRESETS, NAV_FEATURE_KEYS, SHARE_FEATURE_KEYS, elementGroup, featureGroup, lockFeature, OPENING_ELEMENTS, QUESTION_ELEMENTS, COMPLETION_ELEMENTS, ELEMENT_LABELS, CORE_FEATURE_KEYS, featureStyleKey, featureBelongsToStage, type EditorSection, type PreviewScreen, type FeatureStage, type ElementDefinition, type ToolboxItem } from "./editor-model";
+import { BackgroundTemplatePicker, SymbolFace, EmojiImageField, EmojiPicker } from "./pickers";
+import { InlineField } from "./inline-field";
+import { UserImage } from "@/app/ui/user-image";
 
 type CanvasDropHint =
   | { mode: "insert"; targetKey: ElementStyleKey; before: boolean; left: number; top: number; width: number }
   | { mode: "free"; left: number; top: number; width: number; height: number };
 
 export type Profile = { email: string; displayName: string; plan: PlanType; bonusPages: number; pageLimit: number; emailVerified: boolean };
-function toDisplayPhone(raw: string): string {
-  if (!raw) return "";
-  let digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("972")) {
-    digits = "0" + digits.slice(3);
-  }
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
-}
 
-function toNormalizedPhone(val: string): string {
-  const digits = val.replace(/\D/g, "");
-  if (!digits) return "";
-  if (digits.startsWith("0")) {
-    return "972" + digits.slice(1);
-  }
-  if (digits.startsWith("972")) {
-    return digits;
-  }
-  return "972" + digits;
-}
-
-type EditorSection = "opening" | "questions" | "guests" | "completion" | "design";
-type PreviewScreen = "all" | "intro" | "question" | "result";
-
-const editorSections: { id: EditorSection; label: string; helper: string }[] = [
-  { id: "opening", label: "פתיחה", helper: "למי העמוד ומה אומרים בהתחלה" },
-  { id: "questions", label: "שאלות", helper: "החוויה והבחירות של המבקר" },
-  { id: "guests", label: "אורחים", helper: "אישורי הגעה, סיכומים וייצוא" },
-  { id: "completion", label: "סיום", helper: "המסר והפעולה האחרונה" },
-  { id: "design", label: "עיצוב ופרסום", helper: "בוחרים אווירה ומקבלים קישור" },
-];
-
-const DESIGN_PRESETS = [
-  { id: "blush", name: "אישי וחם", helper: "רך, קרוב ומרגש", accent: "#ee5570", soft: "#fff0f3", card: "#ffffff", icon: "♥" },
-  { id: "violet", name: "חגיגי", helper: "צבעוני עם נוכחות", accent: "#6a50b8", soft: "#f1edff", card: "#ffffff", icon: "◆" },
-  { id: "garden", name: "טבעי", helper: "רגוע, נקי ונעים", accent: "#2f8a6c", soft: "#eaf8f2", card: "#ffffff", icon: "❋" },
-  { id: "sun", name: "שמח", helper: "בהיר, קליל ומזמין", accent: "#d88a19", soft: "#fff6dd", card: "#fffdf8", icon: "☀" },
-] as const;
-
-const BACKGROUND_TEMPLATES = [
-  { id: "accent", name: "צבע הדגשה" },
-  { id: "soft", name: "רך" },
-  { id: "solid", name: "מלא" },
-  { id: "dots", name: "נקודות" },
-  { id: "bloom", name: "זוהר" },
-  { id: "sunset", name: "שקיעה" },
-  { id: "waves", name: "גלים" },
-  { id: "paper", name: "נייר" },
-  { id: "stripes", name: "פסים" },
-  { id: "spotlight", name: "זרקור" },
-  { id: "aurora", name: "זוהר צפון" },
-  { id: "night", name: "לילה" },
-  { id: "fluid-mesh", name: "רשת נעה" },
-] as const;
-
-function BackgroundTemplatePicker({
-  value,
-  accent,
-  soft,
-  imageUrl,
-  uploading,
-  error,
-  onChange,
-  onUpload,
-  onRemove,
-  photosLocked,
-  onUnlockPhotos,
-}: {
-  value?: string;
-  accent: string;
-  soft: string;
-  imageUrl?: string;
-  uploading?: boolean;
-  error?: string;
-  onChange: (id: string) => void;
-  onUpload: (file: File) => void;
-  onRemove: () => void;
-  photosLocked?: boolean;
-  onUnlockPhotos?: () => void;
-}) {
-  const selected = value || "soft";
-  const fileRef = useRef<HTMLInputElement>(null);
-  const uploadButton = (
-    <button type="button" role="option" aria-selected={selected === "image"} className={`${selected === "image" ? "active bg-upload-option" : "bg-upload-option"}${photosLocked ? " is-plan-locked" : ""}`} disabled={uploading} onClick={() => {
-      if (photosLocked) {
-        onUnlockPhotos?.();
-        return;
-      }
-      if (imageUrl && selected !== "image") onChange("image");
-      else fileRef.current?.click();
-    }}>
-      <i className="bg-swatch bg-upload-swatch" aria-hidden="true" style={imageUrl ? { backgroundImage: `url("${imageUrl}")` } : undefined}>{imageUrl ? "" : uploading ? "…" : "+"}</i>
-      <b>{uploading ? "מעלים…" : "התמונה שלי"}</b>
-      {photosLocked ? <span className="plan-lock-veil is-inset"><PlanLockBadge feature="photos" plan="free" /></span> : null}
-    </button>
-  );
-  return (
-    <div className="bg-template-block">
-      <div className="bg-template-picker" role="listbox" aria-label="בחירת רקע לעמוד" style={{ "--preview-soft": soft, "--preview-accent": accent } as CSSProperties}>
-        {uploadButton}
-        {BACKGROUND_TEMPLATES.map((template) => {
-          const active = selected === template.id;
-          return (
-            <button type="button" key={template.id} role="option" aria-selected={active} className={active ? "active" : ""} onClick={() => onChange(template.id)}>
-              <i className={`bg-swatch bg-${template.id}`} aria-hidden="true" />
-              <b>{template.name}</b>
-            </button>
-          );
-        })}
-      </div>
-      <input ref={fileRef} type="file" accept="image/*" hidden onChange={(event) => {
-        const file = event.target.files?.[0];
-        event.target.value = "";
-        if (file) onUpload(file);
-      }} />
-      <p className="bg-upload-hint">אפשר לבחור תמונה מהמחשב או מהגלריה בטלפון.</p>
-      {selected === "image" && imageUrl ? <button type="button" className="bg-upload-remove" onClick={onRemove}>הסרת התמונה</button> : null}
-      {error ? <p className="bg-upload-error">{error}</p> : null}
-    </div>
-  );
-}
-
-type FeatureStage = "opening" | "questions" | "completion";
-
-type ElementDefinition = {
-  key: ElementStyleKey;
-  icon: string;
-  title: string;
-  description: string;
-  visibilityKey?: keyof TemplateConfig;
-  required?: boolean;
-};
-
-type ToolboxItem = ToolboxRow & {
-  styleKey?: ElementStyleKey;
-  screen: PreviewScreen;
-  onToggle?: (value: boolean) => void;
-};
-
-const NAV_FEATURE_KEYS = ["showCalendar", "showAppleCalendar", "showWaze", "showGoogleMaps"] as const;
-const SHARE_FEATURE_KEYS = ["showWhatsApp", "showTelegram", "showCopy"] as const;
-
-function elementGroup(key: ElementStyleKey): ToolboxGroupId {
-  if (key === "emoji" || key === "decorations") return "look";
-  if (key === "countdown" || key === "venue" || key === "calendar") return "place";
-  if (key === "shareButtons" || key === "answerRecap") return "share";
-  if (["waxEnvelope", "memories", "guestCounter", "djSong", "voucher", "candle", "scratch", "musicPlayer"].includes(key)) return "experience";
-  return "content";
-}
-
-function featureGroup(key: string): ToolboxGroupId {
-  if ((NAV_FEATURE_KEYS as readonly string[]).includes(key)) return "place";
-  if ((SHARE_FEATURE_KEYS as readonly string[]).includes(key) || key === "showAnswerRecap") return "share";
-  if (key === "showEmoji" || key === "showFallingEmojis") return "look";
-  return "experience";
-}
-
-function lockFeature(plan: PlanType, feature: PlanFeatureId | null | undefined): PlanFeatureId | undefined {
-  if (!feature) return undefined;
-  return planLockLabel(feature, plan) ? feature : undefined;
-}
-
-const OPENING_ELEMENTS: ElementDefinition[] = [
-  { key: "introLabel", icon: "🏷️", title: "תווית עליונה", description: "הטקסט הקטן שמציג את סוג העמוד", visibilityKey: "showIntroLabel" },
-  { key: "emoji", icon: "😊", title: "סמל ראשי", description: "האימוג׳י שמוביל את החוויה", visibilityKey: "showEmoji" },
-  { key: "greeting", icon: "👋", title: "ברכה אישית", description: "שורת שלום עם שם הנמען", visibilityKey: "showGreeting" },
-  { key: "headline", icon: "T", title: "כותרת ראשית", description: "המסר המרכזי של הפתיחה", required: true },
-  { key: "subtitle", icon: "¶", title: "תיאור פתיחה", description: "הטקסט שמסביר מה מחכה בהמשך", required: true },
-  { key: "highlights", icon: "•", title: "פרטים חשובים", description: "תאריך, מקום או נקודות קצרות", visibilityKey: "showHighlights" },
-  { key: "primaryButton", icon: "↵", title: "כפתור התחלה", description: "הפעולה שמובילה לשלב הבא", required: true },
-  { key: "decorations", icon: "✨", title: "קישוטי רקע", description: "אימוג׳ים שנעים ברקע כל הזמן", visibilityKey: "showFallingEmojis" },
-];
-
-const QUESTION_ELEMENTS: ElementDefinition[] = [
-  { key: "question", icon: "?", title: "כותרת השאלה", description: "השאלה, ההסבר ומספר השלב", required: true },
-  { key: "options", icon: "☷", title: "אפשרויות תשובה", description: "הכרטיסים שהמבקר יכול לבחור", required: true },
-  { key: "primaryButton", icon: "↵", title: "כפתור המשך", description: "מעבר לשאלה הבאה או לסיום", required: true },
-];
-
-const COMPLETION_ELEMENTS: ElementDefinition[] = [
-  { key: "resultLabel", icon: "🏷️", title: "תווית הסיום", description: "הטקסט הקטן מעל הכותרת", required: true },
-  { key: "resultTitle", icon: "T", title: "כותרת הסיום", description: "המסר המרכזי שמופיע בסוף", required: true },
-  { key: "resultText", icon: "¶", title: "הודעת הסיום", description: "ברכה, תודה או הסבר על ההמשך", required: true },
-];
-
-const ELEMENT_LABELS: Record<ElementStyleKey, string> = {
-  introLabel: "תווית עליונה",
-  emoji: "סמל ראשי",
-  greeting: "ברכה אישית",
-  headline: "כותרת ראשית",
-  subtitle: "תיאור פתיחה",
-  highlights: "פרטים חשובים",
-  primaryButton: "כפתור",
-  decorations: "קישוטי רקע",
-  countdown: "ספירה לאחור",
-  venue: "כרטיס מקום",
-  calendar: "יומן וניווט",
-  memories: "מצגת זיכרונות",
-  waxEnvelope: "מעטפת שעווה",
-  question: "כותרת השאלה",
-  options: "אפשרויות תשובה",
-  guestCounter: "מונה אורחים",
-  djSong: "בקשת שיר",
-  resultLabel: "תווית הסיום",
-  resultTitle: "כותרת הסיום",
-  resultText: "הודעת הסיום",
-  voucher: "שובר מתנה",
-  candle: "כיבוי הנר",
-  scratch: "כרטיס גירוד",
-  answerRecap: "סיכום תשובות",
-  shareButtons: "כפתורי שיתוף",
-  musicPlayer: "נגן מוזיקה",
-};
-
-const EMOJI_PICKER: Record<string, string[]> = {
-  חגיגה: ["🎂", "🎉", "🥳", "🎈", "🎁", "🎊", "🧁", "🎀", "✨", "🌟", "🥂", "🍾", "🍰", "🕯️"],
-  רומנטי: ["💘", "❤️", "💕", "💗", "💖", "💌", "🫶", "💐", "😘", "🥰", "😍", "🌹", "💍", "🌙"],
-  אירוע: ["🥂", "🍷", "🍽️", "🎬", "✈️", "📸", "🎵", "💃", "🕺", "👑", "💎", "🏠", "🚗", "📍", "🗓️", "⏱️"],
-  כללי: ["😊", "🤗", "👋", "🙏", "☀️", "🌈", "🌿", "🌸", "🌺", "🌻", "⭐", "🐶", "🐱", "🧸", "☕", "🔥", "💫", "🪄", "👶"],
-};
-
-function SymbolFace({ emoji, imageUrl }: { emoji: string; imageUrl?: string }) {
-  if (imageUrl) return <img src={imageUrl} alt="" className="symbol-photo" />;
-  return <>{emoji || "😊"}</>;
-}
-
-function EmojiImageField({
-  imageUrl,
-  uploading,
-  error,
-  onUpload,
-  onRemove,
-  photosLocked,
-  onUnlockPhotos,
-}: {
-  imageUrl?: string;
-  uploading?: boolean;
-  error?: string;
-  onUpload: (file: File) => void;
-  onRemove: () => void;
-  photosLocked?: boolean;
-  onUnlockPhotos?: () => void;
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const uploadButton = (
-    <button type="button" className={`${imageUrl ? "emoji-image-upload has-photo" : "emoji-image-upload"}${photosLocked ? " is-plan-locked" : ""}`} disabled={uploading} onClick={() => {
-      if (photosLocked) {
-        onUnlockPhotos?.();
-        return;
-      }
-      fileRef.current?.click();
-    }}>
-      <i aria-hidden="true" style={imageUrl ? { backgroundImage: `url("${imageUrl}")` } : undefined}>{imageUrl ? "" : "🖼"}</i>
-      <span>
-        <b>{uploading ? "מעלים תמונה…" : imageUrl ? "החלפת התמונה" : "העלאת תמונה"}</b>
-        <small>מהמחשב או מהגלריה בטלפון</small>
-      </span>
-      {photosLocked ? <span className="plan-lock-veil is-inset"><PlanLockBadge feature="photos" plan="free" /></span> : null}
-    </button>
-  );
-  return (
-    <div className="emoji-image-field">
-      {uploadButton}
-      <input ref={fileRef} type="file" accept="image/*" hidden onChange={(event) => {
-        const file = event.target.files?.[0];
-        event.target.value = "";
-        if (file) onUpload(file);
-      }} />
-      {imageUrl ? <button type="button" className="emoji-image-remove" onClick={onRemove}>חזרה לאימוג׳י</button> : null}
-      {error ? <p className="emoji-image-error">{error}</p> : null}
-    </div>
-  );
-}
-
-function EmojiPicker({
-  value,
-  onChange,
-  multiple = false,
-}: {
-  value: string | string[];
-  onChange: (next: string | string[]) => void;
-  multiple?: boolean;
-}) {
-  const groups = Object.keys(EMOJI_PICKER);
-  const [group, setGroup] = useState(groups[0]);
-  const selected = new Set(Array.isArray(value) ? value : value ? [value] : []);
-  const emojis = EMOJI_PICKER[group] || [];
-  const current = Array.isArray(value) ? value.join(" ") : value;
-  const hasValue = Boolean(current);
-  return (
-    <div className="emoji-picker">
-      <div className={`emoji-picker-current${hasValue ? "" : " is-empty"}`}>
-        <span>{current || (multiple ? "בחרו קישוטים" : "בחרו סמל")}</span>
-        {hasValue ? (
-          <button
-            type="button"
-            className="emoji-picker-clear"
-            aria-label={multiple ? "מחיקת הקישוטים" : "מחיקת הסמל"}
-            onClick={() => onChange(multiple ? [] : "")}
-          >
-            ×
-          </button>
-        ) : null}
-      </div>
-      <div className="emoji-picker-tabs" role="tablist" aria-label="קבוצות אימוג׳י">
-        {groups.map((name) => (
-          <button type="button" role="tab" key={name} aria-selected={group === name} className={group === name ? "active" : ""} onClick={() => setGroup(name)}>{name}</button>
-        ))}
-      </div>
-      <div className="emoji-picker-grid">
-        {emojis.map((emoji) => (
-          <button
-            type="button"
-            key={emoji}
-            className={selected.has(emoji) ? "active" : ""}
-            aria-pressed={selected.has(emoji)}
-            aria-label={`בחירת ${emoji}`}
-            onClick={() => {
-              if (multiple) {
-                const current = Array.isArray(value) ? value : [];
-                onChange(selected.has(emoji) ? current.filter((item) => item !== emoji) : [...current, emoji].slice(0, 8));
-              } else {
-                onChange(emoji);
-              }
-            }}
-          >
-            {emoji}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const CORE_FEATURE_KEYS = ["showHighlights", "showEmoji", "showFallingEmojis"] as const;
-
-function featureStyleKey(key: TemplateFeature["key"]): ElementStyleKey {
-  if (key === "showScratchCard") return "scratch";
-  if (key === "showCandle") return "candle";
-  if (key === "showCountdown") return "countdown";
-  if (key === "showVenueCard") return "venue";
-  if (key === "showGuests") return "guestCounter";
-  if (key === "showDjSong") return "djSong";
-  if (["showCalendar", "showAppleCalendar", "showWaze", "showGoogleMaps"].includes(key)) return "calendar";
-  if (key === "showVoucher") return "voucher";
-  if (key === "showMemoriesSlider") return "memories";
-  if (key === "showWaxEnvelope") return "waxEnvelope";
-  if (["showWhatsApp", "showTelegram", "showCopy"].includes(key)) return "shareButtons";
-  if (key === "showAnswerRecap") return "answerRecap";
-  if (key === "showHighlights") return "highlights";
-  if (key === "showEmoji") return "emoji";
-  if (key === "showMusicPlayer") return "musicPlayer";
-  return "decorations";
-}
-
-function featureBelongsToStage(feature: TemplateFeature, stage: FeatureStage) {
-  if (stage === "questions") return ["showGuests", "showDjSong"].includes(feature.key);
-  if (stage === "completion") return ["showScratchCard", "showCandle", "showVoucher", "showWhatsApp", "showTelegram", "showCopy", "showAnswerRecap"].includes(feature.key);
-  return !["showGuests", "showDjSong", "showScratchCard", "showCandle", "showVoucher", "showWhatsApp", "showTelegram", "showCopy", "showAnswerRecap"].includes(feature.key);
-}
-
-export function Editor({ project, profile, saving, onProject, onConfig, onSave, onSaveConfig, onPublish, onUnpublish, onPassword, onDelete, onBack, onRequirePlan }: { project: ProjectRecord; profile: Profile; saving: boolean; onProject: (patch: Partial<ProjectRecord>) => void; onConfig: <K extends keyof TemplateConfig>(key: K, value: TemplateConfig[K]) => void; onSave: () => Promise<boolean>; onSaveConfig: (config: TemplateConfig) => Promise<boolean>; onPublish: () => void; onUnpublish: () => void; onPassword: (password: string | null) => Promise<boolean>; onDelete: () => void; onBack: () => void; onRequirePlan: (feature: PlanFeatureId) => void }) {
+export function Editor({ project, profile, saving, onProject, onConfig, onSave, onSaveConfig, onCommitSlug, onPublish, onUnpublish, onPassword, onDelete, onRequirePlan }: { project: ProjectRecord; profile: Profile; saving: boolean; onProject: (patch: Partial<ProjectRecord>) => void; onConfig: <K extends keyof TemplateConfig>(key: K, value: TemplateConfig[K]) => void; onSave: () => Promise<boolean>; onSaveConfig: (config: TemplateConfig) => Promise<boolean>; onCommitSlug: () => void; onPublish: () => void; onUnpublish: () => void; onPassword: (password: string | null) => Promise<boolean>; onDelete: () => void; onRequirePlan: (feature: PlanFeatureId) => void }) {
   const c = project.config;
   const templateFeatures = getTemplateFeatures(project.templateId);
   const isCustomBlank = project.templateId === "custom-blank";
@@ -484,7 +47,14 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
   const [previewDecorations, setPreviewDecorations] = useState(true);
   const [copied, setCopied] = useState(false);
   const [passwordDraft, setPasswordDraft] = useState("");
-  const [editingElement, setEditingElement] = useState<ElementStyleKey | null>(null);
+  const [editingElement, setEditingElementState] = useState<ElementStyleKey | null>(null);
+  // Mirrors the selection synchronously so a fast second click on the same element starts text editing.
+  const editingElementRef = useRef<ElementStyleKey | null>(null);
+  const setEditingElement = useCallback((next: ElementStyleKey | null | ((current: ElementStyleKey | null) => ElementStyleKey | null)) => {
+    const value = typeof next === "function" ? next(editingElementRef.current) : next;
+    editingElementRef.current = value;
+    setEditingElementState(value);
+  }, []);
   const [toolboxTab, setToolboxTab] = useState<ToolboxTab>("elements");
   const [selectedToolboxId, setSelectedToolboxId] = useState<string | null>(null);
   const [canUndo, setCanUndo] = useState(false);
@@ -500,6 +70,7 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
   const historyTimerRef = useRef<number>(0);
   const toolboxItemsRef = useRef<ToolboxItem[]>([]);
   const configRef = useRef(c);
+  const transformEndRef = useRef<(event?: React.PointerEvent<HTMLButtonElement> | PointerEvent) => void>(() => {});
   const previewFrameRef = useRef<HTMLDivElement>(null);
   const ignoreHistoryRef = useRef(false);
   const skipTextEditRef = useRef(false);
@@ -513,6 +84,7 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
     screen: DOMRect;
     moved: boolean;
     textField: HTMLElement | null;
+    wasSelected: boolean;
   } | null>(null);
   const transformSessionRef = useRef<
     | {
@@ -664,7 +236,7 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
       <label>סמל<input aria-label={`סמל שקופית ${index + 1}`} value={slide.icon} maxLength={8} onChange={(event) => updateMemorySlide(index, { icon: event.target.value })}/></label>
       <label>כותרת<input value={slide.title} maxLength={80} onChange={(event) => updateMemorySlide(index, { title: event.target.value })}/></label>
       <label>הסיפור<textarea value={slide.text} maxLength={240} onChange={(event) => updateMemorySlide(index, { text: event.target.value })}/></label>
-      {slide.photoKey && <img className="memory-inspector-photo" src={`/api/public/${project.slug}/memory?key=${encodeURIComponent(slide.photoKey)}`} alt={slide.title}/>}
+      {slide.photoKey && <UserImage className="memory-inspector-photo" src={`/api/public/${project.slug}/memory?key=${encodeURIComponent(slide.photoKey)}`} alt={slide.title} />}
       <PlanLockLayer feature="photos" plan={profile.plan} onUnlock={onRequirePlan} name="תמונה בשקופית"><label>תמונה אישית<input aria-label={`תמונה לשקופית ${index + 1}`} type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={memoryBusy !== null} onChange={(event) => { const file = event.target.files?.[0]; if(file) void uploadMemoryPhoto(index, file); event.target.value = ""; }}/></label></PlanLockLayer>
       {slide.photoKey && <button type="button" disabled={memoryBusy !== null} onClick={() => void uploadMemoryPhoto(index)}>הסרת התמונה</button>}
     </fieldset>)}<button type="button" disabled={memorySlides().length >= 6} onClick={() => onConfig("memorySlides", [...memorySlides(), { icon: "🌿", title: "עוד רגע שלנו", text: "כאן מתחיל הסיפור של הרגע הזה." }])}>הוספת שקופית</button>{memoryError && <p role="alert">{memoryError}</p>}</div>;
@@ -1303,6 +875,7 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
       screen,
       moved: false,
       textField,
+      wasSelected: editingElementRef.current === key,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
@@ -1382,7 +955,7 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
       skipTextEditRef.current = false;
       return;
     }
-    if (editingElement === session.key && session.textField) {
+    if (session.wasSelected && session.textField) {
       session.textField.focus();
     }
   }
@@ -1680,12 +1253,33 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
   }, [editingElement, previewScreen]);
 
   useEffect(() => {
+    transformEndRef.current = handleChromeTransformEnd;
+  });
+
+  // Deep links such as /studio/[id]?tab=page#rsvp-settings open the matching toolbox panel.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const requested = new URLSearchParams(window.location.search).get("tab");
+      if (requested !== "design" && requested !== "page") return;
+      setToolboxTab(requested);
+      if (window.location.hash) {
+        window.requestAnimationFrame(() => {
+          const target = document.getElementById(window.location.hash.slice(1));
+          if (target instanceof HTMLDetailsElement) target.open = true;
+          target?.scrollIntoView({ block: "center" });
+        });
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     function endExternalDrag() {
       clearDropUi();
     }
     function endTransform(event: PointerEvent) {
       if (!transformSessionRef.current) return;
-      handleChromeTransformEnd(event);
+      transformEndRef.current(event);
     }
     window.addEventListener("dragend", endExternalDrag);
     window.addEventListener("pointerup", endTransform);
@@ -1696,14 +1290,6 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
       window.removeEventListener("pointercancel", endTransform);
     };
   }, []);
-
-  // The editor is keyed by project id, so a project switch remounts it and the undo state
-  // starts from its initial (false) values; only the history refs need resetting here.
-  useEffect(() => {
-    historyRef.current = [structuredClone(c)];
-    historyIndexRef.current = 0;
-    skipHistoryRef.current = 0;
-  }, [project.id]);
 
   useEffect(() => {
     if (ignoreHistoryRef.current || skipHistoryRef.current > 0) {
@@ -2047,46 +1633,7 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
     }
   }
 
-  async function openDraftPreview() {
-    writeDraftPreviewConfig(project.id, c);
-    const preview = window.open("about:blank", "_blank");
-    const saved = await onSave();
-    if (!saved) {
-      preview?.close();
-      return;
-    }
-    const href = `/studio/preview/${project.id}`;
-    if (preview) {
-      preview.location.replace(href);
-      return;
-    }
-    window.open(href, "_blank", "noopener,noreferrer");
-  }
-
   return <div className="editor-workspace visual-editor">
-    <header className="editor-command-bar">
-      <div className="editor-command-context">
-        <button type="button" className="editor-command-back" aria-label="חזרה למרכז העבודה" onClick={onBack}>→</button>
-        <div><h1>{project.title}</h1></div>
-      </div>
-      <div className="editor-command-actions">
-        {project.published
-          ? <a className="editor-page-link" href={`/p/${project.slug}`} target="_blank" rel="noreferrer" title="פתיחת הקישור בחלון חדש">
-              <small>הקישור שלך</small>
-              <b dir="ltr">/p/{project.slug}</b>
-            </a>
-          : <span className="editor-page-link is-draft">
-              <small>הקישור אחרי פרסום</small>
-              <b dir="ltr">/p/{project.slug}</b>
-            </span>}
-        <button type="button" className="editor-save-button" disabled={saving} onClick={onSave}>{saving ? "שומר…" : "שמירת שינויים"}</button>
-        <button type="button" className="editor-preview-button" disabled={saving} onClick={openDraftPreview}>תצוגה מקדימה ↗</button>
-        <button type="button" className="editor-publish-button" disabled={saving} onClick={onPublish}>{primaryPublishLabel(project, saving)}</button>
-        {c.showWhatsApp !== false && !c.whatsapp ? <p className="whatsapp-warning editor-whatsapp-chip" role="status">חסר מספר — בלי מספר זה רק שיתוף</p> : null}
-        {project.published ? <a className="editor-whatsapp-share" href={whatsappShareUrl} target="_blank" rel="noreferrer">שיתוף ב־וואטסאפ</a> : null}
-        {project.published ? <a className="editor-open-button" href={`/p/${project.slug}`} target="_blank" rel="noreferrer" aria-label="פתיחת העמוד המפורסם בחלון חדש">↗</a> : null}
-      </div>
-    </header>
     <div className="mobile-editor-switch" role="group" aria-label="בחירת אזור עבודה">
       <button type="button" className={mobilePane === "edit" ? "active" : ""} aria-pressed={mobilePane === "edit"} onClick={() => setMobilePane("edit")}>אלמנטים</button>
       <button type="button" className={mobilePane === "preview" ? "active" : ""} aria-pressed={mobilePane === "preview"} onClick={() => setMobilePane("preview")}>העמוד</button>
@@ -2133,7 +1680,7 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
             <label>כתובת העמוד
               <div className="toolbox-slug-row" dir="ltr">
                 <span>/p/</span>
-                <input dir="ltr" value={project.slug} maxLength={50} spellCheck={false} autoComplete="off" placeholder="daniel-birthday" onChange={(event) => onProject({ slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50) })} />
+                <input dir="ltr" value={project.slug} maxLength={50} spellCheck={false} autoComplete="off" placeholder="daniel-birthday" onChange={(event) => onProject({ slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50) })} onBlur={onCommitSlug} />
               </div>
               <small className="toolbox-slug-hint">אותיות באנגלית, מספרים ומקף. אחרי שמירה הקישור הישן כבר לא יעבוד.</small>
             </label>
@@ -2176,9 +1723,9 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
           </div>
           </PlanLockLayer>
           <details className="advanced-disclosure"><summary>שאלות והסדר שלהן</summary>{c.questions.map((question, index) => <div className="toolbox-extra-fields" key={question.id}><label>שאלה {index + 1}<input value={question.prompt} onChange={(event) => updateQuestion(index, { prompt: event.target.value })}/></label>{questionWidgetField(index)}</div>)}</details>
-          <details className="advanced-disclosure"><summary>לאירועים — אישורי הגעה</summary>{rsvpPanel()}</details>
+          <details className="advanced-disclosure" id="rsvp-settings"><summary>אישורי הגעה לאירועים</summary>{rsvpPanel()}</details>
           {c.showMemoriesSlider && <details className="advanced-disclosure"><summary>מצגת זיכרונות</summary>{memoryPhotoFields()}</details>}
-          {c.showWhatsApp !== false && !c.whatsapp && <p className="whatsapp-warning" role="status">הוסיפו מספר כדי שהאורחים יכתבו אליכם ישירות. בלי מספר הכפתור רק יפתח שיתוף.</p>}
+          {c.showWhatsApp !== false && !c.whatsapp && <p className="whatsapp-warning editor-whatsapp-chip" role="status">בלי מספר וואטסאפ, הכפתור בסוף רק פותח שיתוף. עם מספר, האורחים כותבים ישר אליכם.</p>}
           <button type="button" className="toolbox-delete" onClick={onDelete}>מחיקת העמוד</button>
         </>}
       />
@@ -2465,10 +2012,10 @@ export function Editor({ project, profile, saving, onProject, onConfig, onSave, 
           <MusicPlaybackProvider youtubeUrl={c.showMusicPlayer ? (c.musicYoutubeUrl || "") : ""}>
           <div className="editor-history-actions" dir="ltr">
             <button type="button" className="editor-history-button" disabled={!canUndo} onClick={undoHistory} title="אחורה" aria-label="ביטול פעולה אחרונה">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7.5 5 12l4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /><path d="M6.2 12H15a4.5 4.5 0 0 1 0 9" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" /></svg>
+              <ArrowCounterClockwise aria-hidden="true" />
             </button>
             <button type="button" className="editor-history-button" disabled={!canRedo} onClick={redoHistory} title="קדימה" aria-label="חזרה על פעולה">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 7.5 19 12l-4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /><path d="M17.8 12H9a4.5 4.5 0 0 0 0 9" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" /></svg>
+              <ArrowClockwise aria-hidden="true" />
             </button>
           </div>
           {editingElement ? (

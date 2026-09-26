@@ -5,6 +5,7 @@ import { pageStage, type DashboardPage } from "@/lib/dashboard";
 import { emojiImageUrl } from "@/lib/background-image";
 import { formatCount, formatRelativeDate } from "@/lib/format";
 import { Badge } from "@/app/ui/status";
+import { UserImage } from "@/app/ui/user-image";
 import PageCardActions from "./page-card-actions";
 
 const STAGE_BADGE = {
@@ -24,7 +25,7 @@ export default function PageCard({ page }: { page: DashboardPage }) {
     <article className="page-card" aria-labelledby={titleId} style={{ "--thumb-accent": page.accent, "--thumb-soft": page.accentSoft } as CSSProperties}>
       <Link href={editHref} className="page-card__thumb" tabIndex={-1} aria-hidden="true">
         <span className="page-card__emoji">
-          {page.emojiImageVersion ? <img src={emojiImageUrl(page.slug, page.emojiImageVersion)} alt="" /> : page.emoji}
+          {page.emojiImageVersion ? <UserImage src={emojiImageUrl(page.slug, page.emojiImageVersion)} alt="" /> : page.emoji}
         </span>
         <span className="page-card__headline">{page.headline}</span>
       </Link>
