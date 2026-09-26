@@ -4,6 +4,7 @@ import PublishedExperience from "@/app/p/[slug]/published-experience";
 import { getTemplate, safeConfig, templates } from "@/lib/templates";
 import { campaignFromObject, withCampaign } from "@/lib/marketing";
 import MarketingTracker from "@/app/marketing-tracker";
+import "@/app/styles/experience.css";
 
 type Props = { params: Promise<{ templateId: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -11,7 +12,7 @@ export async function generateMetadata({ params }: Pick<Props, "params">): Promi
   const { templateId } = await params;
   const template = getTemplate(templateId === "rsvp" ? "event" : templateId);
   if (template.id !== (templateId === "rsvp" ? "event" : templateId)) return { title: "תבנית לא נמצאה | Linkli", robots: { index: false, follow: false } };
-  const title = `${template.name} — תבנית אינטראקטיבית | Linkli`;
+  const title = `${template.name}: תבנית אינטראקטיבית | Linkli`;
   return {
     title,
     description: template.description,

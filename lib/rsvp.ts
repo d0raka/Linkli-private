@@ -259,7 +259,7 @@ export async function listProjectRsvps(db: any, projectId: string, ownerEmail: s
   const songRows = await db.prepare(
     "SELECT DISTINCT song FROM rsvp_responses WHERE project_id = ? AND TRIM(COALESCE(song, '')) <> '' ORDER BY song",
   ).bind(projectId).all();
-  const songs = (songRows.results || []).map((row: { song?: unknown }) => String(row.song || "")).filter(Boolean);
+  const songs: string[] = (songRows.results || []).map((row: { song?: unknown }) => String(row.song || "")).filter(Boolean);
   const rows = await db.prepare(
     `SELECT id, status, guest_count, plus_ones_json, song, answers_json, name, created_at, updated_at
      FROM rsvp_responses WHERE project_id = ?
@@ -268,7 +268,7 @@ export async function listProjectRsvps(db: any, projectId: string, ownerEmail: s
   return {
     summary,
     songs,
-    responses: (rows.results || []).map((row: Record<string, unknown>) => mapRow(row)),
+    responses: ((rows.results || []) as Array<Record<string, unknown>>).map((row) => mapRow(row)),
     offset: safeOffset,
     limit: safeLimit,
   };

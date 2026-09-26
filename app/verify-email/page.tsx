@@ -1,4 +1,4 @@
-import Link from "next/link";
+import AuthLayout from "@/app/site/auth-layout";
 import { safeReturnTo } from "@/lib/auth";
 import VerifyEmailClient from "./verify-email-client";
 
@@ -8,11 +8,9 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
   const query = await searchParams;
   const token = typeof query.token === "string" && /^[0-9a-f]{64}$/i.test(query.token) ? query.token : "";
   const returnTo = safeReturnTo(query.returnTo);
-  return <main className="auth-shell" id="main-content">
-    <Link href="/" className="brand auth-brand">Link<span>li</span></Link>
-    <section className="auth-layout">
-      <div className="auth-message"><span className="kicker">אבטחת החשבון</span><h1>מוודאים שזו<br />באמת הכתובת שלכם.</h1><p>כדי להיכנס לאזור האישי, צריך לאמת את כתובת הדוא״ל באמצעות הקישור ששלחנו.</p><div className="auth-points"><span>✓ פעולה חד־פעמית</span><span>✓ קישור מאובטח</span><span>✓ נדרש לפני הכניסה לאזור האישי</span></div></div>
-      <div className="auth-card"><VerifyEmailClient token={token} sent={query.sent === "1"} deliveryUnavailable={query.delivery === "failed" || query.delivery === "unavailable"} returnTo={returnTo} /></div>
-    </section>
-  </main>;
+  return (
+    <AuthLayout title="מאמתים את כתובת הדוא״ל" lead="צעד אחד לפני שנכנסים: לוחצים על הקישור ששלחנו, ומשם ממשיכים ישר לעמודים שלכם.">
+      <VerifyEmailClient token={token} sent={query.sent === "1"} deliveryUnavailable={query.delivery === "failed" || query.delivery === "unavailable"} returnTo={returnTo} />
+    </AuthLayout>
+  );
 }

@@ -8,6 +8,7 @@ import PasswordGate from "./password-gate";
 import { validSlug } from "@/lib/security";
 import { hasPageAccess } from "@/lib/page-access";
 import { absoluteUrl } from "@/lib/site";
+import "@/app/styles/experience.css";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };

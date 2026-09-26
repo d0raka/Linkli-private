@@ -73,7 +73,7 @@ for(const template of ["birthday","event","wedding"] as const) test(`${template}
   await expect(page.getByRole("link",{name:"שיתוף ב־וואטסאפ"})).toBeVisible();
   const row=user.db.prepare("SELECT id,slug FROM projects WHERE owner_email=? ORDER BY created_at DESC").get(user.email) as {id:string;slug:string};
   await page.goto(`/studio/preview/${row.id}`);
-  if(template!=="birthday") await expect(page.getByText("מצב בדיקה — התשובה לא נשמרת אצל האורחים",{exact:true})).toBeVisible();
+  if(template!=="birthday") await expect(page.getByText("מצב בדיקה: התשובה לא נשמרת אצל האורחים",{exact:true})).toBeVisible();
   await journey(page);
   expect(user.db.prepare("SELECT COUNT(*) n FROM rsvp_responses WHERE project_id=?").get(row.id)?.n).toBe(0);
   await page.goto(`/p/${row.slug}`);

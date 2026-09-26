@@ -6,6 +6,7 @@ import { ensureDatabase } from "@/db";
 import { projectFromRow } from "@/lib/projects";
 import { validUuid } from "@/lib/security";
 import DraftPreviewClient from "./draft-preview-client";
+import "@/app/styles/experience.css";
 
 export const dynamic = "force-dynamic";
 

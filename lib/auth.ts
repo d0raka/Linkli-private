@@ -22,10 +22,8 @@ export type ProductUser = {
   emailVerified: boolean;
 };
 
-const DEVELOPMENT_ADMIN_EMAIL = "dor.aka.inbox@gmail.com";
-
 export function isAdminEmail(email: string) {
-  const configured = runtimeValue("ADMIN_EMAILS") || (process.env.NODE_ENV === "development" ? DEVELOPMENT_ADMIN_EMAIL : "");
+  const configured = runtimeValue("ADMIN_EMAILS") || "";
   return configured.split(",").map((value) => value.trim().toLowerCase()).filter(Boolean).includes(email.trim().toLowerCase());
 }
 
@@ -91,7 +89,14 @@ export async function verifyPassword(password: string, credential?: { password_h
   return hash !== DUMMY_BCRYPT_HASH && valid;
 }
 
-const RETURN_TO_PATHS = ["/studio", "/studio/create", "/account", "/checkout", "/paywall", "/admin"];
+const RETURN_TO_PATHS = ["/studio", "/studio/create", "/account", "/checkout", "/pricing", "/paywall", "/admin"];
+const UUID_PATTERN = "[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
+/** Page-scoped studio routes. Ownership is still enforced by each route after login. */
+const RETURN_TO_PATTERNS = [
+  new RegExp(`^/studio/${UUID_PATTERN}$`, "i"),
+  new RegExp(`^/studio/${UUID_PATTERN}/guests$`, "i"),
+  new RegExp(`^/studio/preview/${UUID_PATTERN}$`, "i"),
+];
 
 /**
  * Query parameters that may survive a login/registration round trip. Everything else is dropped:
@@ -108,7 +113,7 @@ export function safeReturnTo(value: unknown, fallback = "/studio") {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return fallback;
   try {
     const url = new URL(value, "https://linkli.local");
-    if (!RETURN_TO_PATHS.includes(url.pathname)) return fallback;
+    if (!RETURN_TO_PATHS.includes(url.pathname) && !RETURN_TO_PATTERNS.some((pattern) => pattern.test(url.pathname))) return fallback;
     const params = new URLSearchParams();
     for (const [key, pattern] of Object.entries(RETURN_TO_PARAMS)) {
       const candidate = url.searchParams.get(key);

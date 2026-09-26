@@ -1,5 +1,8 @@
 import { getProductUser } from "@/lib/auth";
 import BirthdayCreator from "./birthday-creator";
+import "@/app/styles/experience.css";
+import "@/app/site/phone.css";
+import "../create.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = {

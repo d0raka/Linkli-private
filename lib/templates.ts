@@ -338,7 +338,7 @@ export const templates: LinkliTemplate[] = [
         { id: "question-3", widget: "choice", prompt: "מה אסור שיהיה בערב?", helper: "גבול אחד מספיק.", options: ["טלפונים על השולחן", "מקום רועש", "תוכנית סודית מדי", "אין לי תנאים"], correctOption: "" },
       ],
       finalButtonText: "לגלות לאן", resultLabel: "הערב מחכה מתחת לכרטיס",
-      successTitle: "שולחן לשניים, בלי התראות", successText: "נשאיר את הטלפון בתיק וניקח את הזמן. מתחת לכרטיס מחכה הרמז — את היום סוגרים יחד.",
+      successTitle: "שולחן לשניים, בלי התראות", successText: "נשאיר את הטלפון בתיק וניקח את הזמן. מתחת לכרטיס מחכה הרמז, ואת היום סוגרים יחד.",
       scratchCover: "גרדו כאן", scratchSecret: "פיקניק בשקיעה. אני מביא את הקפה, לך לבחור יום.",
       whatsapp: "", whatsappText: "ראיתי. בוא נקבע ערב.", buttonText: "קובעים בוואטסאפ",
       accent: "#9b3e4e", accentSoft: "#f6ede7", emoji: "💘", decorations: ["💗", "✨", "💕", "🌸"], theme: "romance", bgStyle: "bloom", cardShape: "rounded-3d", cardRadius: 28,

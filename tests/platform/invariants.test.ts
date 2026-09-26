@@ -1,12 +1,13 @@
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { FONT_FAMILIES } from "@/lib/templates";
+import { allAppCss } from "../helpers/css";
 
 const root = new URL("../../", import.meta.url);
 
 describe("M7 platform invariants", () => {
   it("self-hosts Heebo and Rubik instead of loading Google Fonts at runtime", () => {
-    const css = readFileSync(new URL("app/globals.css", root), "utf8") + readFileSync(new URL("app/styles/tokens.css", root), "utf8");
+    const css = allAppCss();
     expect(css).not.toMatch(/fonts\.googleapis\.com/);
     expect(css).toMatch(/@font-face[^}]+font-family:\s*["']Heebo["']/);
     expect(css).toMatch(/@font-face[^}]+font-family:\s*["']Rubik["']/);
@@ -15,7 +16,7 @@ describe("M7 platform invariants", () => {
   });
 
   it("lists only hosted Hebrew fonts in Studio pickers", () => {
-    const studio = readFileSync(new URL("app/studio/studio-client.tsx", root), "utf8");
+    const studio = readFileSync(new URL("app/studio/editor/editor.tsx", root), "utf8");
     const allowed = new Set<string>(FONT_FAMILIES);
     const options = Array.from(studio.matchAll(/<option value="([^"]+)">[^<]*(?:Rubik|Heebo|Assistant|Varela|Secular)[^<]*<\/option>/g), (match) => match[1]);
     expect(options.length).toBeGreaterThan(0);
@@ -50,9 +51,11 @@ describe("M7 platform invariants", () => {
     }
   });
 
-  it("loads Studio client only from the Studio shell", () => {
-    const shell = readFileSync(new URL("app/studio/studio-shell.tsx", root), "utf8");
-    expect(shell).toMatch(/import\(["']\.\/studio-client["']\)/);
-    expect(readFileSync(new URL("app/studio/studio.css", root), "utf8")).toMatch(/\.studio-body/);
+  it("loads the editor bundle and its stylesheet only on the editor route", () => {
+    const route = readFileSync(new URL("app/studio/[id]/page.tsx", root), "utf8");
+    expect(route).toMatch(/studio\/editor\/editor-screen/);
+    expect(route).toMatch(/studio\/editor\.css/);
+    expect(readFileSync(new URL("app/layout.tsx", root), "utf8")).not.toMatch(/editor\.css/);
+    expect(readFileSync(new URL("app/studio/editor.css", root), "utf8")).toMatch(/\.studio-body/);
   });
 });

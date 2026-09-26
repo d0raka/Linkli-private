@@ -12,11 +12,11 @@ const PAGE = `<!doctype html>
 <meta name="robots" content="noindex">
 <title>הטופס לא נשלח | Linkli</title>
 <style>
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: Heebo, Rubik, Arial, sans-serif; background: #fffaf2; color: #201a2d; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: Heebo, Rubik, Arial, sans-serif; background: #f6f5f4; color: #17151c; }
   main { max-width: 460px; padding: 32px 24px; text-align: center; }
   h1 { font-size: 24px; margin: 0 0 12px; }
-  p { line-height: 1.7; color: #5d5566; margin: 0 0 20px; }
-  a { display: inline-block; padding: 12px 22px; border-radius: 12px; background: #db3151; color: #fff; text-decoration: none; font-weight: 700; }
+  p { line-height: 1.7; color: #57535f; margin: 0 0 20px; }
+  a { display: inline-block; padding: 12px 22px; border-radius: 12px; background: #8a2f4a; color: #fff; text-decoration: none; font-weight: 700; }
 </style>
 </head>
 <body>

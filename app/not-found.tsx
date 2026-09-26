@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { LinkBreak } from "@phosphor-icons/react/ssr";
+import { SiteFooter, SiteHeader } from "./site/site-shell";
 import DocumentTitle from "./document-title";
+import "./site/site.css";
 
 export const metadata = {
   title: "העמוד לא נמצא | Linkli",
@@ -7,5 +10,20 @@ export const metadata = {
 };
 
 export default function NotFound() {
-  return <main className="published-shell" id="main-content" style={{"--page-soft":"#ffe7eb","--page-accent":"#ef476f"} as React.CSSProperties}><DocumentTitle title="העמוד לא נמצא | Linkli" /><section className="published-card"><div className="published-emoji">🔍</div><h1>העמוד אינו זמין</h1><p className="published-sub">ייתכן שהעמוד הוחזר למצב טיוטה או שכתובתו השתנתה.</p><Link href="/" className="button button-primary">יצירת עמוד חדש</Link></section></main>;
+  return (
+    <div className="site-shell">
+      <DocumentTitle title="העמוד לא נמצא | Linkli" />
+      <SiteHeader signedIn={false} />
+      <main id="main-content" className="site-main status-page" tabIndex={-1}>
+        <span className="status-page__icon" aria-hidden="true"><LinkBreak /></span>
+        <h1>העמוד אינו זמין</h1>
+        <p>אולי הקישור השתנה, או שהעמוד הוחזר לטיוטה. אם קיבלתם אותו ממישהו, כדאי לבקש ממנו קישור חדש.</p>
+        <div className="status-page__actions">
+          <Link href="/" className="ui-button" data-variant="primary">לדף הבית</Link>
+          <Link href="/contact" className="ui-button">יצירת קשר</Link>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  );
 }

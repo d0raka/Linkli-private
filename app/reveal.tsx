@@ -9,24 +9,21 @@ function prefersReducedMotion() {
     || document.documentElement.dataset.reduceMotion === "true";
 }
 
-function isInViewport(node: HTMLElement) {
-  const rect = node.getBoundingClientRect();
-  return rect.top < window.innerHeight - 24 && rect.bottom > 24;
-}
-
+/**
+ * Fades a section in the first time it scrolls into view. Content is visible by default and
+ * stays visible without JavaScript, under reduced motion, or when already on screen.
+ */
 export default function Reveal({
   as: Tag = "div",
   children,
   className = "",
   delay = 0,
-  eager = false,
   ...props
 }: {
   as?: RevealTag;
   children: ReactNode;
   className?: string;
   delay?: number;
-  eager?: boolean;
 } & HTMLAttributes<HTMLElement>) {
   const ref = useRef<HTMLElement | null>(null);
   const [visible, setVisible] = useState(true);
@@ -34,36 +31,24 @@ export default function Reveal({
 
   useLayoutEffect(() => {
     const node = ref.current;
-    if (!node || eager || prefersReducedMotion()) return;
-    if (isInViewport(node)) return;
-
+    if (!node || prefersReducedMotion()) return;
+    const rect = node.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) return;
     setArmed(true);
     setVisible(false);
-
-    const show = () => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
       setVisible(true);
       observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) show();
-    }, { threshold: 0, rootMargin: "80px 0px 0px 0px" });
-    const onScroll = () => {
-      if (isInViewport(node)) show();
-    };
-
+    }, { rootMargin: "0px 0px -10% 0px" });
     observer.observe(node);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, [eager]);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <Tag
       ref={ref as never}
-      className={`reveal ${eager ? "reveal-hero" : ""} ${armed ? "reveal-armed" : ""} ${visible ? "is-inview" : ""} ${className}`.trim()}
+      className={`reveal ${armed ? "reveal-armed" : ""} ${visible ? "is-inview" : ""} ${className}`.trim()}
       style={{ "--reveal-delay": `${delay}ms` } as CSSProperties}
       {...props}
     >

@@ -2,7 +2,7 @@ import { ensureDatabase } from "@/db";
 import { requireAdminUser } from "@/lib/auth";
 import { billingMetrics } from "@/lib/billing";
 import { normalizePlan } from "@/lib/plans";
-import AppTopbar from "@/app/app-topbar";
+import AppShell from "@/app/app-shell/app-shell";
 import AdminClient from "./admin-client";
 
 export const dynamic = "force-dynamic";
@@ -63,8 +63,8 @@ export default async function AdminPage() {
   const revenue = await billingMetrics(db);
 
   return (
-    <main className="admin-shell" id="main-content">
-      <AppTopbar displayName={admin.displayName} plan={admin.plan} isAdmin current="admin" />
+    <AppShell user={admin} current="admin" width="wide">
+      <div>
       <AdminClient
         initialMetrics={{
           users: Number(metrics.users || 0),
@@ -92,6 +92,7 @@ export default async function AdminPage() {
         initialLeads={leadsResult.results || []}
         adminEmail={admin.email}
       />
-    </main>
+      </div>
+    </AppShell>
   );
 }

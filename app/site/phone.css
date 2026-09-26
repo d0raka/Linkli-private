@@ -1,0 +1,37 @@
+/* Phone frame around a live, embedded invitation (landing hero, guided creators). */
+
+.hero-phone { display: grid; gap: var(--space-3); width: 100%; max-width: 23.5rem; margin: 0; }
+.hero-phone__screen {
+  position: relative;
+  height: min(680px, 78dvh);
+  overflow: hidden auto;
+  border: 9px solid var(--n-900);
+  border-radius: 42px;
+  background: var(--n-0);
+  box-shadow: 0 30px 60px -28px rgb(24 23 29 / 0.45);
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.hero-phone__screen::-webkit-scrollbar { display: none; }
+.hero-phone figcaption { color: var(--color-text-muted); font-size: var(--text-sm); text-align: center; }
+
+/* The embedded invitation behaves like the phone layout regardless of viewport width */
+.hero-phone .experience-shell { min-height: 100% !important; padding: 0 !important; display: block !important; overflow: visible !important; }
+.hero-phone .experience-card {
+  width: 100% !important;
+  min-height: 100% !important;
+  margin: 0 !important;
+  padding: 18px 18px 56px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.hero-phone .experience-intro { padding-top: 24px; }
+.hero-phone .experience-screen h1 { font-size: 30px !important; line-height: 1.2; }
+.hero-phone .experience-screen h2 { font-size: 24px !important; }
+.hero-phone .experience-navigation { position: sticky; bottom: 0; }
+.hero-phone .watermark { margin: 18px 0 8px; }
+
+@media (max-width: 640px) {
+  .hero-phone__screen { height: 560px; border-width: 7px; border-radius: 34px; }
+}
