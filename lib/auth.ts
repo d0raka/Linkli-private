@@ -22,10 +22,8 @@ export type ProductUser = {
   emailVerified: boolean;
 };
 
-const DEVELOPMENT_ADMIN_EMAIL = "dor.aka.inbox@gmail.com";
-
 export function isAdminEmail(email: string) {
-  const configured = runtimeValue("ADMIN_EMAILS") || (process.env.NODE_ENV === "development" ? DEVELOPMENT_ADMIN_EMAIL : "");
+  const configured = runtimeValue("ADMIN_EMAILS") || "";
   return configured.split(",").map((value) => value.trim().toLowerCase()).filter(Boolean).includes(email.trim().toLowerCase());
 }
 

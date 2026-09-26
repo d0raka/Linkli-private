@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureDatabase } from "@/db";
 import { actionUrl, developmentActionUrl, issueAuthToken } from "@/lib/account-security";
-import { deleteCurrentSession, getProductUser, hashPassword, isAdminEmail, revokeOtherSessions, validatePassword, verifyPassword } from "@/lib/auth";
+import { getProductUser, hashPassword, isAdminEmail, revokeOtherSessions, validatePassword, verifyPassword } from "@/lib/auth";
 import { assertAccountDeletable } from "@/lib/billing";
 import { sendAuthEmail } from "@/lib/email";
 import { enforceRateLimit, errorResponse, normalizeEmail, readJsonObject, RequestError, requireSameOrigin } from "@/lib/security";
